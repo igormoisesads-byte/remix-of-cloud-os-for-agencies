@@ -14,16 +14,276 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      client_activities: {
+        Row: {
+          action: string
+          client_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_activities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address: string | null
+          city_uf: string | null
+          contract_start: string | null
+          created_at: string
+          created_by: string | null
+          cs_user_id: string | null
+          id: string
+          monthly_fee_amount: number | null
+          monthly_fee_day: number | null
+          name: string
+          niche: string | null
+          notes: string | null
+          performance_user_id: string | null
+          platform: string | null
+          site: string | null
+          status: Database["public"]["Enums"]["client_status"]
+          type: Database["public"]["Enums"]["client_type"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city_uf?: string | null
+          contract_start?: string | null
+          created_at?: string
+          created_by?: string | null
+          cs_user_id?: string | null
+          id?: string
+          monthly_fee_amount?: number | null
+          monthly_fee_day?: number | null
+          name: string
+          niche?: string | null
+          notes?: string | null
+          performance_user_id?: string | null
+          platform?: string | null
+          site?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          type: Database["public"]["Enums"]["client_type"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city_uf?: string | null
+          contract_start?: string | null
+          created_at?: string
+          created_by?: string | null
+          cs_user_id?: string | null
+          id?: string
+          monthly_fee_amount?: number | null
+          monthly_fee_day?: number | null
+          name?: string
+          niche?: string | null
+          notes?: string | null
+          performance_user_id?: string | null
+          platform?: string | null
+          site?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          type?: Database["public"]["Enums"]["client_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_cs_user_id_fkey"
+            columns: ["cs_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_performance_user_id_fkey"
+            columns: ["performance_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_fees: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          reference_month: string
+          status: Database["public"]["Enums"]["fee_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          reference_month: string
+          status?: Database["public"]["Enums"]["fee_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          reference_month?: string
+          status?: Database["public"]["Enums"]["fee_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_fees_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_tasks: {
+        Row: {
+          client_id: string
+          created_at: string
+          done: boolean
+          done_at: string | null
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          position?: number
+          title: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "gestor" | "operacional" | "financeiro"
+      client_status: "ativo" | "pausado" | "churn" | "onboarding"
+      client_type: "local" | "perpetuo" | "autoria"
+      fee_status: "pendente" | "pago" | "atrasado" | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +410,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "gestor", "operacional", "financeiro"],
+      client_status: ["ativo", "pausado", "churn", "onboarding"],
+      client_type: ["local", "perpetuo", "autoria"],
+      fee_status: ["pendente", "pago", "atrasado", "cancelado"],
+    },
   },
 } as const
