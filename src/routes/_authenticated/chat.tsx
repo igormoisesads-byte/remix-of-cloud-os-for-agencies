@@ -31,6 +31,24 @@ type Channel = {
 type Member = { id: string; user_id: string; role: "admin" | "member"; profile?: Profile };
 type Profile = { id: string; full_name: string; email: string; avatar_url: string | null };
 type Task = { id: string; title: string; status: string };
+type Client = { id: string; name: string };
+
+function handleFromName(name?: string | null) {
+  if (!name) return "user";
+  return name.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "") || "user";
+}
+function clientHandle(name?: string | null) {
+  if (!name) return "cliente";
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "cliente";
+}
+function renderWithMentions(text: string) {
+  const parts = text.split(/(@[\w]+|#[\w-]+)/g);
+  return parts.map((p, i) => {
+    if (/^@[\w]+$/.test(p)) return <span key={i} className="text-primary font-medium bg-primary/10 rounded px-0.5">{p}</span>;
+    if (/^#[\w-]+$/.test(p)) return <span key={i} className="text-blue-600 font-medium bg-blue-500/10 rounded px-0.5">{p}</span>;
+    return <span key={i}>{p}</span>;
+  });
+}
 type Message = {
   id: string; channel_id: string; author_id: string | null; body: string | null;
   task_id: string | null; parent_id: string | null;
