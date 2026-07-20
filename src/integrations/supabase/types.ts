@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      channel_members: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          last_read_at: string | null
+          role: Database["public"]["Enums"]["channel_member_role"]
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          last_read_at?: string | null
+          role?: Database["public"]["Enums"]["channel_member_role"]
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          last_read_at?: string | null
+          role?: Database["public"]["Enums"]["channel_member_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channels: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          topic: string | null
+          type: Database["public"]["Enums"]["channel_type"]
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          topic?: string | null
+          type?: Database["public"]["Enums"]["channel_type"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          topic?: string | null
+          type?: Database["public"]["Enums"]["channel_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_activities: {
         Row: {
           action: string
@@ -126,6 +202,51 @@ export type Database = {
             columns: ["performance_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          author_id: string | null
+          body: string
+          channel_id: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          channel_id: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          channel_id?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -369,9 +490,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_channel_admin: {
+        Args: { _channel_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_channel_member: {
+        Args: { _channel_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "gestor" | "operacional" | "financeiro"
+      channel_member_role: "admin" | "member"
+      channel_type: "public" | "private" | "dm" | "client"
       client_status: "ativo" | "pausado" | "churn" | "onboarding"
       client_type: "local" | "perpetuo" | "autoria"
       fee_status: "pendente" | "pago" | "atrasado" | "cancelado"
@@ -506,6 +637,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "gestor", "operacional", "financeiro"],
+      channel_member_role: ["admin", "member"],
+      channel_type: ["public", "private", "dm", "client"],
       client_status: ["ativo", "pausado", "churn", "onboarding"],
       client_type: ["local", "perpetuo", "autoria"],
       fee_status: ["pendente", "pago", "atrasado", "cancelado"],
