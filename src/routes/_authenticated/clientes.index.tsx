@@ -2,22 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search } from "lucide-react";
-import { toast } from "sonner";
+import { Search } from "lucide-react";
+import { NewClientWizard } from "@/components/new-client-wizard";
 
 export const Route = createFileRoute("/_authenticated/clientes/")({
   component: ClientesList,
 });
+
 
 const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", autoria: "Autoria" };
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
