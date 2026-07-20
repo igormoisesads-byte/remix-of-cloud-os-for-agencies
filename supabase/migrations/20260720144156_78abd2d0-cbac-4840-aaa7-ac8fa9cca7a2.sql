@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.tg_task_audit() FROM PUBLIC, anon, authenticated;
