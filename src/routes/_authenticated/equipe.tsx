@@ -101,3 +101,67 @@ function EquipePage() {
     </div>
   );
 }
+
+function InviteDialog() {
+  const invite = useServerFn(inviteTeamMember);
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<(typeof ROLES)[number]>("operacional");
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    if (!email) return toast.error("Informe o e-mail.");
+    setLoading(true);
+    try {
+      await invite({ data: { email, full_name: fullName || undefined, role } });
+      toast.success(`Convite enviado para ${email}`);
+      setOpen(false);
+      setEmail(""); setFullName(""); setRole("operacional");
+      qc.invalidateQueries({ queryKey: ["team"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao convidar.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button><UserPlus className="h-4 w-4 mr-2" />Convidar membro</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Convidar novo membro</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>E-mail *</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="pessoa@empresa.com" />
+          </div>
+          <div className="space-y-2">
+            <Label>Nome completo</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Opcional" />
+          </div>
+          <div className="space-y-2">
+            <Label>Papel inicial</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Um e-mail de convite será enviado. A pessoa define a senha ao acessar o link.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={submit} disabled={loading}>{loading ? "Enviando…" : "Enviar convite"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
