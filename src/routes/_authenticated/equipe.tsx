@@ -1,18 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { inviteTeamMember } from "@/lib/team.functions";
 
 const ROLES = ["admin", "gestor", "operacional", "financeiro"] as const;
 
 export const Route = createFileRoute("/_authenticated/equipe")({
   component: EquipePage,
 });
+
 
 function EquipePage() {
   const qc = useQueryClient();
@@ -48,12 +58,16 @@ function EquipePage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
-        <p className="text-muted-foreground mt-1">Membros e papéis. {isAdmin ? "Você é admin." : "Só admin pode editar."}</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
+          <p className="text-muted-foreground mt-1">Membros e papéis. {isAdmin ? "Você é admin." : "Só admin pode editar."}</p>
+        </div>
+        {isAdmin && <InviteDialog />}
       </div>
       <Card>
         <CardHeader><CardTitle className="text-base">Membros ({data?.length ?? 0})</CardTitle></CardHeader>
+
         <CardContent>
           <Table>
             <TableHeader>
@@ -87,3 +101,67 @@ function EquipePage() {
     </div>
   );
 }
+
+function InviteDialog() {
+  const invite = useServerFn(inviteTeamMember);
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<(typeof ROLES)[number]>("operacional");
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    if (!email) return toast.error("Informe o e-mail.");
+    setLoading(true);
+    try {
+      await invite({ data: { email, full_name: fullName || undefined, role } });
+      toast.success(`Convite enviado para ${email}`);
+      setOpen(false);
+      setEmail(""); setFullName(""); setRole("operacional");
+      qc.invalidateQueries({ queryKey: ["team"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao convidar.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button><UserPlus className="h-4 w-4 mr-2" />Convidar membro</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Convidar novo membro</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>E-mail *</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="pessoa@empresa.com" />
+          </div>
+          <div className="space-y-2">
+            <Label>Nome completo</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Opcional" />
+          </div>
+          <div className="space-y-2">
+            <Label>Papel inicial</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Um e-mail de convite será enviado. A pessoa define a senha ao acessar o link.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={submit} disabled={loading}>{loading ? "Enviando…" : "Enviar convite"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
