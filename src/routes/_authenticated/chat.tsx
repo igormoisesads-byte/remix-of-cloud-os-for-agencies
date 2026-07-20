@@ -13,9 +13,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase, Paperclip, X,
+  Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase,
+  Paperclip, X, Reply, Mic, Square, Bell, File as FileIcon, Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { registerPWA, requestNotificationPermission, notify } from "@/lib/pwa";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatPage,
@@ -30,9 +32,13 @@ type Member = { id: string; user_id: string; role: "admin" | "member"; profile?:
 type Profile = { id: string; full_name: string; email: string; avatar_url: string | null };
 type Task = { id: string; title: string; status: string };
 type Message = {
-  id: string; channel_id: string; author_id: string | null; body: string;
-  task_id: string | null; created_at: string; edited_at: string | null;
-  author?: Profile; task?: Task;
+  id: string; channel_id: string; author_id: string | null; body: string | null;
+  task_id: string | null; parent_id: string | null;
+  attachment_url: string | null; attachment_type: string | null;
+  attachment_name: string | null; attachment_size: number | null;
+  attachment_kind: string | null;
+  created_at: string; edited_at: string | null;
+  author?: Profile; task?: Task; parent?: Message;
 };
 
 function initials(name?: string | null) {
