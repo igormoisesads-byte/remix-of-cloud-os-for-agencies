@@ -13,9 +13,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase, Paperclip, X,
+  Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase,
+  Paperclip, X, Reply, Mic, Square, Bell, File as FileIcon, Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { registerPWA, requestNotificationPermission, notify } from "@/lib/pwa";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatPage,
@@ -30,9 +32,13 @@ type Member = { id: string; user_id: string; role: "admin" | "member"; profile?:
 type Profile = { id: string; full_name: string; email: string; avatar_url: string | null };
 type Task = { id: string; title: string; status: string };
 type Message = {
-  id: string; channel_id: string; author_id: string | null; body: string;
-  task_id: string | null; created_at: string; edited_at: string | null;
-  author?: Profile; task?: Task;
+  id: string; channel_id: string; author_id: string | null; body: string | null;
+  task_id: string | null; parent_id: string | null;
+  attachment_url: string | null; attachment_type: string | null;
+  attachment_name: string | null; attachment_size: number | null;
+  attachment_kind: string | null;
+  created_at: string; edited_at: string | null;
+  author?: Profile; task?: Task; parent?: Message;
 };
 
 function initials(name?: string | null) {
@@ -297,7 +303,18 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
   const [showMembers, setShowMembers] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [attachTaskId, setAttachTaskId] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission>(
+    typeof Notification !== "undefined" ? Notification.permission : "default"
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const messagesRef = useRef<Message[]>([]);
 
   const meIsAdmin = isAgencyAdmin || members.find((m) => m.user_id === user?.id)?.role === "admin";
 
@@ -305,18 +322,24 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
     const { data } = await supabase.from("messages").select("*")
       .eq("channel_id", channel.id).order("created_at", { ascending: true }).limit(200);
     const list = (data ?? []) as Message[];
-    // attach authors/tasks from local caches
     const taskIds = Array.from(new Set(list.map((m) => m.task_id).filter(Boolean))) as string[];
     let tmap = new Map<string, Task>();
     if (taskIds.length) {
       const { data: ts } = await supabase.from("tasks").select("id,title,status").in("id", taskIds);
       (ts ?? []).forEach((t: any) => tmap.set(t.id, t));
     }
-    setMessages(list.map((m) => ({
+    const byId = new Map(list.map((m) => [m.id, m]));
+    const enriched = list.map((m) => ({
       ...m,
       author: profiles.find((p) => p.id === m.author_id) || undefined,
       task: m.task_id ? tmap.get(m.task_id) : undefined,
-    })));
+      parent: m.parent_id ? byId.get(m.parent_id) : undefined,
+    }));
+    enriched.forEach((m) => {
+      if (m.parent) m.parent.author = profiles.find((p) => p.id === m.parent!.author_id) || m.parent.author;
+    });
+    messagesRef.current = enriched;
+    setMessages(enriched);
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }), 50);
   }
   async function loadMembers() {
@@ -333,6 +356,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
 
   useEffect(() => {
     loadMessages(); loadMembers(); loadTasks();
+    setReplyTo(null); setPendingFile(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id, profiles.length]);
 
@@ -340,23 +364,107 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
     const ch = supabase.channel(`msg-${channel.id}`)
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `channel_id=eq.${channel.id}` },
-        () => loadMessages())
+        async (payload) => {
+          await loadMessages();
+          const m: any = payload.new;
+          if (m.author_id && m.author_id !== user?.id) {
+            const author = profiles.find((p) => p.id === m.author_id);
+            const authorName = author?.full_name || author?.email || "Alguém";
+            const preview = m.body || (m.attachment_kind === "audio" ? "🎤 Áudio" : m.attachment_url ? "📎 Anexo" : "");
+            const hidden = typeof document !== "undefined" && document.hidden;
+            const label = channel.type === "dm" ? authorName : `#${channel.name} · ${authorName}`;
+            if (hidden) notify(label, preview, "/chat", `ch-${channel.id}`);
+          }
+        })
       .on("postgres_changes",
         { event: "*", schema: "public", table: "channel_members", filter: `channel_id=eq.${channel.id}` },
         () => loadMembers())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel.id]);
+  }, [channel.id, user?.id, profiles.length]);
+
+  async function uploadBlob(blob: Blob, filename: string, kind: "file" | "audio" | "image"): Promise<{
+    url: string; type: string; name: string; size: number; kind: string;
+  } | null> {
+    if (!user) return null;
+    const ext = filename.includes(".") ? filename.split(".").pop() : "bin";
+    const path = `${user.id}/${channel.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("chat-attachments").upload(path, blob, {
+      contentType: blob.type || "application/octet-stream", upsert: false,
+    });
+    if (error) { toast.error(error.message); return null; }
+    const { data: signed } = await supabase.storage.from("chat-attachments").createSignedUrl(path, 60 * 60 * 24 * 365);
+    return { url: signed?.signedUrl || "", type: blob.type, name: filename, size: blob.size, kind };
+  }
 
   async function send() {
-    if (!text.trim() || !user) return;
+    if (!user) return;
+    if (!text.trim() && !pendingFile) return;
     const body = text.trim();
-    setText(""); const attach = attachTaskId; setAttachTaskId(null);
+    const attach = attachTaskId; const parent = replyTo?.id ?? null; const file = pendingFile;
+    setText(""); setAttachTaskId(null); setReplyTo(null); setPendingFile(null);
+
+    let att: any = null;
+    if (file) {
+      setUploading(true);
+      const kind = file.type.startsWith("image/") ? "image" : "file";
+      att = await uploadBlob(file, file.name, kind);
+      setUploading(false);
+      if (!att) { setPendingFile(file); return; }
+    }
     const { error } = await supabase.from("messages").insert({
-      channel_id: channel.id, author_id: user.id, body, task_id: attach,
+      channel_id: channel.id, author_id: user.id,
+      body: body || null, task_id: attach, parent_id: parent,
+      attachment_url: att?.url ?? null, attachment_type: att?.type ?? null,
+      attachment_name: att?.name ?? null, attachment_size: att?.size ?? null,
+      attachment_kind: att?.kind ?? null,
     });
     if (error) { toast.error(error.message); setText(body); }
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
+        const filename = `audio-${Date.now()}.webm`;
+        setUploading(true);
+        const att = await uploadBlob(blob, filename, "audio");
+        setUploading(false);
+        if (!att || !user) return;
+        await supabase.from("messages").insert({
+          channel_id: channel.id, author_id: user.id,
+          body: null, parent_id: replyTo?.id ?? null,
+          attachment_url: att.url, attachment_type: att.type,
+          attachment_name: att.name, attachment_size: att.size, attachment_kind: "audio",
+        });
+        setReplyTo(null);
+      };
+      rec.start();
+      recorderRef.current = rec;
+      setRecording(true);
+    } catch (e: any) {
+      toast.error("Não foi possível acessar o microfone");
+    }
+  }
+  function stopRecording() {
+    recorderRef.current?.stop();
+    recorderRef.current = null;
+    setRecording(false);
+  }
+
+  async function enableNotifications() {
+    await registerPWA();
+    const p = await requestNotificationPermission();
+    setNotifPerm(p);
+    if (p === "granted") toast.success("Notificações ativadas");
+    else toast.error("Permissão negada. Ative nas configurações do navegador.");
   }
 
   const Icon = channel.type === "client" ? Briefcase : channel.type === "dm" ? MessageCircle
@@ -371,6 +479,11 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
           {channel.topic && <div className="text-xs text-muted-foreground truncate">{channel.topic}</div>}
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {notifPerm !== "granted" && (
+            <Button variant="outline" size="sm" onClick={enableNotifications} title="Ativar notificações">
+              <Bell className="h-4 w-4 mr-1" /> Notificações
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setShowMembers(true)}>
             <Users className="h-4 w-4 mr-1" /> {members.length}
           </Button>
@@ -384,10 +497,10 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
           )}
           {messages.map((m, i) => {
             const prev = messages[i - 1];
-            const grouped = prev && prev.author_id === m.author_id
+            const grouped = prev && prev.author_id === m.author_id && !m.parent_id
               && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60_000);
             return (
-              <div key={m.id} className={cn("flex gap-3", grouped && "pl-11")}>
+              <div key={m.id} className={cn("group flex gap-3", grouped && "pl-11")}>
                 {!grouped && (
                   <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
                     {initials(m.author?.full_name || m.author?.email)}
@@ -402,7 +515,29 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                       </span>
                     </div>
                   )}
-                  <div className="text-sm whitespace-pre-wrap break-words">{m.body}</div>
+                  {m.parent && (
+                    <a href={`#msg-${m.parent.id}`} className="block mb-1 border-l-2 border-primary/50 pl-2 text-xs text-muted-foreground hover:text-foreground">
+                      <span className="font-medium">{m.parent.author?.full_name || m.parent.author?.email || "—"}</span>{" "}
+                      <span className="line-clamp-1">{m.parent.body || (m.parent.attachment_kind === "audio" ? "🎤 Áudio" : "📎 Anexo")}</span>
+                    </a>
+                  )}
+                  <div id={`msg-${m.id}`} className="text-sm whitespace-pre-wrap break-words">{m.body}</div>
+                  {m.attachment_url && m.attachment_kind === "image" && (
+                    <a href={m.attachment_url} target="_blank" rel="noreferrer">
+                      <img src={m.attachment_url} alt={m.attachment_name || "imagem"} className="mt-1 max-h-64 rounded-md border" />
+                    </a>
+                  )}
+                  {m.attachment_url && m.attachment_kind === "audio" && (
+                    <audio controls src={m.attachment_url} className="mt-1 h-8" />
+                  )}
+                  {m.attachment_url && m.attachment_kind === "file" && (
+                    <a href={m.attachment_url} target="_blank" rel="noreferrer"
+                       className="mt-1 inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-xs hover:bg-muted">
+                      <FileIcon className="h-3 w-3" />
+                      <span className="font-medium">{m.attachment_name}</span>
+                      {m.attachment_size ? <span className="text-muted-foreground">({Math.round(m.attachment_size/1024)} KB)</span> : null}
+                    </a>
+                  )}
                   {m.task && (
                     <div className="mt-1 inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-xs">
                       <Paperclip className="h-3 w-3" />
@@ -411,6 +546,13 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={() => setReplyTo(m)}
+                  className="opacity-0 group-hover:opacity-100 self-start text-muted-foreground hover:text-foreground p-1"
+                  title="Responder"
+                >
+                  <Reply className="h-4 w-4" />
+                </button>
               </div>
             );
           })}
@@ -418,6 +560,24 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
       </div>
 
       <div className="border-t p-3 shrink-0 space-y-2">
+        {replyTo && (
+          <div className="flex items-center gap-2 text-xs rounded-md border bg-muted/40 px-2 py-1">
+            <Reply className="h-3 w-3" />
+            <span>Respondendo a <b>{replyTo.author?.full_name || replyTo.author?.email || "—"}</b>:</span>
+            <span className="truncate text-muted-foreground max-w-md">
+              {replyTo.body || (replyTo.attachment_kind === "audio" ? "🎤 Áudio" : "📎 Anexo")}
+            </span>
+            <button className="ml-auto" onClick={() => setReplyTo(null)}><X className="h-3 w-3" /></button>
+          </div>
+        )}
+        {pendingFile && (
+          <div className="flex items-center gap-2 text-xs rounded-md border bg-muted/40 px-2 py-1">
+            {pendingFile.type.startsWith("image/") ? <ImageIcon className="h-3 w-3" /> : <FileIcon className="h-3 w-3" />}
+            <span className="truncate">{pendingFile.name}</span>
+            <span className="text-muted-foreground">({Math.round(pendingFile.size/1024)} KB)</span>
+            <button className="ml-auto" onClick={() => setPendingFile(null)}><X className="h-3 w-3" /></button>
+          </div>
+        )}
         {attachTaskId && (
           <div className="inline-flex items-center gap-2 text-xs rounded-md border bg-muted/40 px-2 py-1">
             <Paperclip className="h-3 w-3" />
@@ -426,10 +586,26 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
           </div>
         )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef} type="file" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) setPendingFile(f); e.currentTarget.value = ""; }}
+          />
+          <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar arquivo" disabled={recording}>
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          {!recording ? (
+            <Button variant="outline" size="icon" onClick={startRecording} title="Gravar áudio">
+              <Mic className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button variant="destructive" size="icon" onClick={stopRecording} title="Parar gravação">
+              <Square className="h-4 w-4" />
+            </Button>
+          )}
           {tasks.length > 0 && (
             <Select value={attachTaskId ?? ""} onValueChange={(v) => setAttachTaskId(v || null)}>
               <SelectTrigger className="w-10 h-10 p-0 justify-center" aria-label="Anexar tarefa">
-                <Paperclip className="h-4 w-4" />
+                <Briefcase className="h-4 w-4" />
               </SelectTrigger>
               <SelectContent>
                 {tasks.map((t) => (
@@ -441,10 +617,13 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
           <Textarea
             value={text} onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder={`Mensagem em #${channel.name}`}
+            placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name}`}
             className="min-h-10 max-h-40 resize-none"
+            disabled={recording}
           />
-          <Button onClick={send} disabled={!text.trim()}><Send className="h-4 w-4" /></Button>
+          <Button onClick={send} disabled={(!text.trim() && !pendingFile) || uploading || recording}>
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

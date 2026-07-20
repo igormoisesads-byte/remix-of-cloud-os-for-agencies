@@ -208,30 +208,48 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachment_kind: string | null
+          attachment_name: string | null
+          attachment_size: number | null
+          attachment_type: string | null
+          attachment_url: string | null
           author_id: string | null
-          body: string
+          body: string | null
           channel_id: string
           created_at: string
           edited_at: string | null
           id: string
+          parent_id: string | null
           task_id: string | null
         }
         Insert: {
+          attachment_kind?: string | null
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           author_id?: string | null
-          body: string
+          body?: string | null
           channel_id: string
           created_at?: string
           edited_at?: string | null
           id?: string
+          parent_id?: string | null
           task_id?: string | null
         }
         Update: {
+          attachment_kind?: string | null
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           author_id?: string | null
-          body?: string
+          body?: string | null
           channel_id?: string
           created_at?: string
           edited_at?: string | null
           id?: string
+          parent_id?: string | null
           task_id?: string | null
         }
         Relationships: [
@@ -240,6 +258,13 @@ export type Database = {
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
