@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/clientes/")({
 });
 
 
-const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", autoria: "Autoria" };
+const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria" };
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   ativo: "default", pausado: "outline", onboarding: "secondary", churn: "destructive",
 };
