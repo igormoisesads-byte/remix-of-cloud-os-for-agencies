@@ -132,17 +132,20 @@ export type Database = {
         Row: {
           address: string | null
           city_uf: string | null
+          contract_end: string | null
           contract_start: string | null
           created_at: string
           created_by: string | null
           cs_user_id: string | null
           id: string
+          launch_commission_pct: number | null
           monthly_fee_amount: number | null
           monthly_fee_day: number | null
           name: string
           niche: string | null
           notes: string | null
           performance_user_id: string | null
+          plan_id: string | null
           platform: string | null
           site: string | null
           status: Database["public"]["Enums"]["client_status"]
@@ -152,17 +155,20 @@ export type Database = {
         Insert: {
           address?: string | null
           city_uf?: string | null
+          contract_end?: string | null
           contract_start?: string | null
           created_at?: string
           created_by?: string | null
           cs_user_id?: string | null
           id?: string
+          launch_commission_pct?: number | null
           monthly_fee_amount?: number | null
           monthly_fee_day?: number | null
           name: string
           niche?: string | null
           notes?: string | null
           performance_user_id?: string | null
+          plan_id?: string | null
           platform?: string | null
           site?: string | null
           status?: Database["public"]["Enums"]["client_status"]
@@ -172,17 +178,20 @@ export type Database = {
         Update: {
           address?: string | null
           city_uf?: string | null
+          contract_end?: string | null
           contract_start?: string | null
           created_at?: string
           created_by?: string | null
           cs_user_id?: string | null
           id?: string
+          launch_commission_pct?: number | null
           monthly_fee_amount?: number | null
           monthly_fee_day?: number | null
           name?: string
           niche?: string | null
           notes?: string | null
           performance_user_id?: string | null
+          plan_id?: string | null
           platform?: string | null
           site?: string | null
           status?: Database["public"]["Enums"]["client_status"]
@@ -204,7 +213,44 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "clients_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      commission_tiers: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          max_revenue: number | null
+          min_revenue: number
+          pct: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          max_revenue?: number | null
+          min_revenue?: number
+          pct: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          max_revenue?: number | null
+          min_revenue?: number
+          pct?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -363,6 +409,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plans: {
+        Row: {
+          active: boolean
+          amount: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -529,7 +611,7 @@ export type Database = {
       channel_member_role: "admin" | "member"
       channel_type: "public" | "private" | "dm" | "client"
       client_status: "ativo" | "pausado" | "churn" | "onboarding"
-      client_type: "local" | "perpetuo" | "autoria"
+      client_type: "local" | "perpetuo" | "autoria" | "lancamento"
       fee_status: "pendente" | "pago" | "atrasado" | "cancelado"
       task_kind: "kickoff" | "rotina" | "demanda" | "auditoria"
       task_priority: "baixa" | "media" | "alta" | "urgente"
@@ -665,7 +747,7 @@ export const Constants = {
       channel_member_role: ["admin", "member"],
       channel_type: ["public", "private", "dm", "client"],
       client_status: ["ativo", "pausado", "churn", "onboarding"],
-      client_type: ["local", "perpetuo", "autoria"],
+      client_type: ["local", "perpetuo", "autoria", "lancamento"],
       fee_status: ["pendente", "pago", "atrasado", "cancelado"],
       task_kind: ["kickoff", "rotina", "demanda", "auditoria"],
       task_priority: ["baixa", "media", "alta", "urgente"],
