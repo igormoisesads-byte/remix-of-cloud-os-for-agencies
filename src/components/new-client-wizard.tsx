@@ -105,9 +105,29 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     if (tpl.length) {
       await supabase.from("onboarding_tasks").insert(tpl.map((title, i) => ({ client_id: client.id, title, position: i })));
     }
+    // Auto-generate mensalidades a partir do contrato (só para tipos recorrentes com valor)
+    if (!isLaunch && form.monthly_fee_amount && Number(form.monthly_fee_amount) > 0) {
+      const amount = Number(form.monthly_fee_amount);
+      const day = Math.min(Math.max(Number(form.monthly_fee_day) || 5, 1), 28);
+      const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+      const end = form.contract_end ? new Date(form.contract_end + "T00:00:00") : new Date(start.getFullYear() + 1, start.getMonth(), start.getDate());
+      const fees: any[] = [];
+      const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+      const endCursor = new Date(end.getFullYear(), end.getMonth(), 1);
+      while (cursor <= endCursor) {
+        const y = cursor.getFullYear();
+        const m = cursor.getMonth();
+        const ref = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+        const due = `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        fees.push({ client_id: client.id, reference_month: ref, due_date: due, amount });
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+      if (fees.length) await supabase.from("monthly_fees").insert(fees);
+    }
+
     await supabase.from("client_activities").insert({
       client_id: client.id, user_id: user.id,
-      action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}`,
+      action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}${form.monthly_fee_amount ? ` · Mensalidades geradas` : ""}`,
     });
 
     setBusy(false);
