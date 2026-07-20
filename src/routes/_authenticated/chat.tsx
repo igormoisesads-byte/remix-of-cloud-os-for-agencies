@@ -82,8 +82,8 @@ function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] bg-background">
       {/* Channel sidebar */}
-      <aside className="w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground flex flex-col">
-        <div className="p-3 border-b border-sidebar-border flex items-center justify-between">
+      <aside className="w-64 shrink-0 border-r bg-card text-foreground flex flex-col">
+        <div className="p-3 border-b border-border flex items-center justify-between">
           <div className="font-semibold text-sm">Mensagens</div>
           <NewChannelDialog onCreated={(id) => { loadChannels(); setActiveId(id); }} />
         </div>
@@ -92,7 +92,7 @@ function ChatPage() {
           <ChannelGroup label="Clientes" icon={Briefcase} items={grouped.client} activeId={activeId} onSelect={setActiveId} />
           <ChannelGroup label="Privados" icon={Lock} items={grouped.private} activeId={activeId} onSelect={setActiveId} />
           <div className="px-3 pt-3 pb-1 flex items-center justify-between">
-            <div className="text-[11px] uppercase tracking-wider text-sidebar-foreground/60">Mensagens Diretas</div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Mensagens Diretas</div>
             <NewDMDialog profiles={profiles.filter((p) => p.id !== user?.id)} onCreated={(id) => { loadChannels(); setActiveId(id); }} />
           </div>
           <div className="pb-3">
@@ -100,7 +100,7 @@ function ChatPage() {
               <DMRow key={c.id} channel={c} activeId={activeId} onSelect={setActiveId} meId={user?.id} profiles={profiles} />
             ))}
             {grouped.dm.length === 0 && (
-              <div className="px-3 py-2 text-xs text-sidebar-foreground/50">Nenhuma DM ainda</div>
+              <div className="px-3 py-2 text-xs text-muted-foreground">Nenhuma DM ainda</div>
             )}
           </div>
         </ScrollArea>
@@ -128,14 +128,14 @@ function ChannelGroup({
   if (items.length === 0) return null;
   return (
     <div className="pt-3">
-      <div className="px-3 pb-1 text-[11px] uppercase tracking-wider text-sidebar-foreground/60">{label}</div>
+      <div className="px-3 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
       {items.map((c) => (
         <button
           key={c.id}
           onClick={() => onSelect(c.id)}
           className={cn(
-            "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-sidebar-accent/60 text-left",
-            activeId === c.id && "bg-sidebar-accent text-sidebar-accent-foreground"
+            "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left",
+            activeId === c.id && "bg-accent text-accent-foreground"
           )}
         >
           <Icon className="h-3.5 w-3.5 opacity-70 shrink-0" />
@@ -167,8 +167,8 @@ function DMRow({
     <button
       onClick={() => onSelect(channel.id)}
       className={cn(
-        "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-sidebar-accent/60 text-left",
-        activeId === channel.id && "bg-sidebar-accent text-sidebar-accent-foreground"
+        "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left",
+        activeId === channel.id && "bg-accent text-accent-foreground"
       )}
     >
       <div className="h-5 w-5 rounded-full bg-primary/30 text-[10px] flex items-center justify-center shrink-0">
@@ -207,7 +207,7 @@ function NewChannelDialog({ onCreated }: { onCreated: (id: string) => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-sidebar-foreground/70 hover:text-sidebar-foreground">
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
           <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
@@ -267,7 +267,7 @@ function NewDMDialog({ profiles, onCreated }: { profiles: Profile[]; onCreated: 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-5 w-5 text-sidebar-foreground/70 hover:text-sidebar-foreground">
+        <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
