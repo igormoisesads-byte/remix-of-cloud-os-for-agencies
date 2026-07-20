@@ -82,7 +82,7 @@ function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] bg-background">
       {/* Channel sidebar */}
-      <aside className="w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground flex flex-col">
+      <aside className="w-64 shrink-0 border-r bg-card text-foreground flex flex-col">
         <div className="p-3 border-b border-sidebar-border flex items-center justify-between">
           <div className="font-semibold text-sm">Mensagens</div>
           <NewChannelDialog onCreated={(id) => { loadChannels(); setActiveId(id); }} />
