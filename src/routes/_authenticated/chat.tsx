@@ -31,6 +31,24 @@ type Channel = {
 type Member = { id: string; user_id: string; role: "admin" | "member"; profile?: Profile };
 type Profile = { id: string; full_name: string; email: string; avatar_url: string | null };
 type Task = { id: string; title: string; status: string };
+type Client = { id: string; name: string };
+
+function handleFromName(name?: string | null) {
+  if (!name) return "user";
+  return name.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "") || "user";
+}
+function clientHandle(name?: string | null) {
+  if (!name) return "cliente";
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "cliente";
+}
+function renderWithMentions(text: string) {
+  const parts = text.split(/(@[\w]+|#[\w-]+)/g);
+  return parts.map((p, i) => {
+    if (/^@[\w]+$/.test(p)) return <span key={i} className="text-primary font-medium bg-primary/10 rounded px-0.5">{p}</span>;
+    if (/^#[\w-]+$/.test(p)) return <span key={i} className="text-blue-600 font-medium bg-blue-500/10 rounded px-0.5">{p}</span>;
+    return <span key={i}>{p}</span>;
+  });
+}
 type Message = {
   id: string; channel_id: string; author_id: string | null; body: string | null;
   task_id: string | null; parent_id: string | null;
@@ -302,7 +320,11 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
   const [text, setText] = useState("");
   const [showMembers, setShowMembers] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [attachTaskId, setAttachTaskId] = useState<string | null>(null);
+  const [mention, setMention] = useState<{ type: "@" | "#"; query: string; start: number } | null>(null);
+  const [mentionIdx, setMentionIdx] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -353,9 +375,13 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
     const { data } = await q;
     setTasks((data ?? []) as Task[]);
   }
+  async function loadClients() {
+    const { data } = await supabase.from("clients").select("id, name").order("name");
+    setClients((data ?? []) as Client[]);
+  }
 
   useEffect(() => {
-    loadMessages(); loadMembers(); loadTasks();
+    loadMessages(); loadMembers(); loadTasks(); loadClients();
     setReplyTo(null); setPendingFile(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id, profiles.length]);
@@ -521,7 +547,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                       <span className="line-clamp-1">{m.parent.body || (m.parent.attachment_kind === "audio" ? "🎤 Áudio" : "📎 Anexo")}</span>
                     </a>
                   )}
-                  <div id={`msg-${m.id}`} className="text-sm whitespace-pre-wrap break-words">{m.body}</div>
+                  <div id={`msg-${m.id}`} className="text-sm whitespace-pre-wrap break-words">{m.body ? renderWithMentions(m.body) : null}</div>
                   {m.attachment_url && m.attachment_kind === "image" && (
                     <a href={m.attachment_url} target="_blank" rel="noreferrer">
                       <img src={m.attachment_url} alt={m.attachment_name || "imagem"} className="mt-1 max-h-64 rounded-md border" />
@@ -585,27 +611,27 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
             <button onClick={() => setAttachTaskId(null)}><X className="h-3 w-3" /></button>
           </div>
         )}
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-1.5">
           <input
             ref={fileInputRef} type="file" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) setPendingFile(f); e.currentTarget.value = ""; }}
           />
-          <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar arquivo" disabled={recording}>
-            <Paperclip className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => fileInputRef.current?.click()} title="Anexar arquivo" disabled={recording}>
+            <Paperclip className="h-3.5 w-3.5" />
           </Button>
           {!recording ? (
-            <Button variant="outline" size="icon" onClick={startRecording} title="Gravar áudio">
-              <Mic className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={startRecording} title="Gravar áudio">
+              <Mic className="h-3.5 w-3.5" />
             </Button>
           ) : (
-            <Button variant="destructive" size="icon" onClick={stopRecording} title="Parar gravação">
-              <Square className="h-4 w-4" />
+            <Button variant="destructive" size="icon" className="h-8 w-8 shrink-0" onClick={stopRecording} title="Parar gravação">
+              <Square className="h-3.5 w-3.5" />
             </Button>
           )}
           {tasks.length > 0 && (
             <Select value={attachTaskId ?? ""} onValueChange={(v) => setAttachTaskId(v || null)}>
-              <SelectTrigger className="w-10 h-10 p-0 justify-center" aria-label="Anexar tarefa">
-                <Briefcase className="h-4 w-4" />
+              <SelectTrigger className="h-8 w-8 p-0 justify-center shrink-0" aria-label="Anexar tarefa">
+                <Briefcase className="h-3.5 w-3.5" />
               </SelectTrigger>
               <SelectContent>
                 {tasks.map((t) => (
@@ -614,15 +640,107 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
               </SelectContent>
             </Select>
           )}
-          <Textarea
-            value={text} onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name}`}
-            className="min-h-10 max-h-40 resize-none"
-            disabled={recording}
-          />
-          <Button onClick={send} disabled={(!text.trim() && !pendingFile) || uploading || recording}>
-            <Send className="h-4 w-4" />
+          <div className="relative flex-1">
+            {mention && (() => {
+              const q = mention.query.toLowerCase();
+              const opts = mention.type === "@"
+                ? profiles.filter((p) => (p.full_name || p.email).toLowerCase().includes(q)).slice(0, 6)
+                    .map((p) => ({ id: p.id, label: p.full_name || p.email, handle: handleFromName(p.full_name || p.email) }))
+                : clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
+                    .map((c) => ({ id: c.id, label: c.name, handle: clientHandle(c.name) }));
+              if (opts.length === 0) return null;
+              const pick = (o: { handle: string }) => {
+                const before = text.slice(0, mention.start);
+                const after = text.slice(mention.start + 1 + mention.query.length);
+                const insert = `${mention.type}${o.handle} `;
+                const next = before + insert + after;
+                setText(next);
+                setMention(null);
+                setMentionIdx(0);
+                setTimeout(() => {
+                  const pos = (before + insert).length;
+                  textareaRef.current?.focus();
+                  textareaRef.current?.setSelectionRange(pos, pos);
+                }, 0);
+              };
+              return (
+                <div className="absolute bottom-full left-0 mb-1 w-64 rounded-md border bg-popover shadow-lg z-50 overflow-hidden">
+                  <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
+                    {mention.type === "@" ? "Pessoas" : "Clientes"}
+                  </div>
+                  {opts.map((o, i) => (
+                    <button
+                      key={o.id}
+                      onMouseDown={(e) => { e.preventDefault(); pick(o); }}
+                      onMouseEnter={() => setMentionIdx(i)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-1.5 text-sm text-left",
+                        i === mentionIdx ? "bg-accent" : "hover:bg-accent/60"
+                      )}
+                    >
+                      <span className={mention.type === "@" ? "text-primary" : "text-blue-600"}>{mention.type}{o.handle}</span>
+                      <span className="text-xs text-muted-foreground truncate">{o.label}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+            <Textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => {
+                const v = e.target.value;
+                setText(v);
+                const pos = e.target.selectionStart ?? v.length;
+                const upto = v.slice(0, pos);
+                const m = upto.match(/(?:^|\s)([@#])([\w-]*)$/);
+                if (m) {
+                  setMention({ type: m[1] as "@" | "#", query: m[2], start: pos - m[2].length - 1 });
+                  setMentionIdx(0);
+                } else {
+                  setMention(null);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (mention) {
+                  const q = mention.query.toLowerCase();
+                  const opts = mention.type === "@"
+                    ? profiles.filter((p) => (p.full_name || p.email).toLowerCase().includes(q)).slice(0, 6)
+                        .map((p) => ({ handle: handleFromName(p.full_name || p.email) }))
+                    : clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
+                        .map((c) => ({ handle: clientHandle(c.name) }));
+                  if (opts.length) {
+                    if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx((i) => (i + 1) % opts.length); return; }
+                    if (e.key === "ArrowUp")   { e.preventDefault(); setMentionIdx((i) => (i - 1 + opts.length) % opts.length); return; }
+                    if (e.key === "Escape")    { e.preventDefault(); setMention(null); return; }
+                    if (e.key === "Enter" || e.key === "Tab") {
+                      e.preventDefault();
+                      const o = opts[mentionIdx];
+                      const before = text.slice(0, mention.start);
+                      const after = text.slice(mention.start + 1 + mention.query.length);
+                      const insert = `${mention.type}${o.handle} `;
+                      const next = before + insert + after;
+                      setText(next);
+                      setMention(null);
+                      setMentionIdx(0);
+                      setTimeout(() => {
+                        const pos = (before + insert).length;
+                        textareaRef.current?.setSelectionRange(pos, pos);
+                      }, 0);
+                      return;
+                    }
+                  }
+                }
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+              }}
+              placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name} — @ pessoas, # clientes`}
+              className="min-h-9 max-h-32 resize-none text-sm py-1.5 px-2.5"
+              rows={1}
+              disabled={recording}
+            />
+          </div>
+          <Button size="icon" className="h-8 w-8 shrink-0" onClick={send} disabled={(!text.trim() && !pendingFile) || uploading || recording}>
+            <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
