@@ -1,18 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { inviteTeamMember } from "@/lib/team.functions";
 
 const ROLES = ["admin", "gestor", "operacional", "financeiro"] as const;
 
 export const Route = createFileRoute("/_authenticated/equipe")({
   component: EquipePage,
 });
+
 
 function EquipePage() {
   const qc = useQueryClient();
@@ -48,12 +58,16 @@ function EquipePage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
-        <p className="text-muted-foreground mt-1">Membros e papéis. {isAdmin ? "Você é admin." : "Só admin pode editar."}</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Equipe</h1>
+          <p className="text-muted-foreground mt-1">Membros e papéis. {isAdmin ? "Você é admin." : "Só admin pode editar."}</p>
+        </div>
+        {isAdmin && <InviteDialog />}
       </div>
       <Card>
         <CardHeader><CardTitle className="text-base">Membros ({data?.length ?? 0})</CardTitle></CardHeader>
+
         <CardContent>
           <Table>
             <TableHeader>
