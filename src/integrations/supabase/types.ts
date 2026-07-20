@@ -475,6 +475,9 @@ export type Database = {
       }
       task_comments: {
         Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
           author_id: string | null
           body: string
           created_at: string
@@ -482,6 +485,9 @@ export type Database = {
           task_id: string
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           body: string
           created_at?: string
@@ -489,6 +495,9 @@ export type Database = {
           task_id: string
         }
         Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           author_id?: string | null
           body?: string
           created_at?: string
