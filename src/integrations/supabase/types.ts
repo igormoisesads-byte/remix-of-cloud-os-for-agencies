@@ -245,6 +245,97 @@ export type Database = {
         }
         Relationships: []
       }
+      task_comments: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assignee_id: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          done_at: string | null
+          due_date: string | null
+          id: string
+          kind: Database["public"]["Enums"]["task_kind"]
+          position: number
+          priority: Database["public"]["Enums"]["task_priority"]
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["task_kind"]
+          position?: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["task_kind"]
+          position?: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -284,6 +375,9 @@ export type Database = {
       client_status: "ativo" | "pausado" | "churn" | "onboarding"
       client_type: "local" | "perpetuo" | "autoria"
       fee_status: "pendente" | "pago" | "atrasado" | "cancelado"
+      task_kind: "kickoff" | "rotina" | "demanda" | "auditoria"
+      task_priority: "baixa" | "media" | "alta" | "urgente"
+      task_status: "todo" | "doing" | "review" | "done"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -415,6 +509,9 @@ export const Constants = {
       client_status: ["ativo", "pausado", "churn", "onboarding"],
       client_type: ["local", "perpetuo", "autoria"],
       fee_status: ["pendente", "pago", "atrasado", "cancelado"],
+      task_kind: ["kickoff", "rotina", "demanda", "auditoria"],
+      task_priority: ["baixa", "media", "alta", "urgente"],
+      task_status: ["todo", "doing", "review", "done"],
     },
   },
 } as const
