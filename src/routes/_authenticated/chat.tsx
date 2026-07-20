@@ -547,7 +547,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                       <span className="line-clamp-1">{m.parent.body || (m.parent.attachment_kind === "audio" ? "🎤 Áudio" : "📎 Anexo")}</span>
                     </a>
                   )}
-                  <div id={`msg-${m.id}`} className="text-sm whitespace-pre-wrap break-words">{m.body}</div>
+                  <div id={`msg-${m.id}`} className="text-sm whitespace-pre-wrap break-words">{m.body ? renderWithMentions(m.body) : null}</div>
                   {m.attachment_url && m.attachment_kind === "image" && (
                     <a href={m.attachment_url} target="_blank" rel="noreferrer">
                       <img src={m.attachment_url} alt={m.attachment_name || "imagem"} className="mt-1 max-h-64 rounded-md border" />
