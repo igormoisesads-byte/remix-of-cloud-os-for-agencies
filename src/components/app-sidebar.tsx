@@ -53,7 +53,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
+        <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
           <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center shrink-0">
             <Cloud className="h-4 w-4 text-primary-foreground" />
           </div>

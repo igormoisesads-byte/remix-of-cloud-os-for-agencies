@@ -49,9 +49,6 @@ function AuthPage() {
             <TabsContent value="signup"><SignUpForm /></TabsContent>
           </Tabs>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          O primeiro cadastro vira <span className="text-primary font-medium">admin</span> automaticamente.
-        </p>
       </div>
     </div>
   );
