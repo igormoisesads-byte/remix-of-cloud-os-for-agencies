@@ -37,7 +37,7 @@ function OperacoesPage() {
   const tasks = useQuery({
     queryKey: ["tasks", filterClient, filterAssignee],
     queryFn: async () => {
-      let q = supabase.from("tasks").select("*, clients(name), assignee:profiles!tasks_assignee_id_fkey(full_name)").order("position");
+      let q = supabase.from("tasks").select("*, clients(name)").order("position");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       if (filterAssignee !== "all") q = q.eq("assignee_id", filterAssignee);
       const { data, error } = await q;
