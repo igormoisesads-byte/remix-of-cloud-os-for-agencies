@@ -68,7 +68,7 @@ function OperacoesPage() {
   }, [tasks.data, team.data]);
 
   async function moveTo(taskId: string, status: string) {
-    const { error } = await supabase.from("tasks").update({ status }).eq("id", taskId);
+    const { error } = await supabase.from("tasks").update({ status: status as any }).eq("id", taskId);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["tasks"] });
     qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
