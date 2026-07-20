@@ -85,18 +85,23 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="px-2 py-2 space-y-2 group-data-[collapsible=icon]:hidden">
-          <div className="text-xs">
-            <div className="font-medium truncate">{profile?.full_name || profile?.email || "…"}</div>
-            <div className="text-muted-foreground truncate">
+        <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
+          <div className="h-8 w-8 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center text-xs font-semibold shrink-0">
+            {(profile?.full_name || profile?.email || "?").slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-medium truncate">{profile?.full_name || profile?.email || "…"}</div>
+            <div className="text-[10px] text-muted-foreground truncate">
               {roles.length > 0 ? roles.join(" · ") : "sem papel"}
             </div>
           </div>
           <Button
-            variant="ghost" size="sm" className="w-full justify-start gap-2"
+            variant="ghost" size="icon"
+            className="h-8 w-8 shrink-0 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            title="Sair"
             onClick={async () => { await signOut(); nav({ to: "/auth", replace: true }); }}
           >
-            <LogOut className="h-4 w-4" /> Sair
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </SidebarFooter>
