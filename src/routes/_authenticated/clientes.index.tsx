@@ -42,7 +42,7 @@ function ClientesList() {
           <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
           <p className="text-muted-foreground mt-1">Carteira, contratos e status.</p>
         </div>
-        <NewClientDialog />
+        <NewClientWizard onCreated={() => { qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] }); }} />
       </div>
 
       <Card>
