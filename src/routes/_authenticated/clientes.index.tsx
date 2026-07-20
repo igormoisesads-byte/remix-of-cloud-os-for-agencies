@@ -20,6 +20,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "dest
 };
 
 function ClientesList() {
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["clients"],
