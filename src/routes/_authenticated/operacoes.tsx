@@ -56,10 +56,11 @@ function OperacoesPage() {
   });
 
   const grouped = useMemo(() => {
+    const nameMap = new Map<string, string>((team.data ?? []).map((p: any) => [p.id, p.full_name]));
     const g: Record<string, any[]> = { todo: [], doing: [], review: [], done: [] };
-    (tasks.data ?? []).forEach((t: any) => g[t.status]?.push(t));
+    (tasks.data ?? []).forEach((t: any) => g[t.status]?.push({ ...t, assignee: t.assignee_id ? { full_name: nameMap.get(t.assignee_id) ?? "—" } : null }));
     return g;
-  }, [tasks.data]);
+  }, [tasks.data, team.data]);
 
   async function move(task: any, dir: -1 | 1) {
     const idx = COLUMNS.findIndex(c => c.key === task.status);
