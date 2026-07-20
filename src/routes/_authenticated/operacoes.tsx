@@ -99,9 +99,9 @@ function OperacoesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory -mx-2 px-2">
         {COLUMNS.map(col => (
-          <div key={col.key} className="rounded-lg bg-muted/40 border p-3 flex flex-col gap-3 min-h-[400px]">
+          <div key={col.key} className="snap-start shrink-0 w-[85vw] sm:w-[340px] rounded-lg bg-muted/40 border p-3 flex flex-col gap-3 min-h-[400px]">
             <div className="flex items-center justify-between px-1">
               <div className="text-sm font-semibold">{col.label}</div>
               <Badge variant="secondary">{grouped[col.key].length}</Badge>
