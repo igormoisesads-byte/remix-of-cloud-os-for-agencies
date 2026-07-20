@@ -375,9 +375,13 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
     const { data } = await q;
     setTasks((data ?? []) as Task[]);
   }
+  async function loadClients() {
+    const { data } = await supabase.from("clients").select("id, name").order("name");
+    setClients((data ?? []) as Client[]);
+  }
 
   useEffect(() => {
-    loadMessages(); loadMembers(); loadTasks();
+    loadMessages(); loadMembers(); loadTasks(); loadClients();
     setReplyTo(null); setPendingFile(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id, profiles.length]);
