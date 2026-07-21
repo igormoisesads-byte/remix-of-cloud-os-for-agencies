@@ -90,12 +90,68 @@ export type Database = {
           },
         ]
       }
+      client_access: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          login_url: string | null
+          notes: string | null
+          password: string | null
+          platform: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          login_url?: string | null
+          notes?: string | null
+          password?: string | null
+          platform: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          login_url?: string | null
+          notes?: string | null
+          password?: string | null
+          platform?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_access_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_activities: {
         Row: {
           action: string
           client_id: string | null
           created_at: string
           description: string | null
+          entity_id: string | null
+          entity_type: string | null
           id: string
           metadata: Json | null
           user_id: string | null
@@ -105,6 +161,8 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           metadata?: Json | null
           user_id?: string | null
@@ -114,6 +172,8 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           metadata?: Json | null
           user_id?: string | null
@@ -128,9 +188,160 @@ export type Database = {
           },
         ]
       }
+      client_onboarding_stages: {
+        Row: {
+          client_id: string
+          id: string
+          name: string
+          position: number
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          name: string
+          position?: number
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          name?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_onboarding_stages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_reports: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          notes: string | null
+          period_end: string | null
+          period_start: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_routines: {
+        Row: {
+          active: boolean
+          assignee_id: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          day_of_month: number | null
+          day_of_week: number | null
+          description: string | null
+          frequency: string
+          id: string
+          last_generated: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          assignee_id?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          frequency?: string
+          id?: string
+          last_generated?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          assignee_id?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          frequency?: string
+          id?: string
+          last_generated?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_routines_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_routines_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_routines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
+          brand_anniversary: string | null
           city_uf: string | null
           contract_end: string | null
           contract_start: string | null
@@ -139,11 +350,14 @@ export type Database = {
           cs_user_id: string | null
           id: string
           launch_commission_pct: number | null
+          logo_url: string | null
           monthly_fee_amount: number | null
           monthly_fee_day: number | null
           name: string
           niche: string | null
+          niche_id: string | null
           notes: string | null
+          onboarding_template_id: string | null
           performance_user_id: string | null
           plan_id: string | null
           platform: string | null
@@ -154,6 +368,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          brand_anniversary?: string | null
           city_uf?: string | null
           contract_end?: string | null
           contract_start?: string | null
@@ -162,11 +377,14 @@ export type Database = {
           cs_user_id?: string | null
           id?: string
           launch_commission_pct?: number | null
+          logo_url?: string | null
           monthly_fee_amount?: number | null
           monthly_fee_day?: number | null
           name: string
           niche?: string | null
+          niche_id?: string | null
           notes?: string | null
+          onboarding_template_id?: string | null
           performance_user_id?: string | null
           plan_id?: string | null
           platform?: string | null
@@ -177,6 +395,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          brand_anniversary?: string | null
           city_uf?: string | null
           contract_end?: string | null
           contract_start?: string | null
@@ -185,11 +404,14 @@ export type Database = {
           cs_user_id?: string | null
           id?: string
           launch_commission_pct?: number | null
+          logo_url?: string | null
           monthly_fee_amount?: number | null
           monthly_fee_day?: number | null
           name?: string
           niche?: string | null
+          niche_id?: string | null
           notes?: string | null
+          onboarding_template_id?: string | null
           performance_user_id?: string | null
           plan_id?: string | null
           platform?: string | null
@@ -204,6 +426,20 @@ export type Database = {
             columns: ["cs_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_niche_id_fkey"
+            columns: ["niche_id"]
+            isOneToOne: false
+            referencedRelation: "niches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_onboarding_template_id_fkey"
+            columns: ["onboarding_template_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_templates"
             referencedColumns: ["id"]
           },
           {
@@ -251,6 +487,105 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      health_scores: {
+        Row: {
+          client_id: string
+          id: string
+          notes: string | null
+          recorded_at: string
+          recorded_by: string | null
+          score: number
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string | null
+          score: number
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          recorded_by?: string | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_scores_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_scores_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          attendees: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          drive_url: string | null
+          held_at: string
+          id: string
+          notes: string | null
+          recording_url: string | null
+          title: string
+          transcript: string | null
+        }
+        Insert: {
+          attendees?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          drive_url?: string | null
+          held_at?: string
+          id?: string
+          notes?: string | null
+          recording_url?: string | null
+          title: string
+          transcript?: string | null
+        }
+        Update: {
+          attendees?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          drive_url?: string | null
+          held_at?: string
+          id?: string
+          notes?: string | null
+          recording_url?: string | null
+          title?: string
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -372,40 +707,350 @@ export type Database = {
           },
         ]
       }
-      onboarding_tasks: {
+      moodboards: {
         Row: {
           client_id: string
           created_at: string
-          done: boolean
-          done_at: string | null
+          created_by: string | null
           id: string
-          position: number
+          notes: string | null
           title: string
+          url: string | null
         }
         Insert: {
           client_id: string
           created_at?: string
-          done?: boolean
-          done_at?: string | null
+          created_by?: string | null
           id?: string
-          position?: number
+          notes?: string | null
           title: string
+          url?: string | null
         }
         Update: {
           client_id?: string
           created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moodboards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moodboards_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      niches: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      nps_responses: {
+        Row: {
+          client_id: string
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          period: string | null
+          respondent: string | null
+          score: number
+        }
+        Insert: {
+          client_id: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          period?: string | null
+          respondent?: string | null
+          score: number
+        }
+        Update: {
+          client_id?: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          period?: string | null
+          respondent?: string | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nps_responses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_tasks: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          assignee_id: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          done: boolean
+          done_at: string | null
+          id: string
+          position: number
+          stage_id: string | null
+          title: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assignee_id?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
           done?: boolean
           done_at?: string | null
           id?: string
           position?: number
+          stage_id?: string | null
+          title: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assignee_id?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          position?: number
+          stage_id?: string | null
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onboarding_tasks_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "onboarding_tasks_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "client_onboarding_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_template_stages: {
+        Row: {
+          id: string
+          name: string
+          position: number
+          template_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          position?: number
+          template_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          position?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_template_stages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_template_tasks: {
+        Row: {
+          description: string | null
+          id: string
+          position: number
+          stage_id: string
+          title: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          position?: number
+          stage_id: string
+          title: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          position?: number
+          stage_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_template_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_template_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          niche_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          niche_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          niche_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_templates_niche_id_fkey"
+            columns: ["niche_id"]
+            isOneToOne: false
+            referencedRelation: "niches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdas: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdas_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdas_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
