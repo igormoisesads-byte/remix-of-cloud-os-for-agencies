@@ -26,6 +26,7 @@ import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authen
 import { Route as AuthenticatedAjustesPerfilRouteImport } from './routes/_authenticated/ajustes.perfil'
 import { Route as AuthenticatedAjustesOnboardingRouteImport } from './routes/_authenticated/ajustes.onboarding'
 import { Route as AuthenticatedAjustesIntegracoesRouteImport } from './routes/_authenticated/ajustes.integracoes'
+import { Route as AuthenticatedAjustesEquipeRouteImport } from './routes/_authenticated/ajustes.equipe'
 import { Route as AuthenticatedAjustesComissaoRouteImport } from './routes/_authenticated/ajustes.comissao'
 import { Route as ApiPublicHooksSyncAdsRouteImport } from './routes/api/public/hooks/sync-ads'
 
@@ -119,6 +120,12 @@ const AuthenticatedAjustesIntegracoesRoute =
     path: '/integracoes',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
+const AuthenticatedAjustesEquipeRoute =
+  AuthenticatedAjustesEquipeRouteImport.update({
+    id: '/equipe',
+    path: '/equipe',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
 const AuthenticatedAjustesComissaoRoute =
   AuthenticatedAjustesComissaoRouteImport.update({
     id: '/comissao',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/hoje': typeof AuthenticatedHojeRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
+  '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
   '/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
@@ -160,6 +168,7 @@ export interface FileRoutesByTo {
   '/hoje': typeof AuthenticatedHojeRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
+  '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
   '/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
@@ -182,6 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/hoje': typeof AuthenticatedHojeRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
+  '/_authenticated/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/_authenticated/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
   '/_authenticated/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/_authenticated/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/hoje'
     | '/operacoes'
     | '/ajustes/comissao'
+    | '/ajustes/equipe'
     | '/ajustes/integracoes'
     | '/ajustes/onboarding'
     | '/ajustes/perfil'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/hoje'
     | '/operacoes'
     | '/ajustes/comissao'
+    | '/ajustes/equipe'
     | '/ajustes/integracoes'
     | '/ajustes/onboarding'
     | '/ajustes/perfil'
@@ -243,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hoje'
     | '/_authenticated/operacoes'
     | '/_authenticated/ajustes/comissao'
+    | '/_authenticated/ajustes/equipe'
     | '/_authenticated/ajustes/integracoes'
     | '/_authenticated/ajustes/onboarding'
     | '/_authenticated/ajustes/perfil'
@@ -381,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAjustesIntegracoesRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
+    '/_authenticated/ajustes/equipe': {
+      id: '/_authenticated/ajustes/equipe'
+      path: '/equipe'
+      fullPath: '/ajustes/equipe'
+      preLoaderRoute: typeof AuthenticatedAjustesEquipeRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
     '/_authenticated/ajustes/comissao': {
       id: '/_authenticated/ajustes/comissao'
       path: '/comissao'
@@ -400,6 +420,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAjustesRouteChildren {
   AuthenticatedAjustesComissaoRoute: typeof AuthenticatedAjustesComissaoRoute
+  AuthenticatedAjustesEquipeRoute: typeof AuthenticatedAjustesEquipeRoute
   AuthenticatedAjustesIntegracoesRoute: typeof AuthenticatedAjustesIntegracoesRoute
   AuthenticatedAjustesOnboardingRoute: typeof AuthenticatedAjustesOnboardingRoute
   AuthenticatedAjustesPerfilRoute: typeof AuthenticatedAjustesPerfilRoute
@@ -409,6 +430,7 @@ interface AuthenticatedAjustesRouteChildren {
 
 const AuthenticatedAjustesRouteChildren: AuthenticatedAjustesRouteChildren = {
   AuthenticatedAjustesComissaoRoute: AuthenticatedAjustesComissaoRoute,
+  AuthenticatedAjustesEquipeRoute: AuthenticatedAjustesEquipeRoute,
   AuthenticatedAjustesIntegracoesRoute: AuthenticatedAjustesIntegracoesRoute,
   AuthenticatedAjustesOnboardingRoute: AuthenticatedAjustesOnboardingRoute,
   AuthenticatedAjustesPerfilRoute: AuthenticatedAjustesPerfilRoute,
