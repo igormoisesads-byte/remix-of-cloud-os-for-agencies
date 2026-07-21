@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -24,7 +24,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncAdAccount } from "@/lib/ads.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
+const clientQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["client", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*, niches(name), perf:profiles!clients_performance_user_id_fkey(full_name), cs:profiles!clients_cs_user_id_fkey(full_name)")
+        .eq("id", id).single();
+      if (error) throw error;
+      return data as any;
+    },
+    staleTime: 60_000,
+  });
+
 export const Route = createFileRoute("/_authenticated/clientes/$id")({
+  loader: ({ context, params }) => context.queryClient.ensureQueryData(clientQueryOptions(params.id)),
   component: ClienteDetail,
 });
 
@@ -63,18 +78,8 @@ function ClienteDetail() {
   const { id } = Route.useParams();
   const [section, setSection] = useState<Section>("visao");
 
-  const client = useQuery({
-    queryKey: ["client", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*, niches(name), perf:profiles!clients_performance_user_id_fkey(full_name), cs:profiles!clients_cs_user_id_fkey(full_name)")
-        .eq("id", id).single();
-      if (error) throw error; return data as any;
-    },
-  });
+  const client = useQuery(clientQueryOptions(id));
 
-  if (client.isLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
   if (!client.data) return <div className="p-8">Cliente não encontrado</div>;
   const c = client.data;
 
