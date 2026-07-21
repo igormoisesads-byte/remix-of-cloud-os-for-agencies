@@ -82,6 +82,7 @@ function OnboardingConfigPage() {
               active={selectedNiche === n.id}
               onClick={() => pickNiche(n.id)}
               title={n.name}
+              subtitle={n.sigla ? `Sigla: ${n.sigla}` : undefined}
               badge={templateCountByNiche[n.id] ?? 0}
               onDelete={async () => {
                 if (!confirm("Excluir este nicho e todos os templates?")) return;
