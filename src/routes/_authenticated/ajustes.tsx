@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { User, Package, Percent, ListChecks, Plug } from "lucide-react";
+import { User, Package, Percent, ListChecks, Plug, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated/ajustes")({
@@ -8,6 +8,7 @@ export const Route = createFileRoute("/_authenticated/ajustes")({
 
 const nav = [
   { to: "/ajustes/perfil", label: "Meu perfil", icon: User, admin: false },
+  { to: "/ajustes/equipe", label: "Equipe & Cargos (RH)", icon: Users, admin: true },
   { to: "/ajustes/planos", label: "Planos & Produtos", icon: Package, admin: true },
   { to: "/ajustes/comissao", label: "Tabela de comissão", icon: Percent, admin: true },
   { to: "/ajustes/onboarding", label: "Onboarding por nicho", icon: ListChecks, admin: true },
