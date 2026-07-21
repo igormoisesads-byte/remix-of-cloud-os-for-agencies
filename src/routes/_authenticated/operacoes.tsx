@@ -291,6 +291,28 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     queryKey: ["task-comments", taskId],
     queryFn: async () => (await supabase.from("task_comments").select("*, profiles(full_name)").eq("task_id", taskId).order("created_at")).data ?? [],
   });
+  const checklist = useQuery({
+    queryKey: ["task-checklist", taskId],
+    queryFn: async () => (await supabase.from("task_checklist_items").select("*").eq("task_id", taskId).order("position")).data ?? [],
+  });
+  const [newChkTitle, setNewChkTitle] = useState("");
+  async function addChk() {
+    const title = newChkTitle.trim();
+    if (!title) return;
+    const pos = (checklist.data ?? []).length;
+    const { error } = await supabase.from("task_checklist_items").insert({ task_id: taskId, title, position: pos });
+    if (error) return toast.error(error.message);
+    setNewChkTitle("");
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+  }
+  async function toggleChk(id: string, done: boolean) {
+    await supabase.from("task_checklist_items").update({ done, done_at: done ? new Date().toISOString() : null }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+  }
+  async function delChk(id: string) {
+    await supabase.from("task_checklist_items").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+  }
 
   const t = task.data;
   async function patch(fields: any) {
