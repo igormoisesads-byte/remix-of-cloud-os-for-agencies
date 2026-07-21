@@ -512,6 +512,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               <ReviewRow k="Plano" v={plans.find((p) => p.id === form.plan_id)?.name || "—"} />
               <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"} (${form.tempo_contrato_meses || "—"} meses)`} />
               <ReviewRow k="Investimento mensal" v={form.investimento_mensal ? brl(Number(form.investimento_mensal)) : "—"} />
+              <ReviewRow k="Otimização" v={form.optimization_frequency ? form.optimization_frequency.toUpperCase() : "—"} />
               {!isLaunch
                 ? <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
                 : <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />}
