@@ -31,7 +31,7 @@ const clientQueryOptions = (id: string) =>
       const { data, error } = await supabase
         .from("clients")
         .select("*, niches(name), perf:profiles!clients_performance_user_id_fkey(full_name), cs:profiles!clients_cs_user_id_fkey(full_name)")
-        .eq("id", id).single();
+        .eq("id", id).maybeSingle();
       if (error) throw error;
       return data as any;
     },
@@ -39,7 +39,16 @@ const clientQueryOptions = (id: string) =>
   });
 
 export const Route = createFileRoute("/_authenticated/clientes/$id")({
-  loader: ({ context, params }) => context.queryClient.ensureQueryData(clientQueryOptions(params.id)),
+  head: () => ({
+    meta: [
+      { title: "Cliente — CloudOS" },
+      { name: "description", content: "Detalhes, performance, onboarding e auditoria do cliente no CloudOS." },
+      { property: "og:title", content: "Cliente — CloudOS" },
+      { property: "og:description", content: "Acompanhe visão geral, tarefas, relatórios e histórico do cliente." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ClienteDetail,
 });
 
@@ -79,6 +88,30 @@ function ClienteDetail() {
   const [section, setSection] = useState<Section>("visao");
 
   const client = useQuery(clientQueryOptions(id));
+
+  if (client.isLoading) {
+    return (
+      <div className="p-8 space-y-4">
+        <div className="h-8 w-64 rounded-md bg-muted animate-pulse" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="h-40 rounded-lg bg-muted animate-pulse" />
+          <div className="h-40 rounded-lg bg-muted animate-pulse" />
+          <div className="h-32 rounded-lg bg-muted animate-pulse" />
+          <div className="h-32 rounded-lg bg-muted animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (client.error) {
+    return (
+      <div className="p-8 max-w-xl space-y-3">
+        <h1 className="text-xl font-semibold">Não foi possível abrir o cliente</h1>
+        <p className="text-sm text-muted-foreground">A navegação abriu, mas os dados do cliente não carregaram. Tente novamente.</p>
+        <Button onClick={() => client.refetch()}>Tentar novamente</Button>
+      </div>
+    );
+  }
 
   if (!client.data) return <div className="p-8">Cliente não encontrado</div>;
   const c = client.data;
