@@ -131,6 +131,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       monthly_fee_amount: form.monthly_fee_amount ? Number(form.monthly_fee_amount) : null,
       monthly_fee_day: form.monthly_fee_day ? Number(form.monthly_fee_day) : null,
       launch_commission_pct: isLaunch && form.launch_commission_pct ? Number(form.launch_commission_pct) : null,
+      optimization_frequency: form.optimization_frequency || null,
       notes: form.notes || null,
       created_by: user.id,
       status: "onboarding",
