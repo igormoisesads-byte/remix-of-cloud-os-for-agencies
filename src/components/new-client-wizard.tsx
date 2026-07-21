@@ -115,6 +115,13 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       city_uf: form.city_uf || null,
       address: form.address || null,
       brand_anniversary: form.brand_anniversary || null,
+      instagram: form.instagram || null,
+      responsavel_nome: form.responsavel_nome || null,
+      responsavel_telefone: form.responsavel_telefone || null,
+      responsavel_email: form.responsavel_email || null,
+      primeiro_vencimento: form.primeiro_vencimento || null,
+      tempo_contrato_meses: form.tempo_contrato_meses ? Number(form.tempo_contrato_meses) : null,
+      investimento_mensal: form.investimento_mensal ? Number(form.investimento_mensal) : null,
       performance_user_id: form.performance_user_id || null,
       cs_user_id: form.cs_user_id || null,
       plan_id: form.plan_id || null,
@@ -129,11 +136,12 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     }).select().single();
     if (error) { setBusy(false); return toast.error(error.message); }
 
-    // Copy onboarding template stages + tasks
+    // Copy onboarding template stages + tasks (para a página do cliente)
+    // e criar 1 CARD por etapa no Kanban de Operações com as tarefas como CHECKLIST.
     if (form.onboarding_template_id) {
       const [{ data: tStages }, { data: tTasks }] = await Promise.all([
-        supabase.from("onboarding_template_stages").select("id,name,position").eq("template_id", form.onboarding_template_id).order("position"),
-        supabase.from("onboarding_template_tasks").select("id,stage_id,title,description,position").order("position"),
+        supabase.from("onboarding_template_stages").select("id,name,position,prazo_dias").eq("template_id", form.onboarding_template_id).order("position"),
+        supabase.from("onboarding_template_tasks").select("id,stage_id,title,description,position,prazo_dias").order("position"),
       ]);
       const stageMap = new Map<string, string>();
       if (tStages && tStages.length) {
@@ -156,6 +164,31 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
           position: tt.position,
           created_by: user.id,
         })));
+      }
+
+      // Kanban: 1 card por etapa, checklist com as tarefas.
+      const baseDate = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+      for (let i = 0; i < (tStages ?? []).length; i++) {
+        const stg: any = (tStages as any[])[i];
+        const due = stg.prazo_dias
+          ? new Date(baseDate.getTime() + Number(stg.prazo_dias) * 86400000).toISOString().slice(0, 10)
+          : null;
+        const { data: tk, error: terr } = await supabase.from("tasks").insert({
+          title: `Onboarding · ${stg.name}`,
+          description: `Etapa do onboarding do cliente ${form.name}.`,
+          status: "todo",
+          priority: "media",
+          kind: "kickoff",
+          client_id: client.id,
+          assignee_id: form.performance_user_id || form.cs_user_id || user.id,
+          created_by: user.id,
+          due_date: due,
+          position: i,
+        }).select("id").single();
+        if (terr || !tk) continue;
+        const items = (tTasks ?? []).filter((tt: any) => tt.stage_id === stg.id)
+          .map((tt: any, idx: number) => ({ task_id: tk.id, title: tt.title, position: idx }));
+        if (items.length) await supabase.from("task_checklist_items").insert(items);
       }
     }
 
