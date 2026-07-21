@@ -21,6 +21,7 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
+import { Route as ApiPublicHooksSyncAdsRouteImport } from './routes/api/public/hooks/sync-ads'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -82,6 +83,11 @@ const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedClientesRoute,
 } as any)
+const ApiPublicHooksSyncAdsRoute = ApiPublicHooksSyncAdsRouteImport.update({
+  id: '/api/public/hooks/sync-ads',
+  path: '/api/public/hooks/sync-ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/operacoes'
     | '/clientes/$id'
     | '/clientes/'
+    | '/api/public/hooks/sync-ads'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/operacoes'
     | '/clientes/$id'
     | '/clientes'
+    | '/api/public/hooks/sync-ads'
   id:
     | '__root__'
     | '/'
@@ -163,12 +174,14 @@ export interface FileRouteTypes {
     | '/_authenticated/operacoes'
     | '/_authenticated/clientes/$id'
     | '/_authenticated/clientes/'
+    | '/api/public/hooks/sync-ads'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesIdRouteImport
       parentRoute: typeof AuthenticatedClientesRoute
     }
+    '/api/public/hooks/sync-ads': {
+      id: '/api/public/hooks/sync-ads'
+      path: '/api/public/hooks/sync-ads'
+      fullPath: '/api/public/hooks/sync-ads'
+      preLoaderRoute: typeof ApiPublicHooksSyncAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
