@@ -28,6 +28,7 @@ import { Route as AuthenticatedAjustesOnboardingRouteImport } from './routes/_au
 import { Route as AuthenticatedAjustesIntegracoesRouteImport } from './routes/_authenticated/ajustes.integracoes'
 import { Route as AuthenticatedAjustesEquipeRouteImport } from './routes/_authenticated/ajustes.equipe'
 import { Route as AuthenticatedAjustesComissaoRouteImport } from './routes/_authenticated/ajustes.comissao'
+import { Route as AuthenticatedAjustesCargosRouteImport } from './routes/_authenticated/ajustes.cargos'
 import { Route as ApiPublicHooksSyncAdsRouteImport } from './routes/api/public/hooks/sync-ads'
 
 const AuthRoute = AuthRouteImport.update({
@@ -132,6 +133,12 @@ const AuthenticatedAjustesComissaoRoute =
     path: '/comissao',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
+const AuthenticatedAjustesCargosRoute =
+  AuthenticatedAjustesCargosRouteImport.update({
+    id: '/cargos',
+    path: '/cargos',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
 const ApiPublicHooksSyncAdsRoute = ApiPublicHooksSyncAdsRouteImport.update({
   id: '/api/public/hooks/sync-ads',
   path: '/api/public/hooks/sync-ads',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
+  '/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
+  '/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
@@ -190,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/hoje': typeof AuthenticatedHojeRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
+  '/_authenticated/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/_authenticated/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/_authenticated/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/_authenticated/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/hoje'
     | '/operacoes'
+    | '/ajustes/cargos'
     | '/ajustes/comissao'
     | '/ajustes/equipe'
     | '/ajustes/integracoes'
@@ -232,6 +243,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/hoje'
     | '/operacoes'
+    | '/ajustes/cargos'
     | '/ajustes/comissao'
     | '/ajustes/equipe'
     | '/ajustes/integracoes'
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated/financeiro'
     | '/_authenticated/hoje'
     | '/_authenticated/operacoes'
+    | '/_authenticated/ajustes/cargos'
     | '/_authenticated/ajustes/comissao'
     | '/_authenticated/ajustes/equipe'
     | '/_authenticated/ajustes/integracoes'
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAjustesComissaoRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
+    '/_authenticated/ajustes/cargos': {
+      id: '/_authenticated/ajustes/cargos'
+      path: '/cargos'
+      fullPath: '/ajustes/cargos'
+      preLoaderRoute: typeof AuthenticatedAjustesCargosRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
     '/api/public/hooks/sync-ads': {
       id: '/api/public/hooks/sync-ads'
       path: '/api/public/hooks/sync-ads'
@@ -419,6 +439,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAjustesRouteChildren {
+  AuthenticatedAjustesCargosRoute: typeof AuthenticatedAjustesCargosRoute
   AuthenticatedAjustesComissaoRoute: typeof AuthenticatedAjustesComissaoRoute
   AuthenticatedAjustesEquipeRoute: typeof AuthenticatedAjustesEquipeRoute
   AuthenticatedAjustesIntegracoesRoute: typeof AuthenticatedAjustesIntegracoesRoute
@@ -429,6 +450,7 @@ interface AuthenticatedAjustesRouteChildren {
 }
 
 const AuthenticatedAjustesRouteChildren: AuthenticatedAjustesRouteChildren = {
+  AuthenticatedAjustesCargosRoute: AuthenticatedAjustesCargosRoute,
   AuthenticatedAjustesComissaoRoute: AuthenticatedAjustesComissaoRoute,
   AuthenticatedAjustesEquipeRoute: AuthenticatedAjustesEquipeRoute,
   AuthenticatedAjustesIntegracoesRoute: AuthenticatedAjustesIntegracoesRoute,
