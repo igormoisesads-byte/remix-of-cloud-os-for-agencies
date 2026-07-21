@@ -337,6 +337,9 @@ export type Database = {
       }
       client_reports: {
         Row: {
+          ai_content: string | null
+          ai_generated_at: string | null
+          ai_model: string | null
           client_id: string
           created_at: string
           created_by: string | null
@@ -349,6 +352,9 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          ai_content?: string | null
+          ai_generated_at?: string | null
+          ai_model?: string | null
           client_id: string
           created_at?: string
           created_by?: string | null
@@ -361,6 +367,9 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          ai_content?: string | null
+          ai_generated_at?: string | null
+          ai_model?: string | null
           client_id?: string
           created_at?: string
           created_by?: string | null
