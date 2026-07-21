@@ -437,6 +437,27 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               <div className="space-y-2"><Label>Fim do contrato</Label><Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} /></div>
               <div className="space-y-2"><Label>Tempo do contrato (meses)</Label><Input type="number" min="1" value={form.tempo_contrato_meses} onChange={(e) => setForm({ ...form, tempo_contrato_meses: e.target.value })} /></div>
               <div className="space-y-2"><Label>1º vencimento</Label><Input type="date" value={form.primeiro_vencimento} onChange={(e) => setForm({ ...form, primeiro_vencimento: e.target.value })} /></div>
+              <div className="col-span-2 space-y-2">
+                <Label>Frequência de otimização</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { v: "2s", t: "2S", d: "Seg (Full) · Qui (Light)" },
+                    { v: "3s", t: "3S", d: "Ter (Full) · Sex (Light)" },
+                    { v: "4s", t: "4S", d: "Qua (Full) · Sáb (Light)" },
+                  ].map((o) => (
+                    <button key={o.v} type="button"
+                      onClick={() => setForm({ ...form, optimization_frequency: o.v })}
+                      className={cn(
+                        "rounded-md border p-3 text-left transition",
+                        form.optimization_frequency === o.v ? "border-primary bg-primary/5" : "hover:bg-accent"
+                      )}>
+                      <div className="font-semibold text-sm">{o.t}</div>
+                      <div className="text-xs text-muted-foreground">{o.d}</div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Gera automaticamente as tarefas recorrentes de otimização para toda a duração do contrato. A 1ª da semana é <b>Full</b> (análise completa), a 2ª é <b>Light</b> (verificação rápida).</p>
+              </div>
             </div>
           )}
 
