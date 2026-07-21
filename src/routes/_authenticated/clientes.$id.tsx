@@ -78,18 +78,8 @@ function ClienteDetail() {
   const { id } = Route.useParams();
   const [section, setSection] = useState<Section>("visao");
 
-  const client = useQuery({
-    queryKey: ["client", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*, niches(name), perf:profiles!clients_performance_user_id_fkey(full_name), cs:profiles!clients_cs_user_id_fkey(full_name)")
-        .eq("id", id).single();
-      if (error) throw error; return data as any;
-    },
-  });
+  const client = useQuery(clientQueryOptions(id));
 
-  if (client.isLoading) return <div className="p-8 text-muted-foreground">Carregando…</div>;
   if (!client.data) return <div className="p-8">Cliente não encontrado</div>;
   const c = client.data;
 
