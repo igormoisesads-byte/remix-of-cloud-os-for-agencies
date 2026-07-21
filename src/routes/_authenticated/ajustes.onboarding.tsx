@@ -409,6 +409,23 @@ function StagesEditor({ templateId, templateName }: { templateId: string; templa
                   {idx + 1}
                 </div>
                 <div className="flex-1 font-medium text-sm">{s.name}</div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>Prazo</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    defaultValue={s.prazo_dias ?? ""}
+                    onBlur={async (e) => {
+                      const v = e.target.value ? Number(e.target.value) : null;
+                      if (v === (s.prazo_dias ?? null)) return;
+                      await supabase.from("onboarding_template_stages").update({ prazo_dias: v }).eq("id", s.id);
+                      invalidate();
+                    }}
+                    className="h-7 w-16 text-xs"
+                    placeholder="—"
+                  />
+                  <span>dias</span>
+                </div>
                 <Badge variant="secondary" className="text-[10px]">{stageTasks.length} tarefas</Badge>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => delStage(s.id)}>
                   <Trash2 className="h-3.5 w-3.5" />
@@ -422,6 +439,20 @@ function StagesEditor({ templateId, templateName }: { templateId: string; templa
                   <div key={t.id} className="flex items-center gap-2 text-sm rounded-md border px-2.5 py-1.5 bg-background">
                     <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
                     <span className="flex-1 truncate">{t.title}</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      defaultValue={t.prazo_dias ?? ""}
+                      onBlur={async (e) => {
+                        const v = e.target.value ? Number(e.target.value) : null;
+                        if (v === (t.prazo_dias ?? null)) return;
+                        await supabase.from("onboarding_template_tasks").update({ prazo_dias: v }).eq("id", t.id);
+                        invalidate();
+                      }}
+                      className="h-6 w-14 text-xs"
+                      placeholder="prazo"
+                    />
+                    <span className="text-[10px] text-muted-foreground">d</span>
                     <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => delTask(t.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
