@@ -461,12 +461,15 @@ export type Database = {
           address: string | null
           brand_anniversary: string | null
           city_uf: string | null
+          codigo: string | null
           contract_end: string | null
           contract_start: string | null
           created_at: string
           created_by: string | null
           cs_user_id: string | null
           id: string
+          instagram: string | null
+          investimento_mensal: number | null
           launch_commission_pct: number | null
           logo_url: string | null
           monthly_fee_amount: number | null
@@ -479,8 +482,13 @@ export type Database = {
           performance_user_id: string | null
           plan_id: string | null
           platform: string | null
+          primeiro_vencimento: string | null
+          responsavel_email: string | null
+          responsavel_nome: string | null
+          responsavel_telefone: string | null
           site: string | null
           status: Database["public"]["Enums"]["client_status"]
+          tempo_contrato_meses: number | null
           type: Database["public"]["Enums"]["client_type"]
           updated_at: string
         }
@@ -488,12 +496,15 @@ export type Database = {
           address?: string | null
           brand_anniversary?: string | null
           city_uf?: string | null
+          codigo?: string | null
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
           created_by?: string | null
           cs_user_id?: string | null
           id?: string
+          instagram?: string | null
+          investimento_mensal?: number | null
           launch_commission_pct?: number | null
           logo_url?: string | null
           monthly_fee_amount?: number | null
@@ -506,8 +517,13 @@ export type Database = {
           performance_user_id?: string | null
           plan_id?: string | null
           platform?: string | null
+          primeiro_vencimento?: string | null
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
           site?: string | null
           status?: Database["public"]["Enums"]["client_status"]
+          tempo_contrato_meses?: number | null
           type: Database["public"]["Enums"]["client_type"]
           updated_at?: string
         }
@@ -515,12 +531,15 @@ export type Database = {
           address?: string | null
           brand_anniversary?: string | null
           city_uf?: string | null
+          codigo?: string | null
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
           created_by?: string | null
           cs_user_id?: string | null
           id?: string
+          instagram?: string | null
+          investimento_mensal?: number | null
           launch_commission_pct?: number | null
           logo_url?: string | null
           monthly_fee_amount?: number | null
@@ -533,8 +552,13 @@ export type Database = {
           performance_user_id?: string | null
           plan_id?: string | null
           platform?: string | null
+          primeiro_vencimento?: string | null
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
           site?: string | null
           status?: Database["public"]["Enums"]["client_status"]
+          tempo_contrato_meses?: number | null
           type?: Database["public"]["Enums"]["client_type"]
           updated_at?: string
         }
@@ -875,16 +899,19 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          sigla: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          sigla?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          sigla?: string | null
         }
         Relationships: []
       }
@@ -1025,18 +1052,21 @@ export type Database = {
           id: string
           name: string
           position: number
+          prazo_dias: number | null
           template_id: string
         }
         Insert: {
           id?: string
           name: string
           position?: number
+          prazo_dias?: number | null
           template_id: string
         }
         Update: {
           id?: string
           name?: string
           position?: number
+          prazo_dias?: number | null
           template_id?: string
         }
         Relationships: [
@@ -1054,6 +1084,7 @@ export type Database = {
           description: string | null
           id: string
           position: number
+          prazo_dias: number | null
           stage_id: string
           title: string
         }
@@ -1061,6 +1092,7 @@ export type Database = {
           description?: string | null
           id?: string
           position?: number
+          prazo_dias?: number | null
           stage_id: string
           title: string
         }
@@ -1068,6 +1100,7 @@ export type Database = {
           description?: string | null
           id?: string
           position?: number
+          prazo_dias?: number | null
           stage_id?: string
           title?: string
         }
@@ -1211,30 +1244,92 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admissao: string | null
           avatar_url: string | null
+          cargo: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          nivel: string | null
+          obrigacoes: Json
+          salario: number | null
+          telefone: string | null
           updated_at: string
         }
         Insert: {
+          admissao?: string | null
           avatar_url?: string | null
+          cargo?: string | null
           created_at?: string
           email: string
           full_name?: string
           id: string
+          nivel?: string | null
+          obrigacoes?: Json
+          salario?: number | null
+          telefone?: string | null
           updated_at?: string
         }
         Update: {
+          admissao?: string | null
           avatar_url?: string | null
+          cargo?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          nivel?: string | null
+          obrigacoes?: Json
+          salario?: number | null
+          telefone?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      task_checklist_items: {
+        Row: {
+          created_at: string
+          done: boolean
+          done_at: string | null
+          done_by: string | null
+          id: string
+          position: number
+          task_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          position?: number
+          task_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          position?: number
+          task_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_checklist_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_comments: {
         Row: {
@@ -1362,6 +1457,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_client_code: {
+        Args: { _at?: string; _niche_id: string }
+        Returns: string
+      }
+      get_employee_hr: {
+        Args: { _user_id: string }
+        Returns: {
+          admissao: string
+          cargo: string
+          email: string
+          full_name: string
+          nivel: string
+          obrigacoes: Json
+          salario: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1377,9 +1489,43 @@ export type Database = {
         Args: { _channel_id: string; _user_id: string }
         Returns: boolean
       }
+      list_employees_hr: {
+        Args: never
+        Returns: {
+          admissao: string
+          cargo: string
+          email: string
+          full_name: string
+          nivel: string
+          obrigacoes: Json
+          salario: number
+          user_id: string
+        }[]
+      }
+      update_employee_hr: {
+        Args: {
+          _admissao: string
+          _cargo: string
+          _nivel: string
+          _obrigacoes: Json
+          _salario: number
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "admin" | "gestor" | "operacional" | "financeiro"
+      app_role:
+        | "admin"
+        | "gestor"
+        | "operacional"
+        | "financeiro"
+        | "superadmin"
+        | "head_conta"
+        | "gestor_trafego_junior"
+        | "gestor_trafego_senior"
+        | "especialista_performance"
+        | "sucesso_cliente"
       channel_member_role: "admin" | "member"
       channel_type: "public" | "private" | "dm" | "client"
       client_status: "ativo" | "pausado" | "churn" | "onboarding"
@@ -1515,7 +1661,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "gestor", "operacional", "financeiro"],
+      app_role: [
+        "admin",
+        "gestor",
+        "operacional",
+        "financeiro",
+        "superadmin",
+        "head_conta",
+        "gestor_trafego_junior",
+        "gestor_trafego_senior",
+        "especialista_performance",
+        "sucesso_cliente",
+      ],
       channel_member_role: ["admin", "member"],
       channel_type: ["public", "private", "dm", "client"],
       client_status: ["ativo", "pausado", "churn", "onboarding"],
