@@ -16,10 +16,10 @@ export const Route = createFileRoute("/_authenticated/ajustes/onboarding")({
   component: OnboardingConfigPage,
 });
 
-type Niche = { id: string; name: string };
+type Niche = { id: string; name: string; sigla: string | null };
 type Template = { id: string; niche_id: string; name: string; description: string | null };
-type Stage = { id: string; template_id: string; name: string; position: number };
-type TemplateTask = { id: string; stage_id: string; title: string; description: string | null; position: number };
+type Stage = { id: string; template_id: string; name: string; position: number; prazo_dias: number | null };
+type TemplateTask = { id: string; stage_id: string; title: string; description: string | null; position: number; prazo_dias: number | null };
 
 function OnboardingConfigPage() {
   const qc = useQueryClient();
