@@ -44,6 +44,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     monthly_fee_amount: "", monthly_fee_day: "5",
     primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
     launch_commission_pct: "",
+    optimization_frequency: "2s",
     notes: "",
   });
 
