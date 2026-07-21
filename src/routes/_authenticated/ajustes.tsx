@@ -44,6 +44,7 @@ function AjustesPage() {
 
       {isAdmin && <PlansCard />}
       {isAdmin && <TiersCard />}
+      {isAdmin && <OnboardingConfigCard />}
 
       <Button variant="outline" onClick={async () => { await signOut(); nav({ to: "/auth", replace: true }); }}>
         <LogOut className="h-4 w-4" /> Sair
