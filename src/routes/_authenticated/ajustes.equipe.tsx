@@ -170,7 +170,7 @@ function EditHRDialog({ hr, onClose, onSaved }: { hr: HR; onClose: () => void; o
       _admissao: admissao || null,
       _salario: salario ? Number(salario) : null,
       _obrigacoes: obrigacoes,
-    });
+    } as any);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Dados atualizados");
