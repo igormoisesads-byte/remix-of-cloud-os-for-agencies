@@ -214,19 +214,255 @@ function StatCard({ title, icon: Icon, value, sub }: { title: string; icon: any;
   );
 }
 
-/* ============ PERFORMANCE (placeholder integração) ============ */
-function Performance() {
+/* ============ PERFORMANCE (Meta Ads / Google Ads) ============ */
+function Performance({ clientId, clientType }: { clientId: string; clientType: string }) {
+  const qc = useQueryClient();
+  const { hasRole } = useAuth();
+  const canManage = hasRole("admin") || hasRole("gestor");
+  const syncFn = useServerFn(syncAdAccount);
+  const [days, setDays] = useState(30);
+  const [syncing, setSyncing] = useState<string | null>(null);
+
+  const accounts = useQuery({
+    queryKey: ["ad_accounts", clientId],
+    queryFn: async () => (await supabase.from("ad_accounts").select("*").eq("client_id", clientId).order("created_at")).data ?? [],
+  });
+
+  const accountIds = (accounts.data ?? []).map((a: any) => a.id);
+  const insights = useQuery({
+    queryKey: ["ad_insights", clientId, days, accountIds.join(",")],
+    enabled: accountIds.length > 0,
+    queryFn: async () => {
+      const since = new Date(); since.setDate(since.getDate() - days);
+      const { data } = await supabase.from("ad_insights").select("*")
+        .in("ad_account_id", accountIds)
+        .gte("date", since.toISOString().slice(0, 10))
+        .order("date");
+      return data ?? [];
+    },
+  });
+
+  const totals = useMemo(() => {
+    const rows = insights.data ?? [];
+    const t = { spend: 0, impressions: 0, clicks: 0, reach: 0, results: 0 };
+    for (const r of rows) {
+      t.spend += Number(r.spend); t.impressions += Number(r.impressions);
+      t.clicks += Number(r.clicks); t.reach += Number(r.reach); t.results += Number(r.results);
+    }
+    return t;
+  }, [insights.data]);
+
+  const chartData = useMemo(() => {
+    const rows = insights.data ?? [];
+    const byDate: Record<string, any> = {};
+    for (const r of rows) {
+      const d = r.date;
+      if (!byDate[d]) byDate[d] = { date: d, spend: 0, results: 0, clicks: 0 };
+      byDate[d].spend += Number(r.spend);
+      byDate[d].results += Number(r.results);
+      byDate[d].clicks += Number(r.clicks);
+    }
+    return Object.values(byDate).map((r: any) => ({
+      ...r,
+      label: new Date(r.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+    }));
+  }, [insights.data]);
+
+  async function sync(accId: string) {
+    setSyncing(accId);
+    try {
+      const r = await syncFn({ data: { ad_account_id: accId } });
+      toast.success(`Sincronizado: ${(r as any).upserted} dias`);
+      qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_insights", clientId] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setSyncing(null); }
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Remover esta conta de anúncio? O histórico salvo também será apagado.")) return;
+    const { error } = await supabase.from("ad_accounts").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] });
+  }
+
+  const focusHint = clientType === "local"
+    ? "Foco recomendado para cliente local: campanhas de mensagem (WhatsApp) e tráfego pro site."
+    : "Configure objetivos (conversões, leads) na plataforma para relatórios precisos.";
+
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-base">Performance de mídia</CardTitle></CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="rounded-md border border-dashed p-6 text-center">
-          <BarChart3 className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-          <div className="font-medium">Integração Meta Ads e Google Ads</div>
-          <div className="text-muted-foreground mt-1">Conecte as APIs para puxar gastos e resultados em tempo real. Configuração em Ajustes → Integrações (em breve).</div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base">Performance de mídia</CardTitle>
+            <div className="text-xs text-muted-foreground mt-1">{focusHint} Atualização automática a cada 4h.</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+              <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="14">Últimos 14 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+              </SelectContent>
+            </Select>
+            {canManage && <ConnectAdAccountDialog clientId={clientId} onSaved={() => qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] })} />}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {(accounts.data ?? []).length === 0 ? (
+            <div className="rounded-md border border-dashed p-6 text-center text-sm">
+              <BarChart3 className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+              <div className="font-medium">Nenhuma conta conectada</div>
+              <div className="text-muted-foreground mt-1">
+                {canManage ? "Conecte uma conta do Meta Ads para começar." : "Peça a um admin/gestor para conectar as contas."}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                <Stat label="Investimento" value={fmtBRL(totals.spend)} />
+                <Stat label="Impressões" value={totals.impressions.toLocaleString("pt-BR")} />
+                <Stat label="Cliques" value={totals.clicks.toLocaleString("pt-BR")} />
+                <Stat label="Alcance" value={totals.reach.toLocaleString("pt-BR")} />
+                <Stat label="Resultados" value={totals.results.toLocaleString("pt-BR")} />
+              </div>
+
+              {chartData.length > 0 && (
+                <div className="h-64 w-full">
+                  <ResponsiveContainer>
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" fontSize={11} />
+                      <YAxis fontSize={11} />
+                      <Tooltip formatter={(v: any, k: string) => (k === "spend" ? fmtBRL(Number(v)) : v)} />
+                      <Area type="monotone" dataKey="spend" stroke="hsl(var(--primary))" fill="url(#gSpend)" name="Investimento" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              <div className="mt-4 space-y-2">
+                {(accounts.data ?? []).map((a: any) => (
+                  <div key={a.id} className="flex items-center justify-between rounded-md border p-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-md flex items-center justify-center ${a.provider === "meta" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>
+                        {a.provider === "meta" ? <Facebook className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{a.account_name || a.account_id} <Badge variant="outline" className="ml-1">{a.provider === "meta" ? "Meta Ads" : "Google Ads"}</Badge></div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.last_sync_at ? `Última sync: ${new Date(a.last_sync_at).toLocaleString("pt-BR")}` : "Nunca sincronizado"}
+                          {a.last_sync_error && <span className="text-destructive"> · {a.last_sync_error}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    {canManage && (
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="outline" disabled={syncing === a.id} onClick={() => sync(a.id)}>
+                          <RefreshCw className={`h-3.5 w-3.5 ${syncing === a.id ? "animate-spin" : ""}`} />
+                          Sincronizar
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => remove(a.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold mt-1">{value}</div>
+    </div>
+  );
+}
+
+function ConnectAdAccountDialog({ clientId, onSaved }: { clientId: string; onSaved: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ provider: "meta", account_id: "", account_name: "", access_token: "", currency: "BRL" });
+  const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
+
+  async function submit() {
+    if (!form.account_id.trim() || !form.access_token.trim()) {
+      return toast.error("Informe ID da conta e token de acesso.");
+    }
+    setBusy(true);
+    const { error } = await supabase.from("ad_accounts").insert({
+      client_id: clientId,
+      provider: form.provider,
+      account_id: form.account_id.trim(),
+      account_name: form.account_name.trim() || null,
+      access_token: form.access_token.trim(),
+      currency: form.currency,
+      created_by: user?.id,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Conta conectada. Clique em Sincronizar para importar os dados.");
+    setOpen(false);
+    setForm({ provider: "meta", account_id: "", account_name: "", access_token: "", currency: "BRL" });
+    onSaved();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm"><Plus className="h-4 w-4" /> Conectar conta</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Conectar conta de anúncio</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>Plataforma</Label>
+            <Select value={form.provider} onValueChange={(v) => setForm({ ...form, provider: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="meta">Meta Ads (Facebook / Instagram)</SelectItem>
+                <SelectItem value="google">Google Ads (em breve)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>ID da conta {form.provider === "meta" ? "(ex: 1234567890 ou act_1234567890)" : "(customer id)"}</Label>
+            <Input value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Apelido da conta (opcional)</Label>
+            <Input value={form.account_name} onChange={(e) => setForm({ ...form, account_name: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Access Token {form.provider === "meta" ? "(long-lived, com escopo ads_read)" : ""}</Label>
+            <Textarea rows={3} value={form.access_token} onChange={(e) => setForm({ ...form, access_token: e.target.value })} />
+            <div className="text-xs text-muted-foreground">
+              {form.provider === "meta"
+                ? "Gere em business.facebook.com → Configurações → Usuários do sistema → Gerar token. Escopo: ads_read (e ads_management se for necessário)."
+                : "Google Ads exige OAuth + developer token; integração automatizada em breve."}
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+        <DialogFooter>
+          <Button onClick={submit} disabled={busy}>{busy ? "Salvando…" : "Conectar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 function Projecoes({ c }: { c: any }) {
