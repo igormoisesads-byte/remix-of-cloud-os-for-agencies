@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus, Trash2, MessageSquare, Filter, Paperclip, Calendar, User, Tag,
-  AlignLeft, Building2, X, FileText, Image as ImageIcon, Download,
+  AlignLeft, Building2, X, FileText, Image as ImageIcon, Download, CheckSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
