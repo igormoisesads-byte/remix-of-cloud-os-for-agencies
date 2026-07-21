@@ -16,25 +16,27 @@ const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétu
 
 type Plan = { id: string; name: string; kind: string; amount: number | null; active: boolean };
 type Tier = { id: string; min_revenue: number; max_revenue: number | null; pct: number; label: string | null };
-
-const ONBOARDING_TEMPLATES: Record<string, string[]> = {
-  local: ["Kickoff realizado", "Acesso ao Google Ads", "Acesso ao Meta Business", "Pixel/Tag Manager instalado", "Configurar Google Meu Negócio", "Aprovar primeira campanha"],
-  perpetuo: ["Kickoff realizado", "Acesso à plataforma de e-com", "Acesso ao Meta Business e Google Ads", "Catálogo e feed configurados", "Pixel + eventos de conversão", "Aprovar plano de mídia mês 1"],
-  lancamento: ["Reunião de estratégia do lançamento", "Definição de datas (CPL, aula, carrinho)", "Estrutura de captação no ar", "Pixel e eventos configurados", "Aprovar criativos de captação", "Aprovar página de vendas"],
-  autoria: ["Reunião de descoberta", "Definição de posicionamento", "Estrutura de funil validada", "Página de captura no ar", "Sequência de e-mail ativa", "Primeira campanha aprovada"],
-};
+type Niche = { id: string; name: string };
+type Template = { id: string; niche_id: string; name: string };
+type Profile = { id: string; full_name: string | null };
 
 export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+
   const [plans, setPlans] = useState<Plan[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
+  const [niches, setNiches] = useState<Niche[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   const [form, setForm] = useState({
     name: "", type: "local",
-    niche: "", platform: "", site: "", city_uf: "",
+    niche_id: "", onboarding_template_id: "",
+    platform: "", site: "", city_uf: "", address: "", brand_anniversary: "",
+    performance_user_id: "", cs_user_id: "",
     plan_id: "",
     contract_start: "", contract_end: "",
     monthly_fee_amount: "", monthly_fee_day: "5",
@@ -45,18 +47,29 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const [{ data: p }, { data: t }] = await Promise.all([
+      const [p, t, n, tmpl, pr] = await Promise.all([
         supabase.from("plans").select("id,name,kind,amount,active").eq("active", true).order("name"),
         supabase.from("commission_tiers").select("id,min_revenue,max_revenue,pct,label").order("min_revenue"),
+        supabase.from("niches").select("id,name").order("name"),
+        supabase.from("onboarding_templates").select("id,niche_id,name").order("name"),
+        supabase.from("profiles").select("id,full_name").order("full_name"),
       ]);
-      setPlans((p ?? []) as Plan[]);
-      setTiers((t ?? []) as Tier[]);
+      setPlans((p.data ?? []) as Plan[]);
+      setTiers((t.data ?? []) as Tier[]);
+      setNiches((n.data ?? []) as Niche[]);
+      setTemplates((tmpl.data ?? []) as Template[]);
+      setProfiles((pr.data ?? []) as Profile[]);
     })();
   }, [open]);
 
   function reset() {
     setStep(0); setBusy(false);
-    setForm({ name: "", type: "local", niche: "", platform: "", site: "", city_uf: "", plan_id: "", contract_start: "", contract_end: "", monthly_fee_amount: "", monthly_fee_day: "5", launch_commission_pct: "", notes: "" });
+    setForm({
+      name: "", type: "local", niche_id: "", onboarding_template_id: "", platform: "", site: "", city_uf: "",
+      address: "", brand_anniversary: "", performance_user_id: "", cs_user_id: "", plan_id: "",
+      contract_start: "", contract_end: "", monthly_fee_amount: "", monthly_fee_day: "5",
+      launch_commission_pct: "", notes: "",
+    });
   }
 
   const isLaunch = form.type === "lancamento";
@@ -66,16 +79,20 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     return plans.filter((p) => p.kind === "mensal" || p.kind === "outro" || !p.kind);
   }, [plans, form.type, isLaunch]);
 
+  const filteredTemplates = useMemo(
+    () => (form.niche_id ? templates.filter((t) => t.niche_id === form.niche_id) : []),
+    [templates, form.niche_id]
+  );
+
   function pickPlan(id: string) {
     const p = plans.find((x) => x.id === id);
     setForm((f) => ({ ...f, plan_id: id, monthly_fee_amount: p?.amount ? String(p.amount) : f.monthly_fee_amount }));
   }
 
-  const steps = ["Cadastro", "Contrato", isLaunch ? "Comissão" : "Financeiro", "Revisão"];
+  const steps = ["Cadastro", "Responsáveis", "Contrato", isLaunch ? "Comissão" : "Financeiro", "Revisão"];
 
   function canNext(): boolean {
     if (step === 0) return !!form.name.trim() && !!form.type;
-    if (step === 1) return true;
     return true;
   }
 
@@ -85,10 +102,15 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     const { data: client, error } = await supabase.from("clients").insert({
       name: form.name.trim(),
       type: form.type as any,
-      niche: form.niche || null,
+      niche_id: form.niche_id || null,
+      onboarding_template_id: form.onboarding_template_id || null,
       platform: form.platform || null,
       site: form.site || null,
       city_uf: form.city_uf || null,
+      address: form.address || null,
+      brand_anniversary: form.brand_anniversary || null,
+      performance_user_id: form.performance_user_id || null,
+      cs_user_id: form.cs_user_id || null,
       plan_id: form.plan_id || null,
       contract_start: form.contract_start || null,
       contract_end: form.contract_end || null,
@@ -101,11 +123,37 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     }).select().single();
     if (error) { setBusy(false); return toast.error(error.message); }
 
-    const tpl = ONBOARDING_TEMPLATES[form.type] || [];
-    if (tpl.length) {
-      await supabase.from("onboarding_tasks").insert(tpl.map((title, i) => ({ client_id: client.id, title, position: i })));
+    // Copy onboarding template stages + tasks
+    if (form.onboarding_template_id) {
+      const [{ data: tStages }, { data: tTasks }] = await Promise.all([
+        supabase.from("onboarding_template_stages").select("id,name,position").eq("template_id", form.onboarding_template_id).order("position"),
+        supabase.from("onboarding_template_tasks").select("id,stage_id,title,description,position").order("position"),
+      ]);
+      const stageMap = new Map<string, string>();
+      if (tStages && tStages.length) {
+        const { data: created } = await supabase.from("client_onboarding_stages")
+          .insert(tStages.map((s: any) => ({ client_id: client.id, name: s.name, position: s.position })))
+          .select("id,name,position");
+        (created ?? []).forEach((cs: any) => {
+          const src = tStages.find((s: any) => s.name === cs.name && s.position === cs.position);
+          if (src) stageMap.set(src.id, cs.id);
+        });
+      }
+      const stageIds = new Set(stageMap.keys());
+      const relevantTasks = (tTasks ?? []).filter((tt: any) => stageIds.has(tt.stage_id));
+      if (relevantTasks.length) {
+        await supabase.from("onboarding_tasks").insert(relevantTasks.map((tt: any) => ({
+          client_id: client.id,
+          stage_id: stageMap.get(tt.stage_id),
+          title: tt.title,
+          description: tt.description,
+          position: tt.position,
+          created_by: user.id,
+        })));
+      }
     }
-    // Auto-generate mensalidades a partir do contrato (só para tipos recorrentes com valor)
+
+    // Auto-generate mensalidades
     if (!isLaunch && form.monthly_fee_amount && Number(form.monthly_fee_amount) > 0) {
       const amount = Number(form.monthly_fee_amount);
       const day = Math.min(Math.max(Number(form.monthly_fee_day) || 5, 1), 28);
@@ -128,6 +176,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     await supabase.from("client_activities").insert({
       client_id: client.id, user_id: user.id,
       action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}${form.monthly_fee_amount ? ` · Mensalidades geradas` : ""}`,
+      entity_type: "client", entity_id: client.id,
     });
 
     setBusy(false);
@@ -163,7 +212,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
           </div>
         </DialogHeader>
 
-        <div className="min-h-[280px] py-2">
+        <div className="min-h-[280px] py-2 max-h-[60vh] overflow-y-auto pr-1">
           {step === 0 && (
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
@@ -184,7 +233,23 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               </div>
               <div className="space-y-2">
                 <Label>Nicho</Label>
-                <Input value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
+                <Select value={form.niche_id} onValueChange={(v) => setForm({ ...form, niche_id: v, onboarding_template_id: "" })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {niches.length === 0 && <div className="p-2 text-xs text-muted-foreground">Cadastre nichos em Ajustes.</div>}
+                    {niches.map((n) => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Template de onboarding</Label>
+                <Select value={form.onboarding_template_id} onValueChange={(v) => setForm({ ...form, onboarding_template_id: v })} disabled={!form.niche_id}>
+                  <SelectTrigger><SelectValue placeholder={form.niche_id ? "Selecione" : "Escolha o nicho antes"} /></SelectTrigger>
+                  <SelectContent>
+                    {filteredTemplates.length === 0 && <div className="p-2 text-xs text-muted-foreground">Nenhum template para este nicho.</div>}
+                    {filteredTemplates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Plataforma</Label>
@@ -194,14 +259,45 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                 <Label>Site</Label>
                 <Input value={form.site} onChange={(e) => setForm({ ...form, site: e.target.value })} placeholder="marca.com.br" />
               </div>
-              <div className="col-span-2 space-y-2">
+              <div className="space-y-2">
                 <Label>Cidade/UF</Label>
                 <Input value={form.city_uf} onChange={(e) => setForm({ ...form, city_uf: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Aniversário da marca</Label>
+                <Input type="date" value={form.brand_anniversary} onChange={(e) => setForm({ ...form, brand_anniversary: e.target.value })} />
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label>Endereço</Label>
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
               </div>
             </div>
           )}
 
           {step === 1 && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Responsável Performance</Label>
+                <Select value={form.performance_user_id} onValueChange={(v) => setForm({ ...form, performance_user_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || "—"}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Responsável CS</Label>
+                <Select value={form.cs_user_id} onValueChange={(v) => setForm({ ...form, cs_user_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || "—"}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
                 <Label>Plano contratado</Label>
@@ -215,62 +311,41 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                     <SelectContent>
                       {filteredPlans.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.name} {p.amount ? `— R$ ${Number(p.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : ""}
+                          {p.name} {p.amount ? `— ${brl(Number(p.amount))}` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>Início do contrato</Label>
-                <Input type="date" value={form.contract_start} onChange={(e) => setForm({ ...form, contract_start: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Fim do contrato</Label>
-                <Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} />
-              </div>
+              <div className="space-y-2"><Label>Início do contrato</Label><Input type="date" value={form.contract_start} onChange={(e) => setForm({ ...form, contract_start: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Fim do contrato</Label><Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} /></div>
             </div>
           )}
 
-          {step === 2 && !isLaunch && (
+          {step === 3 && !isLaunch && (
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Mensalidade (R$)</Label>
-                <Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} />
-                {form.plan_id && <p className="text-xs text-muted-foreground">Preenchido pelo plano — pode ajustar.</p>}
-              </div>
-              <div className="space-y-2">
-                <Label>Dia de vencimento</Label>
-                <Input type="number" min="1" max="31" value={form.monthly_fee_day} onChange={(e) => setForm({ ...form, monthly_fee_day: e.target.value })} />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label>Observações</Label>
-                <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-              </div>
+              <div className="space-y-2"><Label>Mensalidade (R$)</Label><Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} />{form.plan_id && <p className="text-xs text-muted-foreground">Preenchido pelo plano — pode ajustar.</p>}</div>
+              <div className="space-y-2"><Label>Dia de vencimento</Label><Input type="number" min="1" max="31" value={form.monthly_fee_day} onChange={(e) => setForm({ ...form, monthly_fee_day: e.target.value })} /></div>
+              <div className="col-span-2 space-y-2"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
           )}
 
-          {step === 2 && isLaunch && (
+          {step === 3 && isLaunch && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>% de comissão negociada</Label>
                 <div className="flex items-center gap-2">
-                  <Input type="number" step="0.01" className="max-w-[140px]" value={form.launch_commission_pct}
-                    onChange={(e) => setForm({ ...form, launch_commission_pct: e.target.value })} placeholder="Ex: 15" />
-                  <span className="text-sm text-muted-foreground">% sobre o faturamento do lançamento</span>
+                  <Input type="number" step="0.01" className="max-w-[140px]" value={form.launch_commission_pct} onChange={(e) => setForm({ ...form, launch_commission_pct: e.target.value })} placeholder="Ex: 15" />
+                  <span className="text-sm text-muted-foreground">% sobre o faturamento</span>
                 </div>
               </div>
               <div className="rounded-md border">
-                <div className="px-3 py-2 border-b bg-muted/40 flex items-center justify-between">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tabela padrão</div>
-                  <div className="text-[11px] text-muted-foreground">Clique para aplicar</div>
-                </div>
+                <div className="px-3 py-2 border-b bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tabela padrão (clique para aplicar)</div>
                 <div className="divide-y">
                   {tiers.length === 0 && <div className="p-3 text-sm text-muted-foreground">Cadastre em Ajustes → Comissão.</div>}
                   {tiers.map((t) => (
-                    <button key={t.id} type="button"
-                      onClick={() => setForm({ ...form, launch_commission_pct: String(t.pct) })}
+                    <button key={t.id} type="button" onClick={() => setForm({ ...form, launch_commission_pct: String(t.pct) })}
                       className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-accent text-left">
                       <span>{t.label || `${brl(t.min_revenue)} — ${t.max_revenue ? brl(t.max_revenue) : "∞"}`}</span>
                       <Badge variant="secondary">{t.pct}%</Badge>
@@ -278,18 +353,17 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                   ))}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-              </div>
+              <div className="space-y-2"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-3 text-sm">
               <ReviewRow k="Nome" v={form.name} />
               <ReviewRow k="Tipo" v={TYPE_LABEL[form.type]} />
-              <ReviewRow k="Nicho / Plataforma" v={[form.niche, form.platform].filter(Boolean).join(" · ") || "—"} />
+              <ReviewRow k="Nicho" v={niches.find((n) => n.id === form.niche_id)?.name || "—"} />
+              <ReviewRow k="Template onboarding" v={templates.find((t) => t.id === form.onboarding_template_id)?.name || "—"} />
+              <ReviewRow k="Performance / CS" v={`${profiles.find((p) => p.id === form.performance_user_id)?.full_name || "—"} · ${profiles.find((p) => p.id === form.cs_user_id)?.full_name || "—"}`} />
               <ReviewRow k="Site / Cidade" v={[form.site, form.city_uf].filter(Boolean).join(" · ") || "—"} />
               <ReviewRow k="Plano" v={plans.find((p) => p.id === form.plan_id)?.name || "—"} />
               <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"}`} />
