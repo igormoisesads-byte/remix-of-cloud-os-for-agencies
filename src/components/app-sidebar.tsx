@@ -63,10 +63,19 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        {groups.map((g) => (
-          <SidebarGroup key={g.label}>
-            <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
+      <SidebarContent className="gap-0">
+        {groups.map((g, idx) => (
+          <SidebarGroup
+            key={g.label}
+            className={
+              idx > 0
+                ? "border-t border-sidebar-border/40 pt-3 mt-2 group-data-[collapsible=icon]:mt-1 group-data-[collapsible=icon]:pt-2"
+                : "pt-2"
+            }
+          >
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/55 font-semibold px-2">
+              {g.label}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {g.items.map((item) => (
