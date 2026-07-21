@@ -306,3 +306,185 @@ function TierDialog({ tier, onSaved }: { tier?: Tier; onSaved: () => void }) {
     </Dialog>
   );
 }
+
+/* ------- Onboarding config (Niches -> Templates -> Stages -> Tasks) ------- */
+
+type Niche = { id: string; name: string };
+type Template = { id: string; niche_id: string; name: string; description: string | null };
+type Stage = { id: string; template_id: string; name: string; position: number };
+type TemplateTask = { id: string; stage_id: string; title: string; description: string | null; position: number };
+
+function OnboardingConfigCard() {
+  const qc = useQueryClient();
+  const niches = useQuery({
+    queryKey: ["niches"],
+    queryFn: async () => (await supabase.from("niches").select("*").order("name")).data as Niche[] ?? [],
+  });
+  const [selectedNiche, setSelectedNiche] = useState<string | null>(null);
+  const [newNiche, setNewNiche] = useState("");
+
+  async function addNiche() {
+    if (!newNiche.trim()) return;
+    const { error } = await supabase.from("niches").insert({ name: newNiche.trim() });
+    if (error) return toast.error(error.message);
+    setNewNiche(""); qc.invalidateQueries({ queryKey: ["niches"] });
+  }
+  async function delNiche(id: string) {
+    if (!confirm("Excluir este nicho e todos os templates?")) return;
+    await supabase.from("niches").delete().eq("id", id);
+    if (selectedNiche === id) setSelectedNiche(null);
+    qc.invalidateQueries({ queryKey: ["niches"] });
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Onboarding por nicho</CardTitle>
+        <div className="text-xs text-muted-foreground mt-1">Cadastre nichos, templates, etapas e tarefas. Ao criar um cliente, você escolhe o template e a estrutura é copiada.</div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+          <div className="space-y-2">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Nichos</div>
+            <div className="flex gap-2">
+              <Input placeholder="Novo nicho" value={newNiche} onChange={(e) => setNewNiche(e.target.value)} />
+              <Button size="sm" onClick={addNiche}><Plus className="h-4 w-4" /></Button>
+            </div>
+            <div className="space-y-1">
+              {(niches.data ?? []).map((n) => (
+                <div key={n.id} className={`flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer ${selectedNiche === n.id ? "bg-primary/10 text-primary" : "hover:bg-accent"}`}>
+                  <span className="flex-1 text-sm" onClick={() => setSelectedNiche(n.id)}>{n.name}</span>
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => delNiche(n.id)}><Trash2 className="h-3 w-3" /></Button>
+                </div>
+              ))}
+              {(niches.data ?? []).length === 0 && <div className="text-xs text-muted-foreground">Nenhum nicho.</div>}
+            </div>
+          </div>
+          <div>
+            {selectedNiche ? <TemplatesEditor nicheId={selectedNiche} /> : <div className="text-sm text-muted-foreground border border-dashed rounded-md p-6 text-center">Selecione um nicho para ver os templates.</div>}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TemplatesEditor({ nicheId }: { nicheId: string }) {
+  const qc = useQueryClient();
+  const templates = useQuery({
+    queryKey: ["templates", nicheId],
+    queryFn: async () => (await supabase.from("onboarding_templates").select("*").eq("niche_id", nicheId).order("name")).data as Template[] ?? [],
+  });
+  const [selected, setSelected] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+
+  async function addTemplate() {
+    if (!newName.trim()) return;
+    const { data, error } = await supabase.from("onboarding_templates").insert({ niche_id: nicheId, name: newName.trim() }).select().single();
+    if (error) return toast.error(error.message);
+    setNewName(""); setSelected(data.id);
+    qc.invalidateQueries({ queryKey: ["templates", nicheId] });
+  }
+  async function delTemplate(id: string) {
+    if (!confirm("Excluir template?")) return;
+    await supabase.from("onboarding_templates").delete().eq("id", id);
+    if (selected === id) setSelected(null);
+    qc.invalidateQueries({ queryKey: ["templates", nicheId] });
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Templates</div>
+      <div className="flex gap-2">
+        <Input placeholder="Nome do template" value={newName} onChange={(e) => setNewName(e.target.value)} />
+        <Button size="sm" onClick={addTemplate}><Plus className="h-4 w-4" /> Template</Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {(templates.data ?? []).map((t) => (
+          <div key={t.id} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm cursor-pointer ${selected === t.id ? "bg-primary/10 border-primary text-primary" : "hover:bg-accent"}`} onClick={() => setSelected(t.id)}>
+            {t.name}
+            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={(e) => { e.stopPropagation(); delTemplate(t.id); }}><Trash2 className="h-3 w-3" /></Button>
+          </div>
+        ))}
+      </div>
+      {selected && <StagesEditor templateId={selected} />}
+    </div>
+  );
+}
+
+function StagesEditor({ templateId }: { templateId: string }) {
+  const qc = useQueryClient();
+  const stages = useQuery({
+    queryKey: ["tstages", templateId],
+    queryFn: async () => (await supabase.from("onboarding_template_stages").select("*").eq("template_id", templateId).order("position")).data as Stage[] ?? [],
+  });
+  const tasks = useQuery({
+    queryKey: ["ttasks", templateId],
+    queryFn: async () => {
+      const stageIds = (stages.data ?? []).map((s) => s.id);
+      if (!stageIds.length) return [];
+      return (await supabase.from("onboarding_template_tasks").select("*").in("stage_id", stageIds).order("position")).data as TemplateTask[] ?? [];
+    },
+    enabled: !!stages.data,
+  });
+  const [newStage, setNewStage] = useState("");
+  const [taskInputs, setTaskInputs] = useState<Record<string, string>>({});
+
+  async function addStage() {
+    if (!newStage.trim()) return;
+    const pos = (stages.data?.length ?? 0);
+    await supabase.from("onboarding_template_stages").insert({ template_id: templateId, name: newStage.trim(), position: pos });
+    setNewStage("");
+    qc.invalidateQueries({ queryKey: ["tstages", templateId] });
+    qc.invalidateQueries({ queryKey: ["ttasks", templateId] });
+  }
+  async function delStage(id: string) {
+    if (!confirm("Excluir etapa e suas tarefas?")) return;
+    await supabase.from("onboarding_template_stages").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["tstages", templateId] });
+    qc.invalidateQueries({ queryKey: ["ttasks", templateId] });
+  }
+  async function addTask(stageId: string) {
+    const title = taskInputs[stageId]?.trim();
+    if (!title) return;
+    const pos = (tasks.data ?? []).filter((t) => t.stage_id === stageId).length;
+    await supabase.from("onboarding_template_tasks").insert({ stage_id: stageId, title, position: pos });
+    setTaskInputs({ ...taskInputs, [stageId]: "" });
+    qc.invalidateQueries({ queryKey: ["ttasks", templateId] });
+  }
+  async function delTask(id: string) {
+    await supabase.from("onboarding_template_tasks").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["ttasks", templateId] });
+  }
+
+  return (
+    <div className="space-y-3 rounded-md border p-3 bg-muted/20">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Etapas & Tarefas</div>
+      <div className="flex gap-2">
+        <Input placeholder="Nova etapa (ex: Kickoff, Pixel & Tracking)" value={newStage} onChange={(e) => setNewStage(e.target.value)} />
+        <Button size="sm" onClick={addStage}><Plus className="h-4 w-4" /> Etapa</Button>
+      </div>
+      {(stages.data ?? []).length === 0 && <div className="text-xs text-muted-foreground">Sem etapas.</div>}
+      {(stages.data ?? []).map((s) => (
+        <div key={s.id} className="rounded-md border bg-background p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="font-medium text-sm">{s.name}</div>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => delStage(s.id)}><Trash2 className="h-3 w-3" /></Button>
+          </div>
+          <div className="space-y-1">
+            {(tasks.data ?? []).filter((t) => t.stage_id === s.id).map((t) => (
+              <div key={t.id} className="flex items-center gap-2 text-sm">
+                <span className="flex-1">{t.title}</span>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => delTask(t.id)}><Trash2 className="h-3 w-3" /></Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Input placeholder="Nova tarefa" value={taskInputs[s.id] ?? ""} onChange={(e) => setTaskInputs({ ...taskInputs, [s.id]: e.target.value })} />
+            <Button size="sm" variant="outline" onClick={() => addTask(s.id)}><Plus className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
