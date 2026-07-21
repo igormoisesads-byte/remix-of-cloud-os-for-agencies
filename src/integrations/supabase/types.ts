@@ -488,6 +488,7 @@ export type Database = {
           niche_id: string | null
           notes: string | null
           onboarding_template_id: string | null
+          optimization_frequency: string | null
           performance_user_id: string | null
           plan_id: string | null
           platform: string | null
@@ -523,6 +524,7 @@ export type Database = {
           niche_id?: string | null
           notes?: string | null
           onboarding_template_id?: string | null
+          optimization_frequency?: string | null
           performance_user_id?: string | null
           plan_id?: string | null
           platform?: string | null
@@ -558,6 +560,7 @@ export type Database = {
           niche_id?: string | null
           notes?: string | null
           onboarding_template_id?: string | null
+          optimization_frequency?: string | null
           performance_user_id?: string | null
           plan_id?: string | null
           platform?: string | null
