@@ -315,6 +315,34 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
 
           {step === 1 && (
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label>Responsável pelo contrato (nome)</Label>
+                <Input value={form.responsavel_nome} onChange={(e) => setForm({ ...form, responsavel_nome: e.target.value })} placeholder="Nome do decisor" />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone do responsável</Label>
+                <Input value={form.responsavel_telefone} onChange={(e) => setForm({ ...form, responsavel_telefone: e.target.value })} placeholder="(11) 90000-0000" />
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail do responsável</Label>
+                <Input type="email" value={form.responsavel_email} onChange={(e) => setForm({ ...form, responsavel_email: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Instagram do cliente</Label>
+                <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@marca" />
+              </div>
+              <div className="space-y-2">
+                <Label>Investimento mensal em mídia (R$)</Label>
+                <Input type="number" step="0.01" value={form.investimento_mensal} onChange={(e) => setForm({ ...form, investimento_mensal: e.target.value })} />
+              </div>
+              <div className="col-span-2 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                Estes dados compõem o <b>BI (briefing interno)</b> do cliente e ficam disponíveis na página do cliente.
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Responsável Performance</Label>
                 <Select value={form.performance_user_id} onValueChange={(v) => setForm({ ...form, performance_user_id: v })}>
@@ -336,7 +364,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
                 <Label>Plano contratado</Label>
@@ -359,18 +387,24 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               </div>
               <div className="space-y-2"><Label>Início do contrato</Label><Input type="date" value={form.contract_start} onChange={(e) => setForm({ ...form, contract_start: e.target.value })} /></div>
               <div className="space-y-2"><Label>Fim do contrato</Label><Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Tempo do contrato (meses)</Label><Input type="number" min="1" value={form.tempo_contrato_meses} onChange={(e) => setForm({ ...form, tempo_contrato_meses: e.target.value })} /></div>
+              <div className="space-y-2"><Label>1º vencimento</Label><Input type="date" value={form.primeiro_vencimento} onChange={(e) => setForm({ ...form, primeiro_vencimento: e.target.value })} /></div>
             </div>
           )}
 
-          {step === 3 && !isLaunch && (
+          {step === 4 && !isLaunch && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Mensalidade (R$)</Label><Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} />{form.plan_id && <p className="text-xs text-muted-foreground">Preenchido pelo plano — pode ajustar.</p>}</div>
               <div className="space-y-2"><Label>Dia de vencimento</Label><Input type="number" min="1" max="31" value={form.monthly_fee_day} onChange={(e) => setForm({ ...form, monthly_fee_day: e.target.value })} /></div>
+              <div className="col-span-2 rounded-md border bg-muted/30 p-3 text-xs">
+                Valor total do contrato:{" "}
+                <b>{brl((Number(form.monthly_fee_amount) || 0) * (Number(form.tempo_contrato_meses) || 0))}</b>
+              </div>
               <div className="col-span-2 space-y-2"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
           )}
 
-          {step === 3 && isLaunch && (
+          {step === 4 && isLaunch && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>% de comissão negociada</Label>
@@ -396,19 +430,23 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="space-y-3 text-sm">
               <ReviewRow k="Nome" v={form.name} />
               <ReviewRow k="Tipo" v={TYPE_LABEL[form.type]} />
               <ReviewRow k="Nicho" v={niches.find((n) => n.id === form.niche_id)?.name || "—"} />
               <ReviewRow k="Template onboarding" v={templates.find((t) => t.id === form.onboarding_template_id)?.name || "—"} />
+              <ReviewRow k="Responsável" v={[form.responsavel_nome, form.responsavel_telefone, form.responsavel_email].filter(Boolean).join(" · ") || "—"} />
+              <ReviewRow k="Instagram" v={form.instagram || "—"} />
               <ReviewRow k="Performance / CS" v={`${profiles.find((p) => p.id === form.performance_user_id)?.full_name || "—"} · ${profiles.find((p) => p.id === form.cs_user_id)?.full_name || "—"}`} />
               <ReviewRow k="Site / Cidade" v={[form.site, form.city_uf].filter(Boolean).join(" · ") || "—"} />
               <ReviewRow k="Plano" v={plans.find((p) => p.id === form.plan_id)?.name || "—"} />
-              <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"}`} />
+              <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"} (${form.tempo_contrato_meses || "—"} meses)`} />
+              <ReviewRow k="Investimento mensal" v={form.investimento_mensal ? brl(Number(form.investimento_mensal)) : "—"} />
               {!isLaunch
                 ? <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
                 : <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />}
+              <ReviewRow k="Valor total" v={brl((Number(form.monthly_fee_amount) || 0) * (Number(form.tempo_contrato_meses) || 0))} />
             </div>
           )}
         </div>
