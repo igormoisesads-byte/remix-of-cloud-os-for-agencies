@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,16 @@ import { Search } from "lucide-react";
 import { NewClientWizard } from "@/components/new-client-wizard";
 
 export const Route = createFileRoute("/_authenticated/clientes/")({
+  head: () => ({
+    meta: [
+      { title: "Clientes — CloudOS" },
+      { name: "description", content: "Carteira de clientes, contratos e status da agência no CloudOS." },
+      { property: "og:title", content: "Clientes — CloudOS" },
+      { property: "og:description", content: "Gerencie clientes, contratos e status da agência." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ClientesList,
 });
 
@@ -21,6 +31,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "dest
 
 function ClientesList() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["clients"],
@@ -75,11 +86,23 @@ function ClientesList() {
                 </TableCell></TableRow>
               )}
               {filtered.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer">
+                <TableRow
+                  key={c.id}
+                  tabIndex={0}
+                  role="button"
+                  onClick={() => navigate({ to: "/clientes/$id", params: { id: c.id } })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate({ to: "/clientes/$id", params: { id: c.id } });
+                    }
+                  }}
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
+                >
                   <TableCell>
-                    <Link to="/clientes/$id" params={{ id: c.id }} className="font-medium hover:text-primary">
+                    <span className="font-medium hover:text-primary">
                       {c.name}
-                    </Link>
+                    </span>
                     {c.site && <div className="text-xs text-muted-foreground">{c.site}</div>}
                   </TableCell>
                   <TableCell><Badge variant="outline">{TYPE_LABEL[c.type]}</Badge></TableCell>
