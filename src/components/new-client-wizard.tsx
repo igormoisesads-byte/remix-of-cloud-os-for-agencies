@@ -44,6 +44,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     monthly_fee_amount: "", monthly_fee_day: "5",
     primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
     launch_commission_pct: "",
+    optimization_frequency: "2s",
     notes: "",
   });
 
@@ -74,7 +75,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       performance_user_id: "", cs_user_id: "", plan_id: "",
       contract_start: "", contract_end: "", monthly_fee_amount: "", monthly_fee_day: "5",
       primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
-      launch_commission_pct: "", notes: "",
+      launch_commission_pct: "", optimization_frequency: "2s", notes: "",
     });
   }
 
@@ -130,6 +131,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       monthly_fee_amount: form.monthly_fee_amount ? Number(form.monthly_fee_amount) : null,
       monthly_fee_day: form.monthly_fee_day ? Number(form.monthly_fee_day) : null,
       launch_commission_pct: isLaunch && form.launch_commission_pct ? Number(form.launch_commission_pct) : null,
+      optimization_frequency: form.optimization_frequency || null,
       notes: form.notes || null,
       created_by: user.id,
       status: "onboarding",
@@ -212,9 +214,55 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       if (fees.length) await supabase.from("monthly_fees").insert(fees);
     }
 
+    // Gerar tarefas recorrentes de otimização (Full/Light) conforme a frequência
+    if (form.optimization_frequency) {
+      const freqMap: Record<string, { full: number; light: number; label: string }> = {
+        "2s": { full: 1, light: 4, label: "2S (Seg/Qui)" },   // Segunda Full · Quinta Light
+        "3s": { full: 2, light: 5, label: "3S (Ter/Sex)" },   // Terça Full · Sexta Light
+        "4s": { full: 3, light: 6, label: "4S (Qua/Sáb)" },   // Quarta Full · Sábado Light
+      };
+      const cfg = freqMap[form.optimization_frequency];
+      if (cfg) {
+        const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+        const end = form.contract_end
+          ? new Date(form.contract_end + "T00:00:00")
+          : new Date(start.getTime() + 90 * 86400000); // padrão: 90 dias
+        const assignee = form.performance_user_id || user.id;
+        const optTasks: any[] = [];
+        const cur = new Date(start);
+        let pos = 0;
+        while (cur <= end) {
+          const dow = cur.getDay();
+          if (dow === cfg.full || dow === cfg.light) {
+            const isFull = dow === cfg.full;
+            const dateStr = cur.toISOString().slice(0, 10);
+            optTasks.push({
+              title: `Otimização ${isFull ? "FULL" : "LIGHT"} · ${form.name}`,
+              description: isFull
+                ? "Análise completa da conta: campanhas, criativos, públicos, orçamento e resultados. Ajustes e testes."
+                : "Verificação rápida: entrega, leads, custos e alertas. Sinalizar se algo precisa de análise Full.",
+              status: "todo",
+              priority: isFull ? "alta" : "media",
+              kind: "rotina",
+              client_id: client.id,
+              assignee_id: assignee,
+              created_by: user.id,
+              due_date: dateStr,
+              position: pos++,
+            });
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+        // Insere em lotes de 200 para não estourar o payload
+        for (let i = 0; i < optTasks.length; i += 200) {
+          await supabase.from("tasks").insert(optTasks.slice(i, i + 200));
+        }
+      }
+    }
+
     await supabase.from("client_activities").insert({
       client_id: client.id, user_id: user.id,
-      action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}${form.monthly_fee_amount ? ` · Mensalidades geradas` : ""}`,
+      action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}${form.optimization_frequency ? ` · Otimização ${form.optimization_frequency.toUpperCase()}` : ""}${form.monthly_fee_amount ? ` · Mensalidades geradas` : ""}`,
       entity_type: "client", entity_id: client.id,
     });
 
@@ -389,6 +437,27 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               <div className="space-y-2"><Label>Fim do contrato</Label><Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} /></div>
               <div className="space-y-2"><Label>Tempo do contrato (meses)</Label><Input type="number" min="1" value={form.tempo_contrato_meses} onChange={(e) => setForm({ ...form, tempo_contrato_meses: e.target.value })} /></div>
               <div className="space-y-2"><Label>1º vencimento</Label><Input type="date" value={form.primeiro_vencimento} onChange={(e) => setForm({ ...form, primeiro_vencimento: e.target.value })} /></div>
+              <div className="col-span-2 space-y-2">
+                <Label>Frequência de otimização</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { v: "2s", t: "2S", d: "Seg (Full) · Qui (Light)" },
+                    { v: "3s", t: "3S", d: "Ter (Full) · Sex (Light)" },
+                    { v: "4s", t: "4S", d: "Qua (Full) · Sáb (Light)" },
+                  ].map((o) => (
+                    <button key={o.v} type="button"
+                      onClick={() => setForm({ ...form, optimization_frequency: o.v })}
+                      className={cn(
+                        "rounded-md border p-3 text-left transition",
+                        form.optimization_frequency === o.v ? "border-primary bg-primary/5" : "hover:bg-accent"
+                      )}>
+                      <div className="font-semibold text-sm">{o.t}</div>
+                      <div className="text-xs text-muted-foreground">{o.d}</div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Gera automaticamente as tarefas recorrentes de otimização para toda a duração do contrato. A 1ª da semana é <b>Full</b> (análise completa), a 2ª é <b>Light</b> (verificação rápida).</p>
+              </div>
             </div>
           )}
 
@@ -443,6 +512,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               <ReviewRow k="Plano" v={plans.find((p) => p.id === form.plan_id)?.name || "—"} />
               <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"} (${form.tempo_contrato_meses || "—"} meses)`} />
               <ReviewRow k="Investimento mensal" v={form.investimento_mensal ? brl(Number(form.investimento_mensal)) : "—"} />
+              <ReviewRow k="Otimização" v={form.optimization_frequency ? form.optimization_frequency.toUpperCase() : "—"} />
               {!isLaunch
                 ? <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
                 : <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />}
