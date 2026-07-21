@@ -1296,6 +1296,205 @@ export type Database = {
         }
         Relationships: []
       }
+      role_analises: {
+        Row: {
+          analise: string
+          created_at: string
+          id: string
+          ordem: number
+          template_id: string
+        }
+        Insert: {
+          analise: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          template_id: string
+        }
+        Update: {
+          analise?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_analises_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_attribuicoes: {
+        Row: {
+          created_at: string
+          descricao: string
+          id: string
+          ordem: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          id?: string
+          ordem?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          id?: string
+          ordem?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_attribuicoes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_kpis: {
+        Row: {
+          created_at: string
+          id: string
+          kpi: string
+          ordem: number
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi: string
+          ordem?: number
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi?: string
+          ordem?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_kpis_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_reunioes: {
+        Row: {
+          created_at: string
+          id: string
+          ordem: number
+          periodicidade: string
+          template_id: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordem?: number
+          periodicidade: string
+          template_id: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordem?: number
+          periodicidade?: string
+          template_id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_reunioes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_rotinas: {
+        Row: {
+          created_at: string
+          entregavel: boolean
+          entregavel_desc: string | null
+          id: string
+          ordem: number
+          periodicidade: string
+          tarefa: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          entregavel?: boolean
+          entregavel_desc?: string | null
+          id?: string
+          ordem?: number
+          periodicidade: string
+          tarefa: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          entregavel?: boolean
+          entregavel_desc?: string | null
+          id?: string
+          ordem?: number
+          periodicidade?: string
+          tarefa?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_rotinas_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_templates: {
+        Row: {
+          cargo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nivel: string | null
+          updated_at: string
+        }
+        Insert: {
+          cargo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nivel?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cargo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nivel?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_checklist_items: {
         Row: {
           created_at: string
