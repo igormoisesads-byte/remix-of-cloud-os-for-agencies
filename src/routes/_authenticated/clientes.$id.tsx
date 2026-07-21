@@ -17,12 +17,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import {
   ChevronLeft, Plus, Check, LayoutGrid, BarChart3, LineChart, Search, Repeat, HeartPulse,
   AlertTriangle, Star, FileText, Calendar, Video, ImageIcon, Key, ListChecks, ClipboardList,
-  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook,
+  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { syncAdAccount } from "@/lib/ads.functions";
+import { generateAiReport } from "@/lib/reports.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import ReactMarkdown from "react-markdown";
 
 const clientQueryOptions = (id: string) =>
   queryOptions({
@@ -816,10 +818,12 @@ function Nps({ clientId }: { clientId: string }) {
 function Relatorios({ clientId }: { clientId: string }) {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const genFn = useServerFn(generateAiReport);
   const q = useQuery({
     queryKey: ["reports", clientId],
     queryFn: async () => (await supabase.from("client_reports").select("*").eq("client_id", clientId).order("created_at", { ascending: false })).data ?? [],
   });
+
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: "", kind: "mensal", period_start: "", period_end: "", url: "", notes: "" });
   async function submit() {
@@ -829,49 +833,148 @@ function Relatorios({ clientId }: { clientId: string }) {
     setOpen(false); setForm({ title: "", kind: "mensal", period_start: "", period_end: "", url: "", notes: "" });
     qc.invalidateQueries({ queryKey: ["reports", clientId] });
   }
+
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiForm, setAiForm] = useState({
+    kind: "mensal" as "semanal" | "mensal" | "total",
+    period_start: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
+    period_end: new Date().toISOString().slice(0, 10),
+    extra: "",
+  });
+  const [aiBusy, setAiBusy] = useState(false);
+  async function genAi() {
+    setAiBusy(true);
+    try {
+      await genFn({ data: { clientId, ...aiForm } });
+      toast.success("Relatório gerado com IA");
+      setAiOpen(false);
+      qc.invalidateQueries({ queryKey: ["reports", clientId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  const [viewing, setViewing] = useState<any | null>(null);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Relatórios</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4" /> Relatório</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Novo relatório</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-2"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-2"><Label>Tipo</Label>
-                  <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="semanal">Semanal</SelectItem><SelectItem value="mensal">Mensal</SelectItem><SelectItem value="total">Total</SelectItem></SelectContent>
-                  </Select>
+        <div>
+          <CardTitle className="text-base">Relatórios</CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">Semanais, mensais e totais — gerados por IA (GPT-5.4-nano) com base nos dados de anúncios.</p>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="default"><Sparkles className="h-4 w-4" /> Gerar com IA</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Relatório com IA</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2"><Label>Tipo</Label>
+                    <Select value={aiForm.kind} onValueChange={(v: any) => setAiForm({ ...aiForm, kind: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="semanal">Semanal</SelectItem>
+                        <SelectItem value="mensal">Mensal</SelectItem>
+                        <SelectItem value="total">Total</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Início</Label><Input type="date" value={aiForm.period_start} onChange={(e) => setAiForm({ ...aiForm, period_start: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Fim</Label><Input type="date" value={aiForm.period_end} onChange={(e) => setAiForm({ ...aiForm, period_end: e.target.value })} /></div>
                 </div>
-                <div className="space-y-2"><Label>Início</Label><Input type="date" value={form.period_start} onChange={(e) => setForm({ ...form, period_start: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Fim</Label><Input type="date" value={form.period_end} onChange={(e) => setForm({ ...form, period_end: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>Observações do gestor (opcional)</Label>
+                  <Textarea rows={3} placeholder="Contexto extra: campanhas ativas, promoções, mudanças recentes…" value={aiForm.extra} onChange={(e) => setAiForm({ ...aiForm, extra: e.target.value })} />
+                </div>
+                <p className="text-xs text-muted-foreground">A IA usa dados sincronizados de Meta/Google Ads no período. Se não houver dados, ela vai avisar no relatório.</p>
               </div>
-              <div className="space-y-2"><Label>URL (Drive/PDF)</Label><Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Notas</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-            </div>
-            <DialogFooter><Button onClick={submit}>Salvar</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAiOpen(false)} disabled={aiBusy}>Cancelar</Button>
+                <Button onClick={genAi} disabled={aiBusy}>
+                  {aiBusy ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando…</> : <><Sparkles className="h-4 w-4" /> Gerar</>}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="h-4 w-4" /> Manual</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Novo relatório</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div className="space-y-2"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2"><Label>Tipo</Label>
+                    <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="semanal">Semanal</SelectItem><SelectItem value="mensal">Mensal</SelectItem><SelectItem value="total">Total</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Início</Label><Input type="date" value={form.period_start} onChange={(e) => setForm({ ...form, period_start: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Fim</Label><Input type="date" value={form.period_end} onChange={(e) => setForm({ ...form, period_end: e.target.value })} /></div>
+                </div>
+                <div className="space-y-2"><Label>URL (Drive/PDF)</Label><Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Notas</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              </div>
+              <DialogFooter><Button onClick={submit}>Salvar</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Título</TableHead><TableHead>Período</TableHead><TableHead>Link</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Tipo</TableHead><TableHead>Título</TableHead><TableHead>Período</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
           <TableBody>
-            {(q.data ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sem relatórios</TableCell></TableRow>}
+            {(q.data ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sem relatórios. Gere o primeiro com IA.</TableCell></TableRow>}
             {(q.data ?? []).map((r: any) => (
               <TableRow key={r.id}>
-                <TableCell><Badge variant="outline">{r.kind}</Badge></TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline">{r.kind}</Badge>
+                    {r.ai_content && <Badge variant="secondary" className="gap-1"><Sparkles className="h-3 w-3" /> IA</Badge>}
+                  </div>
+                </TableCell>
                 <TableCell className="font-medium">{r.title}</TableCell>
                 <TableCell>{fmtDate(r.period_start)} → {fmtDate(r.period_end)}</TableCell>
-                <TableCell>{r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="text-primary text-sm inline-flex items-center gap-1">Abrir <ExternalLink className="h-3 w-3" /></a> : "—"}</TableCell>
+                <TableCell className="text-right">
+                  {r.ai_content ? (
+                    <Button size="sm" variant="ghost" onClick={() => setViewing(r)}>Ver</Button>
+                  ) : r.url ? (
+                    <a href={r.url} target="_blank" rel="noreferrer" className="text-primary text-sm inline-flex items-center gap-1">Abrir <ExternalLink className="h-3 w-3" /></a>
+                  ) : "—"}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </CardContent>
+
+      {viewing && (
+        <Dialog open onOpenChange={(v) => !v && setViewing(null)}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> {viewing.title}
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground">Gerado por {viewing.ai_model} · {fmtDate(viewing.ai_generated_at)}</p>
+            </DialogHeader>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <ReactMarkdown>{viewing.ai_content}</ReactMarkdown>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { navigator.clipboard.writeText(viewing.ai_content); toast.success("Copiado"); }}>Copiar markdown</Button>
+              <Button onClick={() => setViewing(null)}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 }
