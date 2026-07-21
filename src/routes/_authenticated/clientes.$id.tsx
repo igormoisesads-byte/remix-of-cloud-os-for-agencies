@@ -24,7 +24,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncAdAccount } from "@/lib/ads.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
+const clientQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["client", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*, niches(name), perf:profiles!clients_performance_user_id_fkey(full_name), cs:profiles!clients_cs_user_id_fkey(full_name)")
+        .eq("id", id).single();
+      if (error) throw error;
+      return data as any;
+    },
+    staleTime: 60_000,
+  });
+
 export const Route = createFileRoute("/_authenticated/clientes/$id")({
+  loader: ({ context, params }) => context.queryClient.ensureQueryData(clientQueryOptions(params.id)),
   component: ClienteDetail,
 });
 
