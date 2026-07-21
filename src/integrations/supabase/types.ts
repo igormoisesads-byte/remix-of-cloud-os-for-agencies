@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_accounts: {
+        Row: {
+          access_token: string | null
+          account_id: string
+          account_name: string | null
+          active: boolean
+          client_id: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          provider: string
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_id: string
+          account_name?: string | null
+          active?: boolean
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          provider: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string
+          account_name?: string | null
+          active?: boolean
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          provider?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_insights: {
+        Row: {
+          ad_account_id: string
+          clicks: number
+          cpc: number | null
+          cpm: number | null
+          created_at: string
+          ctr: number | null
+          date: string
+          id: string
+          impressions: number
+          raw: Json | null
+          reach: number
+          results: number
+          spend: number
+          updated_at: string
+        }
+        Insert: {
+          ad_account_id: string
+          clicks?: number
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          date: string
+          id?: string
+          impressions?: number
+          raw?: Json | null
+          reach?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_account_id?: string
+          clicks?: number
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          date?: string
+          id?: string
+          impressions?: number
+          raw?: Json | null
+          reach?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_insights_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_members: {
         Row: {
           channel_id: string
