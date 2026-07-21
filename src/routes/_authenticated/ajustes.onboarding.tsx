@@ -16,10 +16,10 @@ export const Route = createFileRoute("/_authenticated/ajustes/onboarding")({
   component: OnboardingConfigPage,
 });
 
-type Niche = { id: string; name: string };
+type Niche = { id: string; name: string; sigla: string | null };
 type Template = { id: string; niche_id: string; name: string; description: string | null };
-type Stage = { id: string; template_id: string; name: string; position: number };
-type TemplateTask = { id: string; stage_id: string; title: string; description: string | null; position: number };
+type Stage = { id: string; template_id: string; name: string; position: number; prazo_dias: number | null };
+type TemplateTask = { id: string; stage_id: string; title: string; description: string | null; position: number; prazo_dias: number | null };
 
 function OnboardingConfigPage() {
   const qc = useQueryClient();
@@ -82,6 +82,7 @@ function OnboardingConfigPage() {
               active={selectedNiche === n.id}
               onClick={() => pickNiche(n.id)}
               title={n.name}
+              subtitle={n.sigla ? `Sigla: ${n.sigla}` : undefined}
               badge={templateCountByNiche[n.id] ?? 0}
               onDelete={async () => {
                 if (!confirm("Excluir este nicho e todos os templates?")) return;
@@ -228,16 +229,18 @@ function Empty({ label, hint }: { label: string; hint?: string }) {
 function NicheDialog({ onSaved }: { onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [sigla, setSigla] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     if (!name.trim()) return;
+    const finalSigla = (sigla || name).replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase();
     setBusy(true);
-    const { error } = await supabase.from("niches").insert({ name: name.trim() });
+    const { error } = await supabase.from("niches").insert({ name: name.trim(), sigla: finalSigla });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Nicho criado");
-    setName(""); setOpen(false); onSaved();
+    setName(""); setSigla(""); setOpen(false); onSaved();
   }
 
   return (
@@ -247,9 +250,16 @@ function NicheDialog({ onSaved }: { onSaved: () => void }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Novo nicho</DialogTitle></DialogHeader>
-        <div className="space-y-2">
-          <Label>Nome do nicho</Label>
-          <Input placeholder="Ex: Estética, Odontologia, E-commerce" value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>Nome do nicho</Label>
+            <Input placeholder="Ex: Estética, Odontologia, E-commerce" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Sigla (3 letras) — usada no código do cliente</Label>
+            <Input maxLength={3} placeholder="Ex: EST" value={sigla} onChange={(e) => setSigla(e.target.value.toUpperCase())} />
+            <p className="text-xs text-muted-foreground">Ex: <b>EST-2607-0001</b>. Se em branco, geramos das 3 primeiras letras do nome.</p>
+          </div>
         </div>
         <DialogFooter><Button onClick={submit} disabled={busy}>{busy ? "Salvando…" : "Criar"}</Button></DialogFooter>
       </DialogContent>
@@ -400,6 +410,23 @@ function StagesEditor({ templateId, templateName }: { templateId: string; templa
                   {idx + 1}
                 </div>
                 <div className="flex-1 font-medium text-sm">{s.name}</div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>Prazo</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    defaultValue={s.prazo_dias ?? ""}
+                    onBlur={async (e) => {
+                      const v = e.target.value ? Number(e.target.value) : null;
+                      if (v === (s.prazo_dias ?? null)) return;
+                      await supabase.from("onboarding_template_stages").update({ prazo_dias: v }).eq("id", s.id);
+                      invalidate();
+                    }}
+                    className="h-7 w-16 text-xs"
+                    placeholder="—"
+                  />
+                  <span>dias</span>
+                </div>
                 <Badge variant="secondary" className="text-[10px]">{stageTasks.length} tarefas</Badge>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => delStage(s.id)}>
                   <Trash2 className="h-3.5 w-3.5" />
@@ -413,6 +440,20 @@ function StagesEditor({ templateId, templateName }: { templateId: string; templa
                   <div key={t.id} className="flex items-center gap-2 text-sm rounded-md border px-2.5 py-1.5 bg-background">
                     <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
                     <span className="flex-1 truncate">{t.title}</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      defaultValue={t.prazo_dias ?? ""}
+                      onBlur={async (e) => {
+                        const v = e.target.value ? Number(e.target.value) : null;
+                        if (v === (t.prazo_dias ?? null)) return;
+                        await supabase.from("onboarding_template_tasks").update({ prazo_dias: v }).eq("id", t.id);
+                        invalidate();
+                      }}
+                      className="h-6 w-14 text-xs"
+                      placeholder="prazo"
+                    />
+                    <span className="text-[10px] text-muted-foreground">d</span>
                     <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => delTask(t.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>

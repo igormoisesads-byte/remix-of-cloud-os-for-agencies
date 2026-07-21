@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus, Trash2, MessageSquare, Filter, Paperclip, Calendar, User, Tag,
-  AlignLeft, Building2, X, FileText, Image as ImageIcon, Download,
+  AlignLeft, Building2, X, FileText, Image as ImageIcon, Download, CheckSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -291,6 +291,28 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     queryKey: ["task-comments", taskId],
     queryFn: async () => (await supabase.from("task_comments").select("*, profiles(full_name)").eq("task_id", taskId).order("created_at")).data ?? [],
   });
+  const checklist = useQuery({
+    queryKey: ["task-checklist", taskId],
+    queryFn: async () => (await supabase.from("task_checklist_items").select("*").eq("task_id", taskId).order("position")).data ?? [],
+  });
+  const [newChkTitle, setNewChkTitle] = useState("");
+  async function addChk() {
+    const title = newChkTitle.trim();
+    if (!title) return;
+    const pos = (checklist.data ?? []).length;
+    const { error } = await supabase.from("task_checklist_items").insert({ task_id: taskId, title, position: pos });
+    if (error) return toast.error(error.message);
+    setNewChkTitle("");
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+  }
+  async function toggleChk(id: string, done: boolean) {
+    await supabase.from("task_checklist_items").update({ done, done_at: done ? new Date().toISOString() : null }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+  }
+  async function delChk(id: string) {
+    await supabase.from("task_checklist_items").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+  }
 
   const t = task.data;
   async function patch(fields: any) {
@@ -379,6 +401,58 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                     {t.description || <span className="text-muted-foreground">Adicionar uma descrição mais detalhada…</span>}
                   </button>
                 )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <CheckSquare className="h-4 w-4" /> Checklist
+                    {(checklist.data ?? []).length > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {(checklist.data ?? []).filter((c: any) => c.done).length}/{(checklist.data ?? []).length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {(checklist.data ?? []).length > 0 && (
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all"
+                      style={{
+                        width: `${
+                          ((checklist.data ?? []).filter((c: any) => c.done).length /
+                            Math.max(1, (checklist.data ?? []).length)) * 100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  {(checklist.data ?? []).map((it: any) => (
+                    <div key={it.id} className="group flex items-center gap-2 text-sm rounded-md hover:bg-muted/50 px-2 py-1">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-primary cursor-pointer"
+                        checked={!!it.done}
+                        onChange={(e) => toggleChk(it.id, e.target.checked)}
+                      />
+                      <span className={cn("flex-1", it.done && "line-through text-muted-foreground")}>{it.title}</span>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => delChk(it.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Adicionar item de checklist…"
+                    value={newChkTitle}
+                    onChange={(e) => setNewChkTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addChk()}
+                    className="h-8"
+                  />
+                  <Button size="sm" variant="outline" onClick={addChk}><Plus className="h-3.5 w-3.5" /></Button>
+                </div>
               </div>
 
               <div className="space-y-3">
