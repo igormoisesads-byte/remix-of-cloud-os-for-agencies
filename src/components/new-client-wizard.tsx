@@ -214,9 +214,55 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       if (fees.length) await supabase.from("monthly_fees").insert(fees);
     }
 
+    // Gerar tarefas recorrentes de otimização (Full/Light) conforme a frequência
+    if (form.optimization_frequency) {
+      const freqMap: Record<string, { full: number; light: number; label: string }> = {
+        "2s": { full: 1, light: 4, label: "2S (Seg/Qui)" },   // Segunda Full · Quinta Light
+        "3s": { full: 2, light: 5, label: "3S (Ter/Sex)" },   // Terça Full · Sexta Light
+        "4s": { full: 3, light: 6, label: "4S (Qua/Sáb)" },   // Quarta Full · Sábado Light
+      };
+      const cfg = freqMap[form.optimization_frequency];
+      if (cfg) {
+        const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+        const end = form.contract_end
+          ? new Date(form.contract_end + "T00:00:00")
+          : new Date(start.getTime() + 90 * 86400000); // padrão: 90 dias
+        const assignee = form.performance_user_id || user.id;
+        const optTasks: any[] = [];
+        const cur = new Date(start);
+        let pos = 0;
+        while (cur <= end) {
+          const dow = cur.getDay();
+          if (dow === cfg.full || dow === cfg.light) {
+            const isFull = dow === cfg.full;
+            const dateStr = cur.toISOString().slice(0, 10);
+            optTasks.push({
+              title: `Otimização ${isFull ? "FULL" : "LIGHT"} · ${form.name}`,
+              description: isFull
+                ? "Análise completa da conta: campanhas, criativos, públicos, orçamento e resultados. Ajustes e testes."
+                : "Verificação rápida: entrega, leads, custos e alertas. Sinalizar se algo precisa de análise Full.",
+              status: "todo",
+              priority: isFull ? "alta" : "media",
+              kind: "rotina",
+              client_id: client.id,
+              assignee_id: assignee,
+              created_by: user.id,
+              due_date: dateStr,
+              position: pos++,
+            });
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+        // Insere em lotes de 200 para não estourar o payload
+        for (let i = 0; i < optTasks.length; i += 200) {
+          await supabase.from("tasks").insert(optTasks.slice(i, i + 200));
+        }
+      }
+    }
+
     await supabase.from("client_activities").insert({
       client_id: client.id, user_id: user.id,
-      action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}${form.monthly_fee_amount ? ` · Mensalidades geradas` : ""}`,
+      action: "Cliente criado", description: `Tipo: ${TYPE_LABEL[form.type]}${form.optimization_frequency ? ` · Otimização ${form.optimization_frequency.toUpperCase()}` : ""}${form.monthly_fee_amount ? ` · Mensalidades geradas` : ""}`,
       entity_type: "client", entity_id: client.id,
     });
 
