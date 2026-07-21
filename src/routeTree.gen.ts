@@ -20,6 +20,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
+import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as ApiPublicHooksSyncAdsRouteImport } from './routes/api/public/hooks/sync-ads'
 
@@ -78,6 +79,12 @@ const AuthenticatedClientesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedClientesRoute,
   } as any)
+const AuthenticatedAjustesIndexRoute =
+  AuthenticatedAjustesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -92,7 +99,7 @@ const ApiPublicHooksSyncAdsRoute = ApiPublicHooksSyncAdsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/ajustes': typeof AuthenticatedAjustesRoute
+  '/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/equipe': typeof AuthenticatedEquipeRoute
@@ -100,19 +107,20 @@ export interface FileRoutesByFullPath {
   '/hoje': typeof AuthenticatedHojeRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/ajustes': typeof AuthenticatedAjustesRoute
   '/chat': typeof AuthenticatedChatRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/ajustes': typeof AuthenticatedAjustesIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
@@ -121,7 +129,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/ajustes': typeof AuthenticatedAjustesRoute
+  '/_authenticated/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated/hoje': typeof AuthenticatedHojeRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
@@ -145,19 +154,20 @@ export interface FileRouteTypes {
     | '/hoje'
     | '/operacoes'
     | '/clientes/$id'
+    | '/ajustes/'
     | '/clientes/'
     | '/api/public/hooks/sync-ads'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/ajustes'
     | '/chat'
     | '/equipe'
     | '/financeiro'
     | '/hoje'
     | '/operacoes'
     | '/clientes/$id'
+    | '/ajustes'
     | '/clientes'
     | '/api/public/hooks/sync-ads'
   id:
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hoje'
     | '/_authenticated/operacoes'
     | '/_authenticated/clientes/$id'
+    | '/_authenticated/ajustes/'
     | '/_authenticated/clientes/'
     | '/api/public/hooks/sync-ads'
   fileRoutesById: FileRoutesById
@@ -263,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesIndexRouteImport
       parentRoute: typeof AuthenticatedClientesRoute
     }
+    '/_authenticated/ajustes/': {
+      id: '/_authenticated/ajustes/'
+      path: '/'
+      fullPath: '/ajustes/'
+      preLoaderRoute: typeof AuthenticatedAjustesIndexRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
       path: '/$id'
@@ -280,6 +298,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAjustesRouteChildren {
+  AuthenticatedAjustesIndexRoute: typeof AuthenticatedAjustesIndexRoute
+}
+
+const AuthenticatedAjustesRouteChildren: AuthenticatedAjustesRouteChildren = {
+  AuthenticatedAjustesIndexRoute: AuthenticatedAjustesIndexRoute,
+}
+
+const AuthenticatedAjustesRouteWithChildren =
+  AuthenticatedAjustesRoute._addFileChildren(AuthenticatedAjustesRouteChildren)
+
 interface AuthenticatedClientesRouteChildren {
   AuthenticatedClientesIdRoute: typeof AuthenticatedClientesIdRoute
   AuthenticatedClientesIndexRoute: typeof AuthenticatedClientesIndexRoute
@@ -296,7 +325,7 @@ const AuthenticatedClientesRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAjustesRoute: typeof AuthenticatedAjustesRoute
+  AuthenticatedAjustesRoute: typeof AuthenticatedAjustesRouteWithChildren
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
@@ -306,7 +335,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAjustesRoute: AuthenticatedAjustesRoute,
+  AuthenticatedAjustesRoute: AuthenticatedAjustesRouteWithChildren,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
