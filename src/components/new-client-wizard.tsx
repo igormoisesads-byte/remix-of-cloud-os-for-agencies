@@ -95,7 +95,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     setForm((f) => ({ ...f, plan_id: id, monthly_fee_amount: p?.amount ? String(p.amount) : f.monthly_fee_amount }));
   }
 
-  const steps = ["Cadastro", "Responsáveis", "Contrato", isLaunch ? "Comissão" : "Financeiro", "Revisão"];
+  const steps = ["Cadastro", "Briefing (BI)", "Responsáveis", "Contrato", isLaunch ? "Comissão" : "Financeiro", "Revisão"];
 
   function canNext(): boolean {
     if (step === 0) return !!form.name.trim() && !!form.type;
