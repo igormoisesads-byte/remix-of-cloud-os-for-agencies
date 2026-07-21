@@ -228,16 +228,18 @@ function Empty({ label, hint }: { label: string; hint?: string }) {
 function NicheDialog({ onSaved }: { onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [sigla, setSigla] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     if (!name.trim()) return;
+    const finalSigla = (sigla || name).replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase();
     setBusy(true);
-    const { error } = await supabase.from("niches").insert({ name: name.trim() });
+    const { error } = await supabase.from("niches").insert({ name: name.trim(), sigla: finalSigla });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Nicho criado");
-    setName(""); setOpen(false); onSaved();
+    setName(""); setSigla(""); setOpen(false); onSaved();
   }
 
   return (
@@ -247,9 +249,16 @@ function NicheDialog({ onSaved }: { onSaved: () => void }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Novo nicho</DialogTitle></DialogHeader>
-        <div className="space-y-2">
-          <Label>Nome do nicho</Label>
-          <Input placeholder="Ex: Estética, Odontologia, E-commerce" value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>Nome do nicho</Label>
+            <Input placeholder="Ex: Estética, Odontologia, E-commerce" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Sigla (3 letras) — usada no código do cliente</Label>
+            <Input maxLength={3} placeholder="Ex: EST" value={sigla} onChange={(e) => setSigla(e.target.value.toUpperCase())} />
+            <p className="text-xs text-muted-foreground">Ex: <b>EST-2607-0001</b>. Se em branco, geramos das 3 primeiras letras do nome.</p>
+          </div>
         </div>
         <DialogFooter><Button onClick={submit} disabled={busy}>{busy ? "Salvando…" : "Criar"}</Button></DialogFooter>
       </DialogContent>
