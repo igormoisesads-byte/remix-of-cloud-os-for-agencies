@@ -235,38 +235,46 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-2">
-                {[
-                  ["Valor usado", brl(Number(selected.spend))],
-                  ["Alcance", intl(Number(selected.reach))],
-                  ["Impressões", intl(Number(selected.impressions))],
-                  ["Frequência", num(selected.frequency, 2)],
-                  ["CPP (mil alcançadas)", selected.cpp ? brl(Number(selected.cpp)) : "—"],
-                  ["CPM", selected.cpm ? brl(Number(selected.cpm)) : "—"],
-                  ["Cliques no link únicos", intl(Number(selected.unique_link_clicks))],
-                  ["CTR único", pct(selected.unique_link_ctr ? Number(selected.unique_link_ctr) : null)],
-                  ["CPC único", selected.unique_link_cpc ? brl(Number(selected.unique_link_cpc)) : "—"],
-                  ["Cliques saída únicos", intl(Number(selected.unique_outbound_clicks))],
-                  ["CTR saída único", pct(selected.unique_outbound_ctr ? Number(selected.unique_outbound_ctr) : null)],
-                  ["CPC saída único", selected.unique_outbound_cpc ? brl(Number(selected.unique_outbound_cpc)) : "—"],
-                  ["Visualizações página", intl(Number(selected.landing_page_views))],
-                  ["Custo por LPV", selected.cost_per_landing_page_view ? brl(Number(selected.cost_per_landing_page_view)) : "—"],
-                  ["Checkouts iniciados", intl(Number(selected.initiate_checkout))],
-                  ["Custo por checkout", selected.cost_per_initiate_checkout ? brl(Number(selected.cost_per_initiate_checkout)) : "—"],
-                  ["Valor checkouts", brl(Number(selected.initiate_checkout_value))],
-                  ["Compras", intl(Number(selected.purchases))],
-                  ["Custo por compra", selected.cost_per_purchase ? brl(Number(selected.cost_per_purchase)) : "—"],
-                  ["Valor de conversão", brl(Number(selected.purchase_value))],
-                  ["ROAS", num(selected.roas, 2)],
-                  ["Reproduções vídeo", intl(Number(selected.video_plays))],
-                  ["Reprodução 3s", intl(Number(selected.video_p3s))],
-                  ["Reprodução 75%", intl(Number(selected.video_p75))],
-                  ["Conversas iniciadas (WA)", intl(Number(selected.messaging_conversations_started))],
-                ].map(([k, v]) => (
-                  <div key={k as string} className="border rounded p-2">
-                    <div className="text-[10px] uppercase text-muted-foreground">{k}</div>
-                    <div className="font-semibold text-sm">{v}</div>
-                  </div>
-                ))}
+                {(() => {
+                  const isVideo = Number(selected.video_plays) > 0 || Number(selected.video_p3s) > 0;
+                  const isLocal = focus === "local";
+                  const rows: Array<[string, any] | null> = [
+                    ["Valor usado", brl(Number(selected.spend))],
+                    ["Alcance", intl(Number(selected.reach))],
+                    ["Impressões", intl(Number(selected.impressions))],
+                    ["Frequência", num(selected.frequency, 2)],
+                    ["CPP (mil alcançadas)", selected.cpp ? brl(Number(selected.cpp)) : "—"],
+                    ["CPM", selected.cpm ? brl(Number(selected.cpm)) : "—"],
+                    ["Cliques no link únicos", intl(Number(selected.unique_link_clicks))],
+                    ["CTR único", pct(selected.unique_link_ctr ? Number(selected.unique_link_ctr) : null)],
+                    ["CPC único", selected.unique_link_cpc ? brl(Number(selected.unique_link_cpc)) : "—"],
+                    ["Cliques saída únicos", intl(Number(selected.unique_outbound_clicks))],
+                    ["CTR saída único", pct(selected.unique_outbound_ctr ? Number(selected.unique_outbound_ctr) : null)],
+                    ["CPC saída único", selected.unique_outbound_cpc ? brl(Number(selected.unique_outbound_cpc)) : "—"],
+                    isLocal ? null : ["Visualizações página", intl(Number(selected.landing_page_views))],
+                    isLocal ? null : ["Custo por LPV", selected.cost_per_landing_page_view ? brl(Number(selected.cost_per_landing_page_view)) : "—"],
+                    isLocal ? null : ["Checkouts iniciados", intl(Number(selected.initiate_checkout))],
+                    isLocal ? null : ["Custo por checkout", selected.cost_per_initiate_checkout ? brl(Number(selected.cost_per_initiate_checkout)) : "—"],
+                    isLocal ? null : ["Valor checkouts", brl(Number(selected.initiate_checkout_value))],
+                    Number(selected.purchases) > 0 ? ["Compras", intl(Number(selected.purchases))] : null,
+                    Number(selected.purchases) > 0 && selected.cost_per_purchase ? ["Custo por compra", brl(Number(selected.cost_per_purchase))] : null,
+                    Number(selected.purchase_value) > 0 ? ["Valor de conversão", brl(Number(selected.purchase_value))] : null,
+                    Number(selected.purchase_value) > 0 ? ["ROAS", num(selected.roas, 2)] : null,
+                    isVideo ? ["Reproduções vídeo", intl(Number(selected.video_plays))] : null,
+                    isVideo ? ["Reprodução 3s", intl(Number(selected.video_p3s))] : null,
+                    isVideo ? ["Reprodução 75%", intl(Number(selected.video_p75))] : null,
+                    isLocal ? ["Conversas iniciadas (WA)", intl(Number(selected.messaging_conversations_started))] : null,
+                  ];
+                  return rows.filter(Boolean).map((row) => {
+                    const [k, v] = row as [string, any];
+                    return (
+                      <div key={k} className="border rounded p-2">
+                        <div className="text-[10px] uppercase text-muted-foreground">{k}</div>
+                        <div className="font-semibold text-sm">{v}</div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </>
           )}
