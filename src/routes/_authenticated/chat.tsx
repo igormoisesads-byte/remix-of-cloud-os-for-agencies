@@ -962,7 +962,8 @@ function AudioPlayer({ src }: { src: string }) {
       <audio
         ref={audioRef}
         src={src}
-        preload="metadata"
+        preload="auto"
+
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); setCurrent(0); }}
