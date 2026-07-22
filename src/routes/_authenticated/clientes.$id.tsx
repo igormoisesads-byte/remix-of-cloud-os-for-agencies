@@ -265,8 +265,12 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
   const { hasRole } = useAuth();
   const canManage = hasRole("admin") || hasRole("gestor");
   const syncFn = useServerFn(syncAdAccount);
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState<string>("30");
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncDialog, setSyncDialog] = useState<{ id: string; open: boolean }>({ id: "", open: false });
+  const [syncPreset, setSyncPreset] = useState<"last_30d" | "last_90d" | "last_6m" | "last_year" | "maximum">("last_30d");
+
+  const daysNum = days === "all" ? 3650 : Number(days);
 
   const accounts = useQuery({
     queryKey: ["ad_accounts", clientId],
@@ -275,10 +279,10 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
   const accountIds = (accounts.data ?? []).map((a: any) => a.id);
 
   const insights = useQuery({
-    queryKey: ["ad_insights", clientId, days, accountIds.join(",")],
+    queryKey: ["ad_insights", clientId, daysNum, accountIds.join(",")],
     enabled: accountIds.length > 0,
     queryFn: async () => {
-      const since = new Date(); since.setDate(since.getDate() - days);
+      const since = new Date(); since.setDate(since.getDate() - daysNum);
       const { data } = await supabase.from("ad_insights").select("*")
         .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
       return data ?? [];
@@ -295,39 +299,61 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
     queryFn: async () => (await supabase.from("ad_geo").select("*").in("ad_account_id", accountIds)).data ?? [],
   });
   const wa = useQuery({
-    queryKey: ["ad_wa", clientId, days, accountIds.join(",")],
+    queryKey: ["ad_wa", clientId, daysNum, accountIds.join(",")],
     enabled: accountIds.length > 0,
     queryFn: async () => {
-      const since = new Date(); since.setDate(since.getDate() - days);
+      const since = new Date(); since.setDate(since.getDate() - daysNum);
       const { data } = await supabase.from("ad_funnel_whatsapp").select("*")
         .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
       return data ?? [];
     },
   });
   const campaignInsights = useQuery({
-    queryKey: ["ad_campaign_insights", clientId, days, accountIds.join(",")],
+    queryKey: ["ad_campaign_insights", clientId, daysNum, accountIds.join(",")],
     enabled: accountIds.length > 0,
     queryFn: async () => {
-      const since = new Date(); since.setDate(since.getDate() - days);
+      const since = new Date(); since.setDate(since.getDate() - daysNum);
       const { data } = await supabase.from("ad_campaign_insights").select("*")
         .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
       return data ?? [];
     },
   });
 
-  async function sync(accId: string) {
+  // Vendas do período (agregado, para CPV/ROAS/Lucro)
+  const salesAgg = useQuery({
+    queryKey: ["client_sales_agg", clientId, daysNum],
+    queryFn: async () => {
+      const since = new Date(); since.setDate(since.getDate() - daysNum);
+      const { data } = await supabase.from("client_sales").select("vendas, faturamento")
+        .eq("client_id", clientId).gte("ref_date", since.toISOString().slice(0, 10));
+      const t = (data ?? []).reduce((a: any, r: any) => ({ vendas: a.vendas + Number(r.vendas || 0), faturamento: a.faturamento + Number(r.faturamento || 0) }), { vendas: 0, faturamento: 0 });
+      return t;
+    },
+  });
+
+  async function sync(accId: string, opts?: { preset?: string; first?: boolean }) {
     setSyncing(accId);
     try {
-      const r: any = await syncFn({ data: { ad_account_id: accId } });
+      const payload: any = { ad_account_id: accId };
+      if (opts?.preset) payload.preset = opts.preset;
+      const r: any = await syncFn({ data: payload });
       toast.success(`Sincronizado: ${r.insights || 0} dias, ${r.creatives || 0} criativos, ${r.geo || 0} regiões`);
       qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_insights", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_creatives", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_geo", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
-      qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_campaign_insights", clientId] });
     } catch (e: any) { toast.error(e.message); } finally { setSyncing(null); }
+  }
+  function openSync(acc: any) {
+    setSyncPreset(acc.last_sync_at ? "last_30d" : "maximum");
+    setSyncDialog({ id: acc.id, open: true });
+  }
+  async function confirmSync() {
+    const id = syncDialog.id;
+    setSyncDialog({ id: "", open: false });
+    await sync(id, { preset: syncPreset });
   }
   async function remove(id: string) {
     if (!confirm("Remover esta conta de anúncio? O histórico salvo também será apagado.")) return;
@@ -335,6 +361,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] });
   }
+
 
   const focusHint = clientType === "local"
     ? "Foco recomendado para cliente local: campanhas de mensagem (WhatsApp) e tráfego pro site."
