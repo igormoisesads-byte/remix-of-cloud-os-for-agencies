@@ -755,14 +755,31 @@ function WorldMapPanel({
   maxSpend: number;
 }) {
   const [selected, setSelected] = useState<string | null>(geoData[0]?.code ?? null);
+  const [center, setCenter] = useState<[number, number]>([0, 20]);
+  const [zoom, setZoom] = useState<number>(1);
   const sel = selected ? geoByCode[selected] : null;
+
+  function focusOn(iso2: string, feature?: any) {
+    setSelected(iso2);
+    if (feature) {
+      try {
+        const c = geoCentroid(feature) as [number, number];
+        if (c && isFinite(c[0]) && isFinite(c[1])) {
+          setCenter(c);
+          setZoom(4);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+  function resetView() {
+    setCenter([0, 20]); setZoom(1);
+  }
 
   function fillFor(code?: string) {
     if (!code) return "hsl(var(--muted))";
     const g = geoByCode[code];
     if (!g) return "hsl(var(--muted))";
     const intensity = Math.min(1, Math.sqrt(g.spend / maxSpend));
-    // primary at variable opacity
     return `color-mix(in oklch, hsl(var(--primary)) ${20 + intensity * 80}%, transparent)`;
   }
 
@@ -771,7 +788,10 @@ function WorldMapPanel({
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Mapa-múndi de investimento</CardTitle>
-          <div className="text-xs text-muted-foreground">Clique num país para detalhar</div>
+          <div className="flex items-center gap-2">
+            {zoom > 1 && <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={resetView}>Ver mundo</Button>}
+            <div className="text-xs text-muted-foreground">Clique num país para focar</div>
+          </div>
         </CardHeader>
         <CardContent>
           {geoData.length === 0 ? (
@@ -779,7 +799,7 @@ function WorldMapPanel({
           ) : (
             <div className="w-full aspect-[2/1] bg-muted/30 rounded-md overflow-hidden border">
               <ComposableMap projectionConfig={{ scale: 140 }} style={{ width: "100%", height: "100%" }}>
-                <ZoomableGroup>
+                <ZoomableGroup center={center} zoom={zoom} onMoveEnd={({ coordinates, zoom: z }) => { setCenter(coordinates as any); setZoom(z); }}>
                   <Geographies geography={GEO_URL}>
                     {({ geographies }: any) =>
                       geographies.map((geo: any) => {
@@ -789,12 +809,12 @@ function WorldMapPanel({
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
-                            onClick={() => iso2 && setSelected(iso2)}
+                            onClick={() => iso2 && focusOn(iso2, geo)}
                             style={{
                               default: {
-                                fill: fillFor(iso2),
-                                stroke: "hsl(var(--border))",
-                                strokeWidth: 0.4,
+                                fill: isSel ? "hsl(var(--primary))" : fillFor(iso2),
+                                stroke: isSel ? "hsl(var(--primary))" : "hsl(var(--border))",
+                                strokeWidth: isSel ? 1.2 : 0.4,
                                 outline: "none",
                               },
                               hover: {
@@ -804,8 +824,6 @@ function WorldMapPanel({
                               },
                               pressed: { fill: "hsl(var(--primary))", outline: "none" },
                             }}
-                            stroke={isSel ? "hsl(var(--primary))" : undefined}
-                            strokeWidth={isSel ? 1.2 : undefined}
                           />
                         );
                       })
