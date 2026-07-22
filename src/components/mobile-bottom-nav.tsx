@@ -15,29 +15,34 @@ export function MobileBottomNav() {
   const isActive = (url: string) => pathname === url || pathname.startsWith(url + "/");
 
   return (
-    <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]"
-      aria-label="Navegação principal"
+    <div
+      className="md:hidden fixed left-0 right-0 z-40 pointer-events-none flex justify-center px-3"
+      style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
     >
-      <ul className="grid grid-cols-5">
-        {items.map((it) => {
-          const active = isActive(it.url);
-          return (
-            <li key={it.url}>
-              <Link
-                to={it.url}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <it.icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />
-                <span className="truncate">{it.title}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+      <nav
+        aria-label="Navegação principal"
+        className="pointer-events-auto w-full max-w-md rounded-2xl border border-white/40 bg-white/60 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-black/40 dark:border-white/10"
+      >
+        <ul className="grid grid-cols-5">
+          {items.map((it) => {
+            const active = isActive(it.url);
+            return (
+              <li key={it.url} className="flex">
+                <Link
+                  to={it.url}
+                  className={cn(
+                    "flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium rounded-2xl transition-colors",
+                    active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <it.icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />
+                  <span className="truncate">{it.title}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
   );
 }
