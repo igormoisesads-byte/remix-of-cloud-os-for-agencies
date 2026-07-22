@@ -28,9 +28,13 @@ function PublicReportPage() {
     queryKey: ["public_report", token],
     queryFn: async () => fetchReport({ data: { token } }),
     refetchInterval: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: 3,
     retryDelay: (n) => Math.min(1000 * 2 ** n, 8000),
   });
+
 
   if (q.isLoading) {
     return (
