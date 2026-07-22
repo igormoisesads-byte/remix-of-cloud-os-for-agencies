@@ -138,9 +138,13 @@ function ClienteDetail() {
             <ChevronLeft className="h-3.5 w-3.5" /> Voltar
           </Link>
           <div className="mt-2 flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-              {c.name?.slice(0, 1)?.toUpperCase() || "?"}
-            </div>
+            {c.logo_url ? (
+              <img src={c.logo_url} alt={c.name} className="h-8 w-8 rounded-full object-cover ring-1 ring-border shrink-0" />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                {c.name?.slice(0, 1)?.toUpperCase() || "?"}
+              </div>
+            )}
             <div className="min-w-0">
               <div className="font-semibold truncate text-sm">{c.name}</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{TYPE_LABEL[c.type]}</div>
