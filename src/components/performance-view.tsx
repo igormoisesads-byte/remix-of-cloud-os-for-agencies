@@ -173,8 +173,15 @@ export function PerformanceView({ data }: { data: PerfData }) {
     const cpm = totals.impressions ? (totals.spend / totals.impressions) * 1000 : 0;
     const cpa = totals.results ? totals.spend / totals.results : 0;
     const freq = totals.reach ? totals.impressions / totals.reach : 0;
-    return { ctr, cpc, cpm, cpa, freq };
-  }, [totals]);
+    const salesTot = data.sales?.vendas ?? 0;
+    const revenue = data.sales?.faturamento ?? 0;
+    const cost = data.sales?.custo_produto ?? 0;
+    const cpv = salesTot ? totals.spend / salesTot : 0;
+    const roas = totals.spend ? revenue / totals.spend : 0;
+    const lucro = revenue - totals.spend - cost;
+    return { ctr, cpc, cpm, cpa, freq, cpv, roas, lucro, hasSales: salesTot > 0 };
+  }, [totals, data.sales]);
+
 
   const trend = useMemo(() => {
     const sorted = [...dailyRows].sort((a, b) => a.date.localeCompare(b.date));
