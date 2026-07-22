@@ -199,7 +199,16 @@ export function PerformanceView({ data }: { data: PerfData }) {
     return { spend: calc("spend"), results: calc("results"), clicks: calc("clicks"), impressions: calc("impressions") };
   }, [dailyRows]);
 
+  // Viewport width to decide chart bucket size (daily/weekly/monthly)
+  const [vw, setVw] = useState<number>(typeof window !== "undefined" ? window.innerWidth : 1024);
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const chartData = useMemo(() => {
+    // First aggregate daily
     const byDate: Record<string, any> = {};
     for (const r of dailyRows) {
       const d = r.date;
@@ -209,15 +218,63 @@ export function PerformanceView({ data }: { data: PerfData }) {
       byDate[d].clicks += Number(r.clicks);
       byDate[d].impressions += Number(r.impressions);
     }
-    return Object.values(byDate)
-      .sort((a: any, b: any) => a.date.localeCompare(b.date))
+    const daily = Object.values(byDate).sort((a: any, b: any) => a.date.localeCompare(b.date)) as any[];
+    const n = daily.length;
+
+    // Choose bucket by (viewport, number of points)
+    const isMobile = vw < 640;
+    const isTablet = vw >= 640 && vw < 1024;
+    const maxPoints = isMobile ? 14 : isTablet ? 30 : 45;
+    const monthlyThreshold = isMobile ? 90 : 180;
+    let bucket: "day" | "week" | "month" = "day";
+    if (n > monthlyThreshold) bucket = "month";
+    else if (n > maxPoints) bucket = "week";
+
+    const bucketKey = (dStr: string) => {
+      const d = new Date(dStr + "T00:00");
+      if (bucket === "month") {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      }
+      if (bucket === "week") {
+        // ISO week start (monday)
+        const day = d.getDay(); // 0=sun
+        const diff = day === 0 ? -6 : 1 - day;
+        const start = new Date(d); start.setDate(d.getDate() + diff);
+        return start.toISOString().slice(0, 10);
+      }
+      return dStr;
+    };
+    const bucketLabel = (key: string) => {
+      if (bucket === "month") {
+        const [y, m] = key.split("-");
+        return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+      }
+      if (bucket === "week") {
+        const start = new Date(key + "T00:00");
+        return `${start.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`;
+      }
+      return new Date(key + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    };
+
+    const buckets: Record<string, any> = {};
+    for (const r of daily) {
+      const k = bucketKey(r.date);
+      if (!buckets[k]) buckets[k] = { key: k, spend: 0, results: 0, clicks: 0, impressions: 0 };
+      buckets[k].spend += r.spend;
+      buckets[k].results += r.results;
+      buckets[k].clicks += r.clicks;
+      buckets[k].impressions += r.impressions;
+    }
+    return Object.values(buckets)
+      .sort((a: any, b: any) => a.key.localeCompare(b.key))
       .map((r: any) => ({
         ...r,
-        label: new Date(r.date + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        label: bucketLabel(r.key),
         cpa: r.results ? r.spend / r.results : 0,
         ctr: r.impressions ? (r.clicks / r.impressions) * 100 : 0,
       }));
-  }, [dailyRows]);
+  }, [dailyRows, vw]);
+
 
   // Top-campaign breakdown (aggregated for current filters, ignoring campaign filter itself so user can compare)
   const campaignBreakdown = useMemo(() => {
