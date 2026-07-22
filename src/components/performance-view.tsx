@@ -679,7 +679,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
                     { label: "Impressões", value: waTotals.impressions, color: "#3b82f6" },
                     { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1" },
                     { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366" },
-                    { label: "Primeiras respostas", value: waTotals.first_replies, color: "#059669" },
+                    { label: "Novos contatos", value: waExtras.newContacts, color: "#059669" },
                   ]}
                 />
               )}
