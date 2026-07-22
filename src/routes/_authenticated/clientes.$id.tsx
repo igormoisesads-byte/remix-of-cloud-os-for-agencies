@@ -175,7 +175,9 @@ function ClienteDetail() {
         <div className="p-6">
           {section === "visao" && <VisaoGeral c={c} />}
           {section === "performance" && <Performance clientId={id} clientType={c.type} />}
+          {section === "criativos" && <CreativesView clientId={id} clientType={c.type} />}
           {section === "vendas" && <ClientSales clientId={id} />}
+
           {section === "projecoes" && <Projecoes c={c} />}
           {section === "seo" && <Placeholder title="SEO" text="Em breve: rastreio de posições e páginas do cliente." />}
           {section === "rotinas" && <Rotinas clientId={id} />}
