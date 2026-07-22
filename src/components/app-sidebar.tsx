@@ -22,6 +22,9 @@ const groups = [
     label: "CS",
     items: [
       { title: "Clientes", url: "/clientes", icon: Users },
+      { title: "Health Score", url: "/health-score", icon: HeartPulse },
+      { title: "NPS", url: "/nps", icon: Smile },
+      { title: "PDA", url: "/pdas", icon: Target },
     ],
   },
   {
