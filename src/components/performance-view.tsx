@@ -384,7 +384,6 @@ export function PerformanceView({ data }: { data: PerfData }) {
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
-        <PeriodPicker period={period} setPeriod={setPeriod} customRange={customRange} setCustomRange={setCustomRange} />
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
             <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
@@ -419,6 +418,9 @@ export function PerformanceView({ data }: { data: PerfData }) {
             <X className="h-3.5 w-3.5 mr-1" /> Limpar
           </Button>
         )}
+        <div className="ml-auto">
+          <PeriodPicker period={period} setPeriod={setPeriod} customRange={customRange} setCustomRange={setCustomRange} />
+        </div>
       </div>
 
       {/* KPI Grid — for local (WhatsApp) clients use conversations from waTotals to avoid mixing action types */}
