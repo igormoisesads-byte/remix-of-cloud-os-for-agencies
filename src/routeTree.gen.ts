@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NpsTokenRouteImport } from './routes/nps.$token'
+import { Route as AuthenticatedPdasRouteImport } from './routes/_authenticated/pdas'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
+import { Route as AuthenticatedNpsRouteImport } from './routes/_authenticated/nps'
 import { Route as AuthenticatedHojeRouteImport } from './routes/_authenticated/hoje'
+import { Route as AuthenticatedHealthScoreRouteImport } from './routes/_authenticated/health-score'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
@@ -47,9 +51,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NpsTokenRoute = NpsTokenRouteImport.update({
+  id: '/nps/$token',
+  path: '/nps/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPdasRoute = AuthenticatedPdasRouteImport.update({
+  id: '/pdas',
+  path: '/pdas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
   id: '/operacoes',
   path: '/operacoes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNpsRoute = AuthenticatedNpsRouteImport.update({
+  id: '/nps',
+  path: '/nps',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHojeRoute = AuthenticatedHojeRouteImport.update({
@@ -57,6 +76,12 @@ const AuthenticatedHojeRoute = AuthenticatedHojeRouteImport.update({
   path: '/hoje',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHealthScoreRoute =
+  AuthenticatedHealthScoreRouteImport.update({
+    id: '/health-score',
+    path: '/health-score',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
@@ -166,8 +191,12 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/equipe': typeof AuthenticatedEquipeRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/health-score': typeof AuthenticatedHealthScoreRoute
   '/hoje': typeof AuthenticatedHojeRoute
+  '/nps': typeof AuthenticatedNpsRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
+  '/pdas': typeof AuthenticatedPdasRoute
+  '/nps/$token': typeof NpsTokenRoute
   '/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
@@ -188,8 +217,12 @@ export interface FileRoutesByTo {
   '/chat': typeof AuthenticatedChatRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/health-score': typeof AuthenticatedHealthScoreRoute
   '/hoje': typeof AuthenticatedHojeRoute
+  '/nps': typeof AuthenticatedNpsRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
+  '/pdas': typeof AuthenticatedPdasRoute
+  '/nps/$token': typeof NpsTokenRoute
   '/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
@@ -214,8 +247,12 @@ export interface FileRoutesById {
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
+  '/_authenticated/health-score': typeof AuthenticatedHealthScoreRoute
   '/_authenticated/hoje': typeof AuthenticatedHojeRoute
+  '/_authenticated/nps': typeof AuthenticatedNpsRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
+  '/_authenticated/pdas': typeof AuthenticatedPdasRoute
+  '/nps/$token': typeof NpsTokenRoute
   '/_authenticated/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/_authenticated/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/_authenticated/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
@@ -240,8 +277,12 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/equipe'
     | '/financeiro'
+    | '/health-score'
     | '/hoje'
+    | '/nps'
     | '/operacoes'
+    | '/pdas'
+    | '/nps/$token'
     | '/ajustes/cargos'
     | '/ajustes/comissao'
     | '/ajustes/equipe'
@@ -262,8 +303,12 @@ export interface FileRouteTypes {
     | '/chat'
     | '/equipe'
     | '/financeiro'
+    | '/health-score'
     | '/hoje'
+    | '/nps'
     | '/operacoes'
+    | '/pdas'
+    | '/nps/$token'
     | '/ajustes/cargos'
     | '/ajustes/comissao'
     | '/ajustes/equipe'
@@ -287,8 +332,12 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes'
     | '/_authenticated/equipe'
     | '/_authenticated/financeiro'
+    | '/_authenticated/health-score'
     | '/_authenticated/hoje'
+    | '/_authenticated/nps'
     | '/_authenticated/operacoes'
+    | '/_authenticated/pdas'
+    | '/nps/$token'
     | '/_authenticated/ajustes/cargos'
     | '/_authenticated/ajustes/comissao'
     | '/_authenticated/ajustes/equipe'
@@ -308,6 +357,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  NpsTokenRoute: typeof NpsTokenRoute
   PRelatorioTokenRoute: typeof PRelatorioTokenRoute
   ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
 }
@@ -335,6 +385,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nps/$token': {
+      id: '/nps/$token'
+      path: '/nps/$token'
+      fullPath: '/nps/$token'
+      preLoaderRoute: typeof NpsTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/pdas': {
+      id: '/_authenticated/pdas'
+      path: '/pdas'
+      fullPath: '/pdas'
+      preLoaderRoute: typeof AuthenticatedPdasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/operacoes': {
       id: '/_authenticated/operacoes'
       path: '/operacoes'
@@ -342,11 +406,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOperacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/nps': {
+      id: '/_authenticated/nps'
+      path: '/nps'
+      fullPath: '/nps'
+      preLoaderRoute: typeof AuthenticatedNpsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/hoje': {
       id: '/_authenticated/hoje'
       path: '/hoje'
       fullPath: '/hoje'
       preLoaderRoute: typeof AuthenticatedHojeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/health-score': {
+      id: '/_authenticated/health-score'
+      path: '/health-score'
+      fullPath: '/health-score'
+      preLoaderRoute: typeof AuthenticatedHealthScoreRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/financeiro': {
@@ -526,8 +604,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
+  AuthenticatedHealthScoreRoute: typeof AuthenticatedHealthScoreRoute
   AuthenticatedHojeRoute: typeof AuthenticatedHojeRoute
+  AuthenticatedNpsRoute: typeof AuthenticatedNpsRoute
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
+  AuthenticatedPdasRoute: typeof AuthenticatedPdasRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -536,8 +617,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
+  AuthenticatedHealthScoreRoute: AuthenticatedHealthScoreRoute,
   AuthenticatedHojeRoute: AuthenticatedHojeRoute,
+  AuthenticatedNpsRoute: AuthenticatedNpsRoute,
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
+  AuthenticatedPdasRoute: AuthenticatedPdasRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -547,6 +631,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  NpsTokenRoute: NpsTokenRoute,
   PRelatorioTokenRoute: PRelatorioTokenRoute,
   ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
 }
