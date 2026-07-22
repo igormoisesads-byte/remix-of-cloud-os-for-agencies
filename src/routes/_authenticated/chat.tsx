@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase,
   Paperclip, X, Reply, Mic, Square, Bell, File as FileIcon, Image as ImageIcon,
+  Play, Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { registerPWA, requestNotificationPermission, notify } from "@/lib/pwa";
