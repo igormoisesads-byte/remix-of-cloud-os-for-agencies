@@ -73,9 +73,78 @@ export type Database = {
           },
         ]
       }
+      ad_campaign_insights: {
+        Row: {
+          ad_account_id: string
+          campaign_id: string
+          campaign_name: string | null
+          clicks: number
+          cpc: number | null
+          cpm: number | null
+          created_at: string
+          ctr: number | null
+          date: string
+          id: string
+          impressions: number
+          raw: Json | null
+          reach: number
+          results: number
+          spend: number
+          updated_at: string
+        }
+        Insert: {
+          ad_account_id: string
+          campaign_id: string
+          campaign_name?: string | null
+          clicks?: number
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          date: string
+          id?: string
+          impressions?: number
+          raw?: Json | null
+          reach?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_account_id?: string
+          campaign_id?: string
+          campaign_name?: string | null
+          clicks?: number
+          cpc?: number | null
+          cpm?: number | null
+          created_at?: string
+          ctr?: number | null
+          date?: string
+          id?: string
+          impressions?: number
+          raw?: Json | null
+          reach?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_campaign_insights_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_creatives: {
         Row: {
           ad_account_id: string
+          adset_id: string | null
+          adset_name: string | null
+          campaign_id: string | null
+          campaign_name: string | null
           clicks: number
           cpc: number | null
           created_at: string
@@ -97,6 +166,10 @@ export type Database = {
         }
         Insert: {
           ad_account_id: string
+          adset_id?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
           clicks?: number
           cpc?: number | null
           created_at?: string
@@ -118,6 +191,10 @@ export type Database = {
         }
         Update: {
           ad_account_id?: string
+          adset_id?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
           clicks?: number
           cpc?: number | null
           created_at?: string
