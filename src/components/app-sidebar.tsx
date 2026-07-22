@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Home, MessageSquare, Users, ClipboardList, DollarSign, Settings, LogOut, UserCog,
-  HeartPulse, Smile, Target, Film,
+  HeartPulse, Smile, Target, Film, LayoutDashboard, Headphones, Briefcase, Wallet, Cog, ChevronDown,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
@@ -16,6 +18,7 @@ import cloudosLogo from "@/assets/cloudos-logo.png.asset.json";
 const groups = [
   {
     label: "Visão geral",
+    icon: LayoutDashboard,
     items: [
       { title: "Hoje", url: "/hoje", icon: Home },
       { title: "Chat", url: "/chat", icon: MessageSquare },
@@ -23,6 +26,7 @@ const groups = [
   },
   {
     label: "CS",
+    icon: Headphones,
     items: [
       { title: "Clientes", url: "/clientes", icon: Users },
       { title: "Health Score", url: "/health-score", icon: HeartPulse },
@@ -32,6 +36,7 @@ const groups = [
   },
   {
     label: "Operações",
+    icon: Briefcase,
     items: [
       { title: "Tarefas", url: "/operacoes", icon: ClipboardList },
       { title: "Criativos", url: "/criativos", icon: Film },
@@ -40,12 +45,14 @@ const groups = [
 
   {
     label: "Financeiro",
+    icon: Wallet,
     items: [
       { title: "Mensalidades", url: "/financeiro", icon: DollarSign },
     ],
   },
   {
     label: "Configurações",
+    icon: Cog,
     items: [
       { title: "Equipe", url: "/equipe", icon: UserCog },
       { title: "Ajustes", url: "/ajustes", icon: Settings },
