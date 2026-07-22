@@ -630,7 +630,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Ch
         </div>
       </div>
 
-      <div className="border-t p-3 shrink-0 space-y-2">
+      <div className="border-t px-3 pt-3 shrink-0 space-y-2 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-3">
         {replyTo && (
           <div className="flex items-center gap-2 text-xs rounded-md border bg-muted/40 px-2 py-1">
             <Reply className="h-3 w-3" />
