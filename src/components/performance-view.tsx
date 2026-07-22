@@ -762,50 +762,70 @@ function EmptyMsg({ text = "Sem dados no período. Sincronize a conta para ver m
   return <div className="text-sm text-muted-foreground text-center py-8">{text}</div>;
 }
 
-/* Vertical funnel — visual moderno com barras degradê e setas de conversão */
+/* Vertical funnel — formato trapezoidal com taxa de conversão entre etapas */
 function VerticalFunnel({ steps }: { steps: { label: string; value: number; color: string }[] }) {
   const max = Math.max(...steps.map((s) => s.value), 1);
+  const minW = 18; // % — largura mínima para etapas pequenas continuarem visíveis
   return (
-    <div className="space-y-1 py-2">
-      {steps.map((s, i) => {
-        const pct = (s.value / max) * 100;
-        const conv = i === 0 ? 100 : steps[0].value ? (s.value / steps[0].value) * 100 : 0;
-        const stepConv = i === 0 ? null : steps[i - 1].value ? (s.value / steps[i - 1].value) * 100 : 0;
-        const dropoff = stepConv !== null ? 100 - stepConv : null;
-        return (
-          <div key={s.label}>
-            <div className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-8 w-8 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: s.color }}>
-                    {i + 1}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{s.label}</div>
-                    <div className="text-[11px] text-muted-foreground">{conv.toFixed(1)}% do topo</div>
-                  </div>
+    <div className="flex gap-4 py-2">
+      {/* Funil (trapézios) */}
+      <div className="flex-1 flex flex-col items-center gap-0">
+        {steps.map((s, i) => {
+          const topRaw = (s.value / max) * 100;
+          const nextRaw = i < steps.length - 1 ? (steps[i + 1].value / max) * 100 : topRaw;
+          const top = Math.max(minW, topRaw);
+          const bottom = Math.max(minW, nextRaw);
+          const isLast = i === steps.length - 1;
+          return (
+            <div key={s.label} className="w-full flex flex-col items-center">
+              <div
+                className="relative w-full flex items-center justify-center text-white font-medium shadow-sm"
+                style={{
+                  height: 72,
+                  clipPath: isLast
+                    ? `polygon(${(100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 100%, ${(100 - top) / 2}% 100%)`
+                    : `polygon(${(100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 0%, ${100 - (100 - bottom) / 2}% 100%, ${(100 - bottom) / 2}% 100%)`,
+                  background: `linear-gradient(180deg, ${s.color}, ${s.color}cc)`,
+                }}
+              >
+                <div className="text-center px-2">
+                  <div className="text-xs opacity-90 leading-tight">{s.label}</div>
+                  <div className="text-lg font-bold tabular-nums leading-tight">{fmtInt(s.value)}</div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xl font-bold tabular-nums">{fmtInt(s.value)}</div>
-                </div>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full transition-all"
-                  style={{ width: `${Math.max(2, pct)}%`, background: `linear-gradient(90deg, ${s.color}dd, ${s.color})` }} />
               </div>
             </div>
-            {stepConv !== null && (
-              <div className="flex items-center justify-center gap-2 py-1.5 text-[10px]">
-                <div className="text-emerald-600 font-medium">→ {stepConv.toFixed(1)}% seguiu</div>
-                {dropoff! > 0 && <div className="text-rose-500">↓ {dropoff!.toFixed(1)}% caiu</div>}
+          );
+        })}
+      </div>
+      {/* Coluna de conversão etapa a etapa */}
+      <div className="w-40 flex flex-col justify-around py-2">
+        {steps.map((s, i) => {
+          if (i === 0) {
+            return (
+              <div key={s.label} className="text-right">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Topo</div>
+                <div className="text-sm font-semibold text-muted-foreground">100%</div>
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          }
+          const prev = steps[i - 1].value;
+          const conv = prev ? (s.value / prev) * 100 : 0;
+          const dropoff = 100 - conv;
+          return (
+            <div key={s.label} className="text-right border-l-2 border-emerald-500/40 pl-3">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                {steps[i - 1].label.split(" ")[0]} → {s.label.split(" ")[0]}
+              </div>
+              <div className="text-lg font-bold text-emerald-600 tabular-nums">{conv.toFixed(1)}%</div>
+              <div className="text-[10px] text-rose-500">↓ {dropoff.toFixed(1)}% caiu</div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
+
 
 /* World map panel */
 function WorldMapPanel({
