@@ -30,6 +30,8 @@ import { PerformanceView } from "@/components/performance-view";
 import { ClientSales } from "@/components/client-sales";
 import { AiDataChat } from "@/components/ai-data-chat";
 import { CreativesView } from "@/components/creatives-view";
+import { uploadToR2 } from "@/lib/upload-r2";
+import { Pencil, Upload } from "lucide-react";
 
 
 const clientQueryOptions = (id: string) =>
@@ -136,9 +138,13 @@ function ClienteDetail() {
             <ChevronLeft className="h-3.5 w-3.5" /> Voltar
           </Link>
           <div className="mt-2 flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-              {c.name?.slice(0, 1)?.toUpperCase() || "?"}
-            </div>
+            {c.logo_url ? (
+              <img src={c.logo_url} alt={c.name} className="h-8 w-8 rounded-full object-cover ring-1 ring-border shrink-0" />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                {c.name?.slice(0, 1)?.toUpperCase() || "?"}
+              </div>
+            )}
             <div className="min-w-0">
               <div className="font-semibold truncate text-sm">{c.name}</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{TYPE_LABEL[c.type]}</div>
@@ -163,6 +169,9 @@ function ClienteDetail() {
 
       <div className="flex-1 md:overflow-y-auto min-w-0">
         <div className="border-b px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2 bg-card/40">
+          {c.logo_url && (
+            <img src={c.logo_url} alt={c.name} className="h-9 w-9 rounded-lg object-cover ring-1 ring-border" />
+          )}
           <h1 className="text-lg sm:text-xl font-bold tracking-tight break-words min-w-0">{c.name}</h1>
           <Badge variant="outline">{TYPE_LABEL[c.type]}</Badge>
           <Badge>{c.status}</Badge>
@@ -254,7 +263,12 @@ function VisaoGeral({ c }: { c: any }) {
   const pctOfExpected = expected ? Math.min(100, (actual / expected) * 100) : 0;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Visão geral do cliente</div>
+        <EditClientDialog client={c} />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Dados Cadastrais</CardTitle></CardHeader>
         <CardContent className="text-sm grid grid-cols-2 gap-x-6 gap-y-2">
@@ -315,7 +329,124 @@ function VisaoGeral({ c }: { c: any }) {
       <StatCard title="PDAs" icon={AlertTriangle} value={`${pdasQ.data ?? 0} pendentes`} />
       <StatCard title="NPS" icon={Star} value={npsQ.data ? String(npsQ.data.score) : "Sem registros"} sub={npsQ.data ? fmtDate(npsQ.data.created_at) : ""} />
       <StatCard title="Onboarding" icon={ListChecks} value={totalCount ? `${doneCount}/${totalCount}` : "Não iniciado"} sub={totalCount ? `${Math.round((doneCount / totalCount) * 100)}% concluído` : ""} />
+      </div>
     </div>
+  );
+}
+
+function EditClientDialog({ client }: { client: any }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({
+    name: client.name || "",
+    site: client.site || "",
+    city_uf: client.city_uf || "",
+    address: client.address || "",
+    platform: client.platform || "",
+    instagram: client.instagram || "",
+    brand_anniversary: client.brand_anniversary || "",
+    contract_start: client.contract_start || "",
+    contract_end: client.contract_end || "",
+    monthly_fee_amount: client.monthly_fee_amount ?? "",
+    monthly_fee_day: client.monthly_fee_day ?? "",
+    investimento_mensal: client.investimento_mensal ?? "",
+    logo_url: client.logo_url || "",
+    notes: client.notes || "",
+  });
+
+  async function handleUpload(file: File) {
+    if (!file.type.startsWith("image/")) return toast.error("Envie uma imagem.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Máximo 5MB.");
+    setUploading(true);
+    try {
+      const url = await uploadToR2(file, { folder: `clients/${client.id}`, filename: file.name });
+      setForm((f) => ({ ...f, logo_url: url }));
+      toast.success("Logo carregada.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function save() {
+    setBusy(true);
+    const payload: any = {
+      ...form,
+      monthly_fee_amount: form.monthly_fee_amount === "" ? null : Number(form.monthly_fee_amount),
+      monthly_fee_day: form.monthly_fee_day === "" ? null : Number(form.monthly_fee_day),
+      investimento_mensal: form.investimento_mensal === "" ? null : Number(form.investimento_mensal),
+      brand_anniversary: form.brand_anniversary || null,
+      contract_start: form.contract_start || null,
+      contract_end: form.contract_end || null,
+      logo_url: form.logo_url || null,
+    };
+    const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Cliente atualizado.");
+    qc.invalidateQueries({ queryKey: ["client", client.id] });
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2"><Pencil className="h-3.5 w-3.5" /> Editar</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Editar cliente</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Logo do cliente</Label>
+            <div className="mt-2 flex items-center gap-3">
+              {form.logo_url ? (
+                <img src={form.logo_url} alt="logo" className="h-16 w-16 rounded-lg object-cover ring-1 ring-border" />
+              ) : (
+                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">Sem logo</div>
+              )}
+              <div className="flex gap-2">
+                <input id="client-logo-upload" type="file" accept="image/*" className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                <Button asChild variant="outline" size="sm" disabled={uploading}>
+                  <label htmlFor="client-logo-upload" className="cursor-pointer inline-flex items-center gap-2">
+                    <Upload className="h-3.5 w-3.5" />
+                    {uploading ? "Enviando..." : form.logo_url ? "Trocar" : "Enviar"}
+                  </label>
+                </Button>
+                {form.logo_url && (
+                  <Button variant="ghost" size="sm" onClick={() => setForm((f) => ({ ...f, logo_url: "" }))}>Remover</Button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Aparece no relatório público e no perfil do cliente.</p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+            <div><Label>Site</Label><Input value={form.site} onChange={(e) => setForm({ ...form, site: e.target.value })} /></div>
+            <div><Label>Cidade/UF</Label><Input value={form.city_uf} onChange={(e) => setForm({ ...form, city_uf: e.target.value })} /></div>
+            <div><Label>Endereço</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+            <div><Label>Plataforma</Label><Input value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} /></div>
+            <div><Label>Instagram</Label><Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} /></div>
+            <div><Label>Aniversário da marca</Label><Input type="date" value={form.brand_anniversary} onChange={(e) => setForm({ ...form, brand_anniversary: e.target.value })} /></div>
+            <div><Label>Início do contrato</Label><Input type="date" value={form.contract_start} onChange={(e) => setForm({ ...form, contract_start: e.target.value })} /></div>
+            <div><Label>Fim do contrato</Label><Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} /></div>
+            <div><Label>Mensalidade (R$)</Label><Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} /></div>
+            <div><Label>Dia do vencimento</Label><Input type="number" min="1" max="31" value={form.monthly_fee_day} onChange={(e) => setForm({ ...form, monthly_fee_day: e.target.value })} /></div>
+            <div><Label>Investimento mensal (R$)</Label><Input type="number" step="0.01" value={form.investimento_mensal} onChange={(e) => setForm({ ...form, investimento_mensal: e.target.value })} /></div>
+          </div>
+
+          <div><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
+          <Button onClick={save} disabled={busy}>{busy ? "Salvando..." : "Salvar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
