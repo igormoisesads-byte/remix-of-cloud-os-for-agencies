@@ -376,12 +376,16 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
             <div className="text-xs text-muted-foreground mt-1">{focusHint} Atualização automática a cada 4h.</div>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
-              <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+            <Select value={days} onValueChange={setDays}>
+              <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="7">Últimos 7 dias</SelectItem>
                 <SelectItem value="14">Últimos 14 dias</SelectItem>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+                <SelectItem value="180">Últimos 6 meses</SelectItem>
+                <SelectItem value="365">Último ano</SelectItem>
+                <SelectItem value="all">Todo o período</SelectItem>
               </SelectContent>
             </Select>
             {canManage && <SharePublicLinkDialog clientId={clientId} />}
@@ -408,6 +412,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                     whatsapp: wa.data ?? [],
                     campaignInsights: campaignInsights.data ?? [],
                     accounts: accounts.data ?? [],
+                    sales: salesAgg.data,
                   }} />
                 </div>
                 <div className="hidden xl:block">
@@ -431,7 +436,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                     </div>
                     {canManage && (
                       <div className="flex items-center gap-1">
-                        <Button size="sm" variant="outline" disabled={syncing === a.id} onClick={() => sync(a.id)}>
+                        <Button size="sm" variant="outline" disabled={syncing === a.id} onClick={() => openSync(a)}>
                           <RefreshCw className={`h-3.5 w-3.5 ${syncing === a.id ? "animate-spin" : ""}`} />
                           Sincronizar
                         </Button>
@@ -443,6 +448,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
               </div>
             </>
           )}
+
         </CardContent>
       </Card>
     </div>
