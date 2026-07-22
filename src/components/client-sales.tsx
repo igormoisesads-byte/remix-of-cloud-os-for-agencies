@@ -126,15 +126,15 @@ export function ClientSales({ clientId }: { clientId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Vendas do cliente</h2>
-          <p className="text-sm text-muted-foreground">Registro semanal — leads, agendamentos, vendas e faturamento por semana.</p>
+          <h2 className="text-xl font-semibold">Resultados do cliente</h2>
+          <p className="text-sm text-muted-foreground">Registro semanal — leads, agendamentos, matrículas/cadastros e faturamento por semana.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1" />Registrar semana</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Registrar vendas da semana</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Registrar resultados da semana</DialogTitle></DialogHeader>
             <div className="grid gap-3">
               <div>
                 <Label>Semana (segunda a domingo)</Label>
