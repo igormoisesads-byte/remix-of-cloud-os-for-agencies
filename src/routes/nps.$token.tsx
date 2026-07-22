@@ -20,9 +20,6 @@ function PublicNpsPage() {
   const { token } = Route.useParams();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [score, setScore] = useState<number | null>(null);
-  const [comment, setComment] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -47,14 +44,12 @@ function PublicNpsPage() {
       survey_id: survey!.id,
       score: finalScore != null && !Number.isNaN(finalScore) ? finalScore : null,
       answers,
-      comment: comment || null,
-      respondent_name: name || null,
-      respondent_email: email || null,
     });
     setSending(false);
     if (error) { toast.error(error.message); return; }
     setSent(true);
   }
+
 
   if (sent) {
     return (
