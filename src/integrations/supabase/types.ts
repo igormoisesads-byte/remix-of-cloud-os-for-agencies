@@ -399,6 +399,56 @@ export type Database = {
           },
         ]
       }
+      ad_hourly_leads: {
+        Row: {
+          ad_account_id: string
+          clicks: number
+          created_at: string
+          date: string
+          dow: number
+          hour: number
+          id: string
+          impressions: number
+          results: number
+          spend: number
+          updated_at: string
+        }
+        Insert: {
+          ad_account_id: string
+          clicks?: number
+          created_at?: string
+          date: string
+          dow: number
+          hour: number
+          id?: string
+          impressions?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_account_id?: string
+          clicks?: number
+          created_at?: string
+          date?: string
+          dow?: number
+          hour?: number
+          id?: string
+          impressions?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_hourly_leads_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_insights: {
         Row: {
           ad_account_id: string

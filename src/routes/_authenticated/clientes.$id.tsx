@@ -325,6 +325,11 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
       return data ?? [];
     },
   });
+  const hourly = useQuery({
+    queryKey: ["ad_hourly_leads", clientId, accountIds.join(",")],
+    enabled: accountIds.length > 0,
+    queryFn: async () => (await supabase.from("ad_hourly_leads").select("*").in("ad_account_id", accountIds)).data ?? [],
+  });
 
   // Vendas do período (agregado, para CPV/ROAS/Lucro)
   const salesAgg = useQuery({
@@ -420,6 +425,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                     campaignInsights: campaignInsights.data ?? [],
                     accounts: accounts.data ?? [],
                     sales: salesAgg.data,
+                    hourly: hourly.data ?? [],
                   }} />
                 </div>
                 <div className="hidden xl:block">

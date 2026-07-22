@@ -344,12 +344,57 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
       // ignore campaign insights errors
     }
 
+    // 6) Hourly leads (últimos 30 dias) — para heatmap dia da semana × hora do dia
+    let upsertedHourly = 0;
+    try {
+      const hourlyRange = (() => {
+        const untilD = new Date();
+        const sinceD = new Date(); sinceD.setDate(sinceD.getDate() - 30);
+        const f = (d: Date) => d.toISOString().slice(0, 10);
+        return JSON.stringify({ since: f(sinceD), until: f(untilD) });
+      })();
+      const hUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/insights`);
+      hUrl.searchParams.set("fields", "spend,impressions,clicks,actions");
+      hUrl.searchParams.set("breakdowns", "hourly_stats_aggregated_by_advertiser_time_zone");
+      hUrl.searchParams.set("time_increment", "1");
+      hUrl.searchParams.set("time_range", hourlyRange);
+      hUrl.searchParams.set("limit", "500");
+      hUrl.searchParams.set("access_token", token);
+      const hourly = await metaFetch(hUrl);
+      // Limpa histórico da conta e regrava (mais simples que reconciliar)
+      await supabaseAdmin.from("ad_hourly_leads").delete().eq("ad_account_id", acc.id);
+      for (const r of hourly.data ?? []) {
+        const range: string = r.hourly_stats_aggregated_by_advertiser_time_zone || "";
+        const hh = Number(range.slice(0, 2));
+        if (!Number.isFinite(hh)) continue;
+        const d = new Date(r.date_start + "T00:00");
+        const dow = (d.getDay() + 6) % 7; // 0=Seg .. 6=Dom
+        const results = pickResults(r.actions ?? []);
+        const { error: e } = await supabaseAdmin.from("ad_hourly_leads").upsert(
+          {
+            ad_account_id: acc.id,
+            date: r.date_start,
+            hour: hh,
+            dow,
+            results,
+            spend: Number(r.spend ?? 0),
+            impressions: Number(r.impressions ?? 0),
+            clicks: Number(r.clicks ?? 0),
+          },
+          { onConflict: "ad_account_id,date,hour" },
+        );
+        if (!e) upsertedHourly++;
+      }
+    } catch {
+      // ignore hourly errors — breakdown pode não estar disponível
+    }
+
     await supabaseAdmin
       .from("ad_accounts")
       .update({ last_sync_at: new Date().toISOString(), last_sync_error: null })
       .eq("id", acc.id);
 
-    return { ok: true, insights: upsertedInsights, creatives: upsertedCreatives, geo: upsertedGeo, whatsapp: upsertedWa, campaigns: upsertedCampaignInsights };
+    return { ok: true, insights: upsertedInsights, creatives: upsertedCreatives, geo: upsertedGeo, whatsapp: upsertedWa, campaigns: upsertedCampaignInsights, hourly: upsertedHourly };
   } catch (e: any) {
     await supabaseAdmin
       .from("ad_accounts")
@@ -444,7 +489,7 @@ export const getPublicReport = createServerFn({ method: "GET" })
     const since = new Date();
     since.setDate(since.getDate() - daysBack);
     const sinceStr = since.toISOString().slice(0, 10);
-    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }, { data: campaignInsights }] = await Promise.all([
+    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }, { data: campaignInsights }, { data: hourly }] = await Promise.all([
       accountIds.length
         ? supabaseAdmin.from("ad_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
         : Promise.resolve({ data: [] as any[] }),
@@ -459,6 +504,9 @@ export const getPublicReport = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
         ? supabaseAdmin.from("ad_campaign_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
+        : Promise.resolve({ data: [] as any[] }),
+      accountIds.length
+        ? supabaseAdmin.from("ad_hourly_leads").select("*").in("ad_account_id", accountIds)
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -479,5 +527,6 @@ export const getPublicReport = createServerFn({ method: "GET" })
       geo: geo ?? [],
       whatsapp: wa ?? [],
       campaignInsights: campaignInsights ?? [],
+      hourly: hourly ?? [],
     };
   });

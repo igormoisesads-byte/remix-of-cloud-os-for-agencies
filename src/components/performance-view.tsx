@@ -26,6 +26,7 @@ export type PerfData = {
   whatsapp: any[];
   accounts?: any[];
   campaignInsights?: any[];
+  hourly?: any[];
   sales?: { vendas: number; faturamento: number; custo_produto?: number };
   clientType?: string | null;
 };
@@ -427,7 +428,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
       )}
 
       {/* Heatmap leads/dia (12 semanas) — baseado em resultados diários das campanhas */}
-      <LeadsHeatmap insights={dailyRows} />
+      <HourDayHeatmap hourly={data.hourly ?? []} />
 
 
       <Tabs defaultValue="visao">
@@ -450,21 +451,21 @@ export function PerformanceView({ data }: { data: PerfData }) {
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="gRes" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="label" fontSize={11} />
                         <YAxis yAxisId="l" fontSize={11} />
                         <YAxis yAxisId="r" orientation="right" fontSize={11} />
                         <Tooltip formatter={(v: any, k: string) => (k === "Investimento" ? fmtBRL(Number(v)) : fmtInt(Number(v)))} />
                         <Legend />
-                        <Area yAxisId="l" type="monotone" dataKey="spend" stroke="hsl(var(--primary))" fill="url(#gSpend)" name="Investimento" />
+                        <Area yAxisId="l" type="monotone" dataKey="spend" stroke="var(--primary)" fill="url(#gSpend)" name="Investimento" />
                         <Area yAxisId="r" type="monotone" dataKey="results" stroke="#10b981" fill="url(#gRes)" name="Resultados" />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -539,13 +540,13 @@ export function PerformanceView({ data }: { data: PerfData }) {
                 <div className="h-64 w-full">
                   <ResponsiveContainer>
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="label" fontSize={11} />
                       <YAxis yAxisId="l" fontSize={11} />
                       <YAxis yAxisId="r" orientation="right" fontSize={11} />
                       <Tooltip formatter={(v: any) => fmtInt(Number(v))} />
                       <Legend />
-                      <Bar yAxisId="l" dataKey="impressions" fill="hsl(var(--primary))" name="Impressões" opacity={0.85} />
+                      <Bar yAxisId="l" dataKey="impressions" fill="var(--primary)" name="Impressões" opacity={0.85} />
                       <Bar yAxisId="r" dataKey="clicks" fill="#f59e0b" name="Cliques" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -817,11 +818,11 @@ function WorldMapPanel({
   }
 
   function fillFor(code?: string) {
-    if (!code) return "hsl(var(--muted))";
+    if (!code) return "var(--muted)";
     const g = geoByCode[code];
-    if (!g) return "hsl(var(--muted))";
+    if (!g) return "var(--muted)";
     const intensity = Math.min(1, Math.sqrt(g.spend / maxSpend));
-    return `color-mix(in oklch, hsl(var(--primary)) ${20 + intensity * 80}%, transparent)`;
+    return `color-mix(in oklch, var(--primary) ${20 + intensity * 80}%, transparent)`;
   }
 
   return (
@@ -853,17 +854,17 @@ function WorldMapPanel({
                             onClick={() => iso2 && focusOn(iso2, geo)}
                             style={{
                               default: {
-                                fill: isSel ? "hsl(var(--primary))" : fillFor(iso2),
-                                stroke: isSel ? "hsl(var(--primary))" : "hsl(var(--border))",
+                                fill: isSel ? "var(--primary)" : fillFor(iso2),
+                                stroke: isSel ? "var(--primary)" : "var(--border)",
                                 strokeWidth: isSel ? 1.2 : 0.4,
                                 outline: "none",
                               },
                               hover: {
-                                fill: iso2 && geoByCode[iso2] ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                fill: iso2 && geoByCode[iso2] ? "var(--primary)" : "var(--muted)",
                                 cursor: iso2 && geoByCode[iso2] ? "pointer" : "default",
                                 outline: "none",
                               },
-                              pressed: { fill: "hsl(var(--primary))", outline: "none" },
+                              pressed: { fill: "var(--primary)", outline: "none" },
                             }}
                           />
                         );
@@ -876,7 +877,7 @@ function WorldMapPanel({
           )}
           <div className="flex items-center gap-2 mt-3 text-[11px] text-muted-foreground">
             <span>Menor gasto</span>
-            <div className="flex-1 h-2 rounded" style={{ background: "linear-gradient(90deg, color-mix(in oklch, hsl(var(--primary)) 20%, transparent), hsl(var(--primary)))" }} />
+            <div className="flex-1 h-2 rounded" style={{ background: "linear-gradient(90deg, color-mix(in oklch, var(--primary) 20%, transparent), var(--primary))" }} />
             <span>Maior gasto</span>
           </div>
         </CardContent>
@@ -929,74 +930,83 @@ function WorldMapPanel({
   );
 }
 
-/* ---------- Leads heatmap (GitHub-style, 12 semanas, baseado em resultados diários) ---------- */
+/* ---------- Heatmap dia da semana × hora do dia ---------- */
 const DOW_LBL = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-function LeadsHeatmap({ insights }: { insights: any[] }) {
-  const { weeks, max, best, total } = useMemo(() => {
-    const byDate: Record<string, number> = {};
-    for (const r of insights ?? []) {
-      const d = String(r.date);
-      byDate[d] = (byDate[d] ?? 0) + Number(r.results ?? 0);
-    }
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    // start = segunda 12 semanas atrás
-    const start = new Date(today);
-    const dow = (start.getDay() + 6) % 7;
-    start.setDate(start.getDate() - dow - 11 * 7);
-    const wks: { label: string; cells: { date: string; val: number }[] }[] = [];
+function HourDayHeatmap({ hourly }: { hourly: any[] }) {
+  const { grid, max, total, bestDay, bestHour, bestCell } = useMemo(() => {
+    const g: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+    const perDow = Array(7).fill(0);
+    const perHour = Array(24).fill(0);
     let max = 0, total = 0;
-    const perDow = [0, 0, 0, 0, 0, 0, 0];
-    for (let w = 0; w < 12; w++) {
-      const cells: { date: string; val: number }[] = [];
-      for (let d = 0; d < 7; d++) {
-        const cur = new Date(start);
-        cur.setDate(cur.getDate() + w * 7 + d);
-        const key = cur.toISOString().slice(0, 10);
-        const val = byDate[key] ?? 0;
-        cells.push({ date: key, val });
-        if (val > max) max = val;
-        total += val;
-        perDow[d] += val;
-      }
-      const s = new Date(start); s.setDate(s.getDate() + w * 7);
-      wks.push({ label: s.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }), cells });
+    let bestCell = { d: -1, h: -1, val: 0 };
+    for (const r of hourly ?? []) {
+      const d = Number(r.dow), h = Number(r.hour);
+      if (!(d >= 0 && d <= 6) || !(h >= 0 && h <= 23)) continue;
+      const v = Number(r.results ?? 0);
+      g[d][h] += v;
+      perDow[d] += v;
+      perHour[h] += v;
+      total += v;
+      if (g[d][h] > max) max = g[d][h];
+      if (g[d][h] > bestCell.val) bestCell = { d, h, val: g[d][h] };
     }
-    const bestIdx = perDow.indexOf(Math.max(...perDow));
-    return { weeks: wks, max: Math.max(1, max), best: perDow[bestIdx] ? { label: DOW_LBL[bestIdx], val: perDow[bestIdx] } : null, total };
-  }, [insights]);
+    const bd = perDow.indexOf(Math.max(...perDow));
+    const bh = perHour.indexOf(Math.max(...perHour));
+    return {
+      grid: g,
+      max: Math.max(1, max),
+      total,
+      bestDay: perDow[bd] ? { label: DOW_LBL[bd], val: perDow[bd] } : null,
+      bestHour: perHour[bh] ? { label: `${String(bh).padStart(2, "0")}h`, val: perHour[bh] } : null,
+      bestCell: bestCell.val > 0 ? bestCell : null,
+    };
+  }, [hourly]);
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Mapa de calor · leads por dia (12 semanas)</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            {total === 0
-              ? "Sem dados suficientes ainda"
-              : best ? `Melhor dia: ${best.label} (${best.val} leads no período)` : ""}
-          </p>
-        </div>
+      <CardHeader>
+        <CardTitle className="text-base">Mapa de calor · melhor dia e horário para leads</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          {total === 0
+            ? "Sem dados horários ainda. Sincronize a conta para popular o heatmap por hora."
+            : (
+              <>
+                {bestDay && <>Melhor dia: <b>{bestDay.label}</b> ({fmtInt(bestDay.val)} leads) · </>}
+                {bestHour && <>melhor horário: <b>{bestHour.label}</b> ({fmtInt(bestHour.val)} leads)</>}
+                {bestCell && (
+                  <> · pico: <b>{DOW_LBL[bestCell.d]} {String(bestCell.h).padStart(2, "0")}h</b> ({fmtInt(bestCell.val)})</>
+                )}
+              </>
+            )}
+        </p>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2 w-full">
-          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground shrink-0" style={{ paddingTop: 16 }}>
-            {DOW_LBL.map((d) => <div key={d} className="h-5 flex items-center">{d}</div>)}
-          </div>
-          <div className="flex gap-1 flex-1 min-w-0">
-            {weeks.map((w, wi) => (
-              <div key={wi} className="flex flex-col gap-1 flex-1 min-w-0">
-                <div className="text-[9px] text-muted-foreground text-center h-3 leading-3 truncate">
-                  {wi % 2 === 0 ? w.label.split(" ")[0] : ""}
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[560px]">
+            {/* header hours */}
+            <div className="flex gap-[2px] pl-8 mb-1">
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} className="flex-1 text-center text-[9px] text-muted-foreground tabular-nums">
+                  {h % 3 === 0 ? String(h).padStart(2, "0") : ""}
                 </div>
-                {w.cells.map((c) => {
-                  const intensity = c.val / max;
-                  const bg = c.val === 0
+              ))}
+            </div>
+            {DOW_LBL.map((lbl, d) => (
+              <div key={lbl} className="flex items-center gap-[2px] mb-[2px]">
+                <div className="w-8 text-[10px] text-muted-foreground shrink-0">{lbl}</div>
+                {Array.from({ length: 24 }, (_, h) => {
+                  const v = grid[d][h];
+                  const intensity = v / max;
+                  const bg = v === 0
                     ? "hsl(220 14% 93%)"
-                    : `rgba(37, 99, 235, ${0.2 + intensity * 0.8})`;
+                    : `rgba(37, 99, 235, ${0.15 + intensity * 0.85})`;
                   return (
-                    <div key={c.date} className="h-5 w-full rounded-sm border border-border/50"
-                      style={{ background: bg }}
-                      title={`${new Date(c.date + "T00:00").toLocaleDateString("pt-BR")} · ${c.val} leads`} />
+                    <div
+                      key={h}
+                      className="flex-1 aspect-square rounded-[3px] border border-border/40"
+                      style={{ background: bg, minWidth: 8 }}
+                      title={`${lbl} · ${String(h).padStart(2, "0")}h — ${v} leads`}
+                    />
                   );
                 })}
               </div>
@@ -1006,7 +1016,7 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
         <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
           <span>Menos</span>
           {[0.1, 0.3, 0.6, 1].map((v) => (
-            <div key={v} className="h-3 w-3 rounded-sm border border-border/50" style={{ background: `rgba(37, 99, 235, ${0.2 + v * 0.8})` }} />
+            <div key={v} className="h-3 w-3 rounded-sm border border-border/40" style={{ background: `rgba(37, 99, 235, ${0.15 + v * 0.85})` }} />
           ))}
           <span>Mais</span>
         </div>
@@ -1103,6 +1113,15 @@ function periodLabel(period: string, customRange: { from?: Date; to?: Date }) {
   }
   return PERIOD_PRESETS.find((p) => p.value === period)?.label ?? "Período";
 }
+function presetToRange(period: string): { from?: Date; to?: Date } {
+  if (period === "all") return {};
+  const to = new Date(); to.setHours(0, 0, 0, 0);
+  if (period === "current_week") return { from: to, to };
+  const n = Number(period);
+  if (!Number.isFinite(n)) return {};
+  const from = new Date(to); from.setDate(from.getDate() - (n - 1));
+  return { from, to };
+}
 function PeriodPicker({
   period, setPeriod, customRange, setCustomRange,
 }: {
@@ -1112,6 +1131,7 @@ function PeriodPicker({
   setCustomRange: (r: { from?: Date; to?: Date }) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const selectedRange = period === "custom" ? customRange : presetToRange(period);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -1120,16 +1140,16 @@ function PeriodPicker({
           {periodLabel(period, customRange)}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0" align="end">
         <div className="flex">
-          <div className="border-r p-2 min-w-[160px] space-y-0.5">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-2">Selecione</div>
+          <div className="border-r p-1.5 w-[150px] space-y-0.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-1">Período</div>
             {PERIOD_PRESETS.map((p) => (
               <button
                 key={p.value}
                 onClick={() => { setPeriod(p.value); setCustomRange({}); }}
                 className={cn(
-                  "w-full text-left text-sm rounded px-2 py-1.5 transition-colors",
+                  "w-full text-left text-xs rounded px-2 py-1.5 transition-colors",
                   period === p.value ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"
                 )}
               >
@@ -1137,10 +1157,11 @@ function PeriodPicker({
               </button>
             ))}
           </div>
-          <div className="p-2">
+          <div className="p-1">
             <Calendar
               mode="range"
-              selected={period === "custom" ? (customRange as any) : undefined}
+              selected={selectedRange as any}
+              defaultMonth={selectedRange.from ?? new Date()}
               onSelect={(r: any) => { setPeriod("custom"); setCustomRange(r || {}); }}
               numberOfMonths={2}
               className="pointer-events-auto"
