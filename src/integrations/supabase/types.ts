@@ -1312,6 +1312,101 @@ export type Database = {
           },
         ]
       }
+      nps_survey_responses: {
+        Row: {
+          answers: Json
+          client_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          respondent_email: string | null
+          respondent_name: string | null
+          score: number | null
+          survey_id: string
+        }
+        Insert: {
+          answers?: Json
+          client_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          respondent_email?: string | null
+          respondent_name?: string | null
+          score?: number | null
+          survey_id: string
+        }
+        Update: {
+          answers?: Json
+          client_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          respondent_email?: string | null
+          respondent_name?: string | null
+          score?: number | null
+          survey_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_survey_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nps_survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "nps_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nps_surveys: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          public_token: string
+          questions: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          public_token?: string
+          questions?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          public_token?: string
+          questions?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_surveys_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_tasks: {
         Row: {
           approved_at: string | null
@@ -1494,6 +1589,70 @@ export type Database = {
             columns: ["niche_id"]
             isOneToOne: false
             referencedRelation: "niches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pda_action_steps: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          owner_id: string | null
+          pda_id: string
+          position: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string | null
+          pda_id: string
+          position?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string | null
+          pda_id?: string
+          position?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pda_action_steps_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pda_action_steps_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pda_action_steps_pda_id_fkey"
+            columns: ["pda_id"]
+            isOneToOne: false
+            referencedRelation: "pdas"
             referencedColumns: ["id"]
           },
         ]

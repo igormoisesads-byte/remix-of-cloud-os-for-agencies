@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Cloud, Home, MessageSquare, Users, ClipboardList, DollarSign, Settings, LogOut, UserCog,
+  HeartPulse, Smile, Target,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,9 @@ const groups = [
     label: "CS",
     items: [
       { title: "Clientes", url: "/clientes", icon: Users },
+      { title: "Health Score", url: "/health-score", icon: HeartPulse },
+      { title: "NPS", url: "/nps", icon: Smile },
+      { title: "PDA", url: "/pdas", icon: Target },
     ],
   },
   {
