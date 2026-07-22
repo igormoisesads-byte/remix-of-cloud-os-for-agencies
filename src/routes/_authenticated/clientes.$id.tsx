@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import {
   ChevronLeft, Plus, Check, LayoutGrid, BarChart3, LineChart, Search, Repeat, HeartPulse,
   AlertTriangle, Star, FileText, Calendar, Video, ImageIcon, Key, ListChecks, ClipboardList,
-  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2,
+  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -25,6 +25,7 @@ import { syncAdAccount } from "@/lib/ads.functions";
 import { generateAiReport } from "@/lib/reports.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ReactMarkdown from "react-markdown";
+import { PerformanceView } from "@/components/performance-view";
 
 const clientQueryOptions = (id: string) =>
   queryOptions({
