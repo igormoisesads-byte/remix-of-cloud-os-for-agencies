@@ -451,9 +451,38 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
 
         </CardContent>
       </Card>
+
+      <Dialog open={syncDialog.open} onOpenChange={(o) => setSyncDialog({ id: syncDialog.id, open: o })}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sincronizar Meta Ads</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Escolha o período que deve ser puxado do Meta. Serão importadas contas, campanhas, conjuntos e anúncios.
+            </p>
+            <Select value={syncPreset} onValueChange={(v: any) => setSyncPreset(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="last_30d">Últimos 30 dias</SelectItem>
+                <SelectItem value="last_90d">Últimos 90 dias</SelectItem>
+                <SelectItem value="last_6m">Últimos 6 meses</SelectItem>
+                <SelectItem value="last_year">Último ano</SelectItem>
+                <SelectItem value="maximum">Toda a conta (histórico completo)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Dica: na primeira sincronização, escolha "Toda a conta" para trazer o histórico completo. Nas próximas, "Últimos 30 dias" já basta para manter os dados atualizados.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSyncDialog({ id: "", open: false })}>Cancelar</Button>
+            <Button onClick={confirmSync}>Sincronizar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 function SharePublicLinkDialog({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
