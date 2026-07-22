@@ -294,14 +294,35 @@ export function PerformanceView({ data }: { data: PerfData }) {
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[150px]"><SelectValue placeholder="Período" /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="current_week">Semana atual</SelectItem>
             <SelectItem value="7">Últimos 7 dias</SelectItem>
-            <SelectItem value="14">Últimos 14 dias</SelectItem>
+            <SelectItem value="15">Últimos 15 dias</SelectItem>
             <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="90">Últimos 90 dias</SelectItem>
+            <SelectItem value="365">Último ano</SelectItem>
             <SelectItem value="all">Todo o período</SelectItem>
+            <SelectItem value="custom">Personalizado…</SelectItem>
           </SelectContent>
         </Select>
+        {period === "custom" && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-xs">
+                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                {customRange.from ? customRange.from.toLocaleDateString("pt-BR") : "Início"}
+                {" → "}
+                {customRange.to ? customRange.to.toLocaleDateString("pt-BR") : "Fim"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={customRange as any}
+                onSelect={(r: any) => setCustomRange(r || {})}
+                numberOfMonths={2} className="pointer-events-auto p-3" />
+            </PopoverContent>
+          </Popover>
+        )}
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
             <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
