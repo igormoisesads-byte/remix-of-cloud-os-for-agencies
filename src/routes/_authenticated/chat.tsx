@@ -327,6 +327,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
   const [mentionIdx, setMentionIdx] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [lightbox, setLightbox] = useState<{ url: string; name: string } | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -569,9 +570,13 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                   )}
                   <div id={`msg-${m.id}`} className="text-sm whitespace-pre-wrap break-words">{m.body ? renderWithMentions(m.body) : null}</div>
                   {m.attachment_url && m.attachment_kind === "image" && (
-                    <a href={m.attachment_url} target="_blank" rel="noreferrer">
-                      <img src={m.attachment_url} alt={m.attachment_name || "imagem"} className="mt-1 max-h-64 rounded-md border" />
-                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setLightbox({ url: m.attachment_url!, name: m.attachment_name || "imagem" })}
+                      className="block mt-1"
+                    >
+                      <img src={m.attachment_url} alt={m.attachment_name || "imagem"} className="max-h-64 rounded-md border cursor-zoom-in hover:opacity-90 transition" />
+                    </button>
                   )}
                   {m.attachment_url && m.attachment_kind === "audio" && (
                     <audio controls src={m.attachment_url} className="mt-1 h-8" />
@@ -776,6 +781,25 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
         channel={channel} members={members} profiles={profiles}
         canManage={meIsAdmin} onChanged={loadMembers}
       />
+
+      <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
+        <DialogContent
+          className="max-w-[100vw] w-screen h-screen sm:rounded-none p-0 bg-black/95 border-0 flex items-center justify-center"
+          onClick={() => setLightbox(null)}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>{lightbox?.name || "Imagem"}</DialogTitle>
+          </DialogHeader>
+          {lightbox && (
+            <img
+              src={lightbox.url}
+              alt={lightbox.name}
+              className="max-w-[95vw] max-h-[95vh] object-contain select-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
