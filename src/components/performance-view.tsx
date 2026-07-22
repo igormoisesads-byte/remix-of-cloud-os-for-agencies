@@ -380,13 +380,14 @@ export function PerformanceView({ data }: { data: PerfData }) {
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 rounded-lg border bg-card p-2">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
+      <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 rounded-lg border bg-card p-2">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground pl-1 shrink-0">
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
+        <Filter className="h-4 w-4 text-muted-foreground sm:hidden shrink-0 ml-1" />
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
-            <SelectTrigger className="h-8 w-full sm:w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
+            <SelectTrigger className="h-8 flex-1 min-w-0 sm:flex-none sm:w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as contas</SelectItem>
               {accountsList.map((a: any) => (
@@ -396,7 +397,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </Select>
         )}
         <Select value={campaignId} onValueChange={(v) => { setCampaignId(v); setCreativeId("all"); }}>
-          <SelectTrigger className="h-8 w-full sm:w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
+          <SelectTrigger className="h-8 flex-1 min-w-0 sm:flex-none sm:w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as campanhas</SelectItem>
             {campaignOptions.map((c) => (
@@ -405,7 +406,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </SelectContent>
         </Select>
         <Select value={creativeId} onValueChange={setCreativeId}>
-          <SelectTrigger className="h-8 w-full sm:w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
+          <SelectTrigger className="h-8 flex-1 min-w-0 sm:flex-none sm:w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os anúncios</SelectItem>
             {creativeOptions.map((c) => (
@@ -414,14 +415,15 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </SelectContent>
         </Select>
         {hasFilters && (
-          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearFilters}>
-            <X className="h-3.5 w-3.5 mr-1" /> Limpar
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={clearFilters} title="Limpar filtros">
+            <X className="h-3.5 w-3.5" />
           </Button>
         )}
-        <div className="w-full sm:w-auto sm:ml-auto">
+        <div className="ml-auto shrink-0">
           <PeriodPicker period={period} setPeriod={setPeriod} customRange={customRange} setCustomRange={setCustomRange} />
         </div>
       </div>
+
 
       {/* KPI Grid — for local (WhatsApp) clients use conversations from waTotals to avoid mixing action types */}
       {(() => {
