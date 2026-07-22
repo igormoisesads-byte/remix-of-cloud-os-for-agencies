@@ -425,6 +425,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                     campaignInsights: campaignInsights.data ?? [],
                     accounts: accounts.data ?? [],
                     sales: salesAgg.data,
+                    hourly: hourly.data ?? [],
                   }} />
                 </div>
                 <div className="hidden xl:block">
