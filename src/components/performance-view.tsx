@@ -762,20 +762,20 @@ function EmptyMsg({ text = "Sem dados no período. Sincronize a conta para ver m
   return <div className="text-sm text-muted-foreground text-center py-8">{text}</div>;
 }
 
-/* Vertical funnel — formato trapezoidal com taxa de conversão entre etapas */
+/* Vertical funnel — largura decresce gradualmente (100% → 50%) independente do valor */
 function VerticalFunnel({ steps }: { steps: { label: string; value: number; color: string }[] }) {
-  const max = Math.max(...steps.map((s) => s.value), 1);
-  const minW = 18; // % — largura mínima para etapas pequenas continuarem visíveis
+  const n = steps.length;
+  const startW = 100;
+  const endW = 50;
+  const widthAt = (i: number) => (n <= 1 ? startW : startW - ((startW - endW) * i) / (n - 1));
   return (
     <div className="flex gap-4 py-2">
       {/* Funil (trapézios) */}
       <div className="flex-1 flex flex-col items-center gap-0">
         {steps.map((s, i) => {
-          const topRaw = (s.value / max) * 100;
-          const nextRaw = i < steps.length - 1 ? (steps[i + 1].value / max) * 100 : topRaw;
-          const top = Math.max(minW, topRaw);
-          const bottom = Math.max(minW, nextRaw);
-          const isLast = i === steps.length - 1;
+          const top = widthAt(i);
+          const bottom = widthAt(i + 1 < n ? i + 1 : i);
+          const isLast = i === n - 1;
           return (
             <div key={s.label} className="w-full flex flex-col items-center">
               <div
@@ -797,6 +797,7 @@ function VerticalFunnel({ steps }: { steps: { label: string; value: number; colo
           );
         })}
       </div>
+
       {/* Coluna de conversão etapa a etapa */}
       <div className="w-40 flex flex-col justify-around py-2">
         {steps.map((s, i) => {
