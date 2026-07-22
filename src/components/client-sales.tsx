@@ -126,15 +126,15 @@ export function ClientSales({ clientId }: { clientId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Vendas do cliente</h2>
-          <p className="text-sm text-muted-foreground">Registro semanal — leads, agendamentos, vendas e faturamento por semana.</p>
+          <h2 className="text-xl font-semibold">Resultados do cliente</h2>
+          <p className="text-sm text-muted-foreground">Registro semanal — leads, agendamentos, matrículas/cadastros e faturamento por semana.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1" />Registrar semana</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Registrar vendas da semana</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Registrar resultados da semana</DialogTitle></DialogHeader>
             <div className="grid gap-3">
               <div>
                 <Label>Semana (segunda a domingo)</Label>
@@ -146,7 +146,7 @@ export function ClientSales({ clientId }: { clientId: string }) {
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Leads</Label><Input type="number" min={0} value={form.leads} onChange={(e) => setForm({ ...form, leads: e.target.value })} /></div>
                 <div><Label>Agendamentos</Label><Input type="number" min={0} value={form.agendamentos} onChange={(e) => setForm({ ...form, agendamentos: e.target.value })} /></div>
-                <div><Label>Vendas</Label><Input type="number" min={0} value={form.vendas} onChange={(e) => setForm({ ...form, vendas: e.target.value })} /></div>
+                <div><Label>Matrículas / Cadastros</Label><Input type="number" min={0} value={form.vendas} onChange={(e) => setForm({ ...form, vendas: e.target.value })} /></div>
               </div>
               <div><Label>Faturamento (R$)</Label><Input type="number" min={0} step="0.01" value={form.faturamento} onChange={(e) => setForm({ ...form, faturamento: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
@@ -159,7 +159,7 @@ export function ClientSales({ clientId }: { clientId: string }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiSm label="Leads (total)" value={String(totals.leads)} accent="primary" />
         <KpiSm label="Agendamentos" value={String(totals.agendamentos)} accent="violet" />
-        <KpiSm label="Vendas" value={String(totals.vendas)} accent="emerald" />
+        <KpiSm label="Matrículas/Cadastros" value={String(totals.vendas)} accent="emerald" />
         <KpiSm label="Faturamento" value={fmtBRL(totals.faturamento)} accent="emerald" />
       </div>
 
@@ -192,7 +192,7 @@ export function ClientSales({ clientId }: { clientId: string }) {
                     <div className="grid grid-cols-4 gap-2 text-xs">
                       <Cell k="Leads" v={String(w.leads)} />
                       <Cell k="Agend." v={String(w.agendamentos)} />
-                      <Cell k="Vendas" v={String(w.vendas)} />
+                      <Cell k="Matríc." v={String(w.vendas)} />
                       <Cell k="R$" v={fmtBRL(w.faturamento)} />
                     </div>
                   </div>
