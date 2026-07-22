@@ -6,8 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { NewClientWizard } from "@/components/new-client-wizard";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/clientes/")({
   head: () => ({
@@ -74,14 +80,15 @@ function ClientesList() {
                 <TableHead>Plataforma</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Mensalidade</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
               )}
               {!isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">
                   Nenhum cliente cadastrado. Comece adicionando o primeiro.
                 </TableCell></TableRow>
               )}
@@ -111,6 +118,38 @@ function ClientesList() {
                   <TableCell><Badge variant={STATUS_VARIANT[c.status]}>{c.status}</Badge></TableCell>
                   <TableCell className="text-right font-medium">
                     {c.monthly_fee_amount ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(c.monthly_fee_amount)) : "—"}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" title="Excluir cliente">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação remove <strong>{c.name}</strong> e todos os dados relacionados (tarefas, mensalidades, relatórios, etc.). Não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={async () => {
+                              const { error } = await supabase.from("clients").delete().eq("id", c.id);
+                              if (error) { toast.error("Erro ao excluir: " + error.message); return; }
+                              toast.success("Cliente excluído");
+                              qc.invalidateQueries({ queryKey: ["clients"] });
+                              qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+                            }}
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
