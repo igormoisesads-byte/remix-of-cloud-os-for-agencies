@@ -451,21 +451,21 @@ export function PerformanceView({ data }: { data: PerfData }) {
                       <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                           </linearGradient>
                           <linearGradient id="gRes" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
                             <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="label" fontSize={11} />
                         <YAxis yAxisId="l" fontSize={11} />
                         <YAxis yAxisId="r" orientation="right" fontSize={11} />
                         <Tooltip formatter={(v: any, k: string) => (k === "Investimento" ? fmtBRL(Number(v)) : fmtInt(Number(v)))} />
                         <Legend />
-                        <Area yAxisId="l" type="monotone" dataKey="spend" stroke="hsl(var(--primary))" fill="url(#gSpend)" name="Investimento" />
+                        <Area yAxisId="l" type="monotone" dataKey="spend" stroke="var(--primary)" fill="url(#gSpend)" name="Investimento" />
                         <Area yAxisId="r" type="monotone" dataKey="results" stroke="#10b981" fill="url(#gRes)" name="Resultados" />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -540,13 +540,13 @@ export function PerformanceView({ data }: { data: PerfData }) {
                 <div className="h-64 w-full">
                   <ResponsiveContainer>
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="label" fontSize={11} />
                       <YAxis yAxisId="l" fontSize={11} />
                       <YAxis yAxisId="r" orientation="right" fontSize={11} />
                       <Tooltip formatter={(v: any) => fmtInt(Number(v))} />
                       <Legend />
-                      <Bar yAxisId="l" dataKey="impressions" fill="hsl(var(--primary))" name="Impressões" opacity={0.85} />
+                      <Bar yAxisId="l" dataKey="impressions" fill="var(--primary)" name="Impressões" opacity={0.85} />
                       <Bar yAxisId="r" dataKey="clicks" fill="#f59e0b" name="Cliques" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -818,11 +818,11 @@ function WorldMapPanel({
   }
 
   function fillFor(code?: string) {
-    if (!code) return "hsl(var(--muted))";
+    if (!code) return "var(--muted)";
     const g = geoByCode[code];
-    if (!g) return "hsl(var(--muted))";
+    if (!g) return "var(--muted)";
     const intensity = Math.min(1, Math.sqrt(g.spend / maxSpend));
-    return `color-mix(in oklch, hsl(var(--primary)) ${20 + intensity * 80}%, transparent)`;
+    return `color-mix(in oklch, var(--primary) ${20 + intensity * 80}%, transparent)`;
   }
 
   return (
@@ -854,17 +854,17 @@ function WorldMapPanel({
                             onClick={() => iso2 && focusOn(iso2, geo)}
                             style={{
                               default: {
-                                fill: isSel ? "hsl(var(--primary))" : fillFor(iso2),
-                                stroke: isSel ? "hsl(var(--primary))" : "hsl(var(--border))",
+                                fill: isSel ? "var(--primary)" : fillFor(iso2),
+                                stroke: isSel ? "var(--primary)" : "var(--border)",
                                 strokeWidth: isSel ? 1.2 : 0.4,
                                 outline: "none",
                               },
                               hover: {
-                                fill: iso2 && geoByCode[iso2] ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                                fill: iso2 && geoByCode[iso2] ? "var(--primary)" : "var(--muted)",
                                 cursor: iso2 && geoByCode[iso2] ? "pointer" : "default",
                                 outline: "none",
                               },
-                              pressed: { fill: "hsl(var(--primary))", outline: "none" },
+                              pressed: { fill: "var(--primary)", outline: "none" },
                             }}
                           />
                         );
@@ -877,7 +877,7 @@ function WorldMapPanel({
           )}
           <div className="flex items-center gap-2 mt-3 text-[11px] text-muted-foreground">
             <span>Menor gasto</span>
-            <div className="flex-1 h-2 rounded" style={{ background: "linear-gradient(90deg, color-mix(in oklch, hsl(var(--primary)) 20%, transparent), hsl(var(--primary)))" }} />
+            <div className="flex-1 h-2 rounded" style={{ background: "linear-gradient(90deg, color-mix(in oklch, var(--primary) 20%, transparent), var(--primary))" }} />
             <span>Maior gasto</span>
           </div>
         </CardContent>
