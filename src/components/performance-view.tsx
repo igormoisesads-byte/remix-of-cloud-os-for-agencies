@@ -380,13 +380,13 @@ export function PerformanceView({ data }: { data: PerfData }) {
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 rounded-lg border bg-card p-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
-            <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
+            <SelectTrigger className="h-8 w-full sm:w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as contas</SelectItem>
               {accountsList.map((a: any) => (
@@ -396,7 +396,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </Select>
         )}
         <Select value={campaignId} onValueChange={(v) => { setCampaignId(v); setCreativeId("all"); }}>
-          <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
+          <SelectTrigger className="h-8 w-full sm:w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as campanhas</SelectItem>
             {campaignOptions.map((c) => (
@@ -405,7 +405,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </SelectContent>
         </Select>
         <Select value={creativeId} onValueChange={setCreativeId}>
-          <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
+          <SelectTrigger className="h-8 w-full sm:w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os anúncios</SelectItem>
             {creativeOptions.map((c) => (
@@ -418,7 +418,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
             <X className="h-3.5 w-3.5 mr-1" /> Limpar
           </Button>
         )}
-        <div className="ml-auto">
+        <div className="w-full sm:w-auto sm:ml-auto">
           <PeriodPicker period={period} setPeriod={setPeriod} customRange={customRange} setCustomRange={setCustomRange} />
         </div>
       </div>
