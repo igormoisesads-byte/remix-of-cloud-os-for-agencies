@@ -30,6 +30,8 @@ import { PerformanceView } from "@/components/performance-view";
 import { ClientSales } from "@/components/client-sales";
 import { AiDataChat } from "@/components/ai-data-chat";
 import { CreativesView } from "@/components/creatives-view";
+import { uploadToR2 } from "@/lib/upload-r2";
+import { Pencil, Upload } from "lucide-react";
 
 
 const clientQueryOptions = (id: string) =>
