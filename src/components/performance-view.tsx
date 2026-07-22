@@ -253,13 +253,31 @@ export function PerformanceView({ data }: { data: PerfData }) {
   }, [data.whatsapp, accountId, period]);
 
   const geoData = useMemo(() => {
-    const src = (data.geo ?? []).filter((r) => inAccount(r));
+    // Country-level only (no region)
+    const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
     const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
     return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
       .map((g) => ({
         code: g.country_code,
         name: regionName(g.country_code),
+        spend: Number(g.spend),
+        results: Number(g.results),
+        clicks: Number(g.clicks),
+        impressions: Number(g.impressions),
+        reach: Number(g.reach),
+        pct: (Number(g.spend) / total) * 100,
+      }));
+  }, [data.geo, accountId]);
+
+  const regionData = useMemo(() => {
+    const src = (data.geo ?? []).filter((r) => inAccount(r) && r.region);
+    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
+    return [...src]
+      .sort((a, b) => Number(b.spend) - Number(a.spend))
+      .map((g) => ({
+        region: g.region_name || g.region,
+        country: g.country_code,
         spend: Number(g.spend),
         results: Number(g.results),
         clicks: Number(g.clicks),
