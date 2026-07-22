@@ -1024,3 +1024,73 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
     </Card>
   );
 }
+
+/* WhatsApp KPI card with comparison badge */
+function WaKpi({ label, value, prev, hint, accent }: { label: string; value: number; prev: number; hint?: string; accent?: "primary" | "emerald" }) {
+  const delta = prev ? ((value - prev) / prev) * 100 : 0;
+  const showDelta = prev > 0 && Number.isFinite(delta) && Math.abs(delta) > 0.5;
+  const up = delta >= 0;
+  const accentBg = accent === "emerald" ? "bg-emerald-500/10 text-emerald-600" : accent === "primary" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground";
+  return (
+    <div className="rounded-lg border p-3 bg-card">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground truncate">{label}</div>
+        <div className={`h-6 w-6 rounded flex items-center justify-center ${accentBg}`}>
+          <MessageCircle className="h-3.5 w-3.5" />
+        </div>
+      </div>
+      <div className="text-xl sm:text-2xl font-semibold mt-1 tabular-nums">{fmtInt(value)}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{hint}</div>}
+      {showDelta ? (
+        <div className={`text-[11px] mt-1 flex items-center gap-1 ${up ? "text-emerald-600" : "text-rose-600"}`}>
+          {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {up ? "+" : ""}{delta.toFixed(1)}% vs. período anterior ({fmtInt(prev)})
+        </div>
+      ) : prev > 0 ? (
+        <div className="text-[11px] mt-1 text-muted-foreground">Estável vs. período anterior</div>
+      ) : null}
+    </div>
+  );
+}
+
+/* Region (state) ranking */
+function RegionRanking({ regions }: { regions: { region: string; country: string; spend: number; results: number; clicks: number; impressions: number; reach: number; pct: number }[] }) {
+  if (!regions.length) return null;
+  const max = regions[0]?.spend || 1;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Ranking por estado / região</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">Distribuição do investimento pelas regiões onde seu anúncio foi entregue.</p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          {regions.slice(0, 30).map((g, i) => {
+            const cpa = g.results ? g.spend / g.results : 0;
+            return (
+              <div key={g.region + i} className="rounded-md border p-3 hover:bg-accent/40 transition">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">{i + 1}</div>
+                    <div className="text-sm font-medium truncate">{g.region}</div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{g.country}</span>
+                  </div>
+                  <div className="text-sm font-semibold tabular-nums shrink-0">{fmtBRL(g.spend)}</div>
+                </div>
+                <div className="h-1.5 bg-muted rounded overflow-hidden mb-2">
+                  <div className="h-full bg-primary" style={{ width: `${(g.spend / max) * 100}%` }} />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-muted-foreground">
+                  <div><span className="text-foreground font-medium">{fmtInt(g.results)}</span> result.</div>
+                  <div>CPR <span className="text-foreground font-medium">{g.results ? fmtBRL(cpa) : "—"}</span></div>
+                  <div><span className="text-foreground font-medium">{fmtInt(g.clicks)}</span> cliques</div>
+                  <div><span className="text-foreground font-medium">{g.pct.toFixed(1)}%</span> do total</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
