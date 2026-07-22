@@ -1113,6 +1113,15 @@ function periodLabel(period: string, customRange: { from?: Date; to?: Date }) {
   }
   return PERIOD_PRESETS.find((p) => p.value === period)?.label ?? "Período";
 }
+function presetToRange(period: string): { from?: Date; to?: Date } {
+  if (period === "all") return {};
+  const to = new Date(); to.setHours(0, 0, 0, 0);
+  if (period === "current_week") return { from: to, to };
+  const n = Number(period);
+  if (!Number.isFinite(n)) return {};
+  const from = new Date(to); from.setDate(from.getDate() - (n - 1));
+  return { from, to };
+}
 function PeriodPicker({
   period, setPeriod, customRange, setCustomRange,
 }: {
@@ -1122,6 +1131,7 @@ function PeriodPicker({
   setCustomRange: (r: { from?: Date; to?: Date }) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const selectedRange = period === "custom" ? customRange : presetToRange(period);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -1130,16 +1140,16 @@ function PeriodPicker({
           {periodLabel(period, customRange)}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0" align="end">
         <div className="flex">
-          <div className="border-r p-2 min-w-[160px] space-y-0.5">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-2">Selecione</div>
+          <div className="border-r p-1.5 w-[150px] space-y-0.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-1">Período</div>
             {PERIOD_PRESETS.map((p) => (
               <button
                 key={p.value}
                 onClick={() => { setPeriod(p.value); setCustomRange({}); }}
                 className={cn(
-                  "w-full text-left text-sm rounded px-2 py-1.5 transition-colors",
+                  "w-full text-left text-xs rounded px-2 py-1.5 transition-colors",
                   period === p.value ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"
                 )}
               >
@@ -1147,10 +1157,11 @@ function PeriodPicker({
               </button>
             ))}
           </div>
-          <div className="p-2">
+          <div className="p-1">
             <Calendar
               mode="range"
-              selected={period === "custom" ? (customRange as any) : undefined}
+              selected={selectedRange as any}
+              defaultMonth={selectedRange.from ?? new Date()}
               onSelect={(r: any) => { setPeriod("custom"); setCustomRange(r || {}); }}
               numberOfMonths={2}
               className="pointer-events-auto"
