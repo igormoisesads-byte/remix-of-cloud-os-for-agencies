@@ -43,13 +43,12 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
                 continue;
               }
 
-              // Recipients: admins + gestores + client's responsavel
+              // Recipients: admins + gestores
               const [{ data: staff }, { data: client }] = await Promise.all([
                 supabaseAdmin.from("user_roles").select("user_id, role").in("role", ["admin", "gestor"]),
-                supabaseAdmin.from("clients").select("id, name, responsavel_id").eq("id", acc.client_id).maybeSingle(),
+                supabaseAdmin.from("clients").select("id, name").eq("id", acc.client_id).maybeSingle(),
               ]);
               const users = new Set<string>((staff ?? []).map((s: any) => s.user_id));
-              if (client?.responsavel_id) users.add(client.responsavel_id);
 
               const title = `⚠️ Saldo baixo — ${client?.name ?? "conta de anúncio"}`;
               const body = `Saldo cobre ~${Number(days).toFixed(1)} dia(s) de anúncios. Recarregue a conta.`;
@@ -67,9 +66,8 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
                 if (channel?.id) {
                   await supabaseAdmin.from("messages").insert({
                     channel_id: channel.id,
-                    user_id: null,
+                    author_id: null,
                     body: `🚨 **Saldo crítico**: cobre ~${Number(days).toFixed(1)} dia(s). Recarregue a conta de anúncio "${acc.account_name}".`,
-                    kind: "system",
                   });
                 }
               }

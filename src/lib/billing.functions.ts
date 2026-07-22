@@ -210,7 +210,7 @@ export const updateAccountBillingSettings = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: { tax_rate?: number; low_balance_days_threshold?: number } = {};
     if (data.tax_rate != null) patch.tax_rate = data.tax_rate;
     if (data.low_balance_days_threshold != null) patch.low_balance_days_threshold = data.low_balance_days_threshold;
     const { error } = await context.supabase.from("ad_accounts").update(patch).eq("id", data.ad_account_id);

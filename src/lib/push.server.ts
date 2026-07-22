@@ -24,6 +24,7 @@ export async function sendPushToSubscription(
   try {
     const subscription: PushSubscription = {
       endpoint: sub.endpoint,
+      expirationTime: null,
       keys: { p256dh: sub.p256dh, auth: sub.auth },
     };
     const message: PushMessage = {
@@ -31,7 +32,7 @@ export async function sendPushToSubscription(
       options: { ttl: 60 * 60 * 24 },
     };
     const req = await buildPushPayload(message, subscription, getVapid());
-    const resp = await fetch(subscription.endpoint, req);
+    const resp = await fetch(subscription.endpoint, req as RequestInit);
     if (resp.status === 404 || resp.status === 410) {
       return { ok: false, status: resp.status, gone: true };
     }
