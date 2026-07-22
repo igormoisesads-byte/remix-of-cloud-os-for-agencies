@@ -179,13 +179,14 @@ function DMRow({
   meId?: string; profiles: Profile[];
 }) {
   const [otherName, setOtherName] = useState<string>(channel.name);
+  const [otherAvatar, setOtherAvatar] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("channel_members").select("user_id").eq("channel_id", channel.id);
       const other = (data ?? []).find((m) => m.user_id !== meId);
       if (other) {
         const p = profiles.find((x) => x.id === other.user_id);
-        if (p) setOtherName(p.full_name || p.email);
+        if (p) { setOtherName(p.full_name || p.email); setOtherAvatar(p.avatar_url); }
       }
     })();
   }, [channel.id, meId, profiles]);
@@ -197,8 +198,8 @@ function DMRow({
         activeId === channel.id && "bg-accent text-accent-foreground"
       )}
     >
-      <div className="h-5 w-5 rounded-full bg-primary/30 text-[10px] flex items-center justify-center shrink-0">
-        {initials(otherName)}
+      <div className="h-5 w-5 rounded-full bg-primary/30 text-[10px] flex items-center justify-center shrink-0 overflow-hidden">
+        {otherAvatar ? <img src={otherAvatar} alt="" className="h-full w-full object-cover" /> : initials(otherName)}
       </div>
       <span className="truncate">{otherName}</span>
     </button>
@@ -550,8 +551,12 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
             return (
               <div key={m.id} className={cn("group flex gap-3", grouped ? "pl-11 mt-0.5" : "mt-4")}>
                 {!grouped && (
-                  <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                    {initials(m.author?.full_name || m.author?.email)}
+                  <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0 overflow-hidden">
+                    {m.author?.avatar_url ? (
+                      <img src={m.author.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initials(m.author?.full_name || m.author?.email)
+                    )}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -850,8 +855,12 @@ function MembersDialog({
         <div className="max-h-80 overflow-y-auto divide-y">
           {members.map((m) => (
             <div key={m.id} className="flex items-center gap-3 py-2">
-              <div className="h-7 w-7 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center">
-                {initials(m.profile?.full_name || m.profile?.email)}
+              <div className="h-7 w-7 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center overflow-hidden">
+                {m.profile?.avatar_url ? (
+                  <img src={m.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials(m.profile?.full_name || m.profile?.email)
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm truncate">{m.profile?.full_name || m.profile?.email || m.user_id}</div>
