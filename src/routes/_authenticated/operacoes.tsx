@@ -198,6 +198,23 @@ function OperacoesPage() {
               {(team.data ?? []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={filterKind} onValueChange={setFilterKind}>
+            <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {Object.entries(KIND_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterTag} onValueChange={setFilterTag}>
+            <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Tag" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as tags</SelectItem>
+              {(allTags.data ?? []).length === 0 && (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhuma tag ainda</div>
+              )}
+              {(allTags.data ?? []).map((t: string) => <SelectItem key={t} value={t}>#{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
         </div>
       </div>
