@@ -642,13 +642,24 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="geo">
+        <TabsContent value="geo" className="space-y-4">
           <WorldMapPanel geoData={geoData} geoByCode={geoByCode} maxSpend={maxSpend} />
+          <RegionRanking regions={regionData} />
         </TabsContent>
 
-        <TabsContent value="whatsapp">
+        <TabsContent value="whatsapp" className="space-y-4">
+          {/* WhatsApp KPI cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <WaKpi label="Conversas iniciadas" hint="Novas conversas de WhatsApp no período" value={waTotals.conversations_started} prev={waPrevTotals.conversations_started} accent="emerald" />
+            <WaKpi label="Primeiras respostas" hint="Clientes que responderam à sua mensagem" value={waTotals.first_replies} prev={waPrevTotals.first_replies} accent="primary" />
+            <WaKpi label="Cliques no anúncio" hint="Cliques que abriram o WhatsApp" value={waTotals.link_clicks} prev={waPrevTotals.link_clicks} />
+            <WaKpi label="Impressões" hint="Vezes que o anúncio foi exibido" value={waTotals.impressions} prev={waPrevTotals.impressions} />
+          </div>
           <Card>
-            <CardHeader><CardTitle className="text-base">Funil de conversas</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Funil de conversas</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Percurso da pessoa até iniciar a conversa no WhatsApp.</p>
+            </CardHeader>
             <CardContent>
               {waTotals.impressions === 0 && waTotals.conversations_started === 0 ? (
                 <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
