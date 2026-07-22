@@ -104,13 +104,17 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
-          <div className="h-8 w-8 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center text-xs font-semibold shrink-0">
-            {(profile?.full_name || profile?.email || "?").slice(0, 1).toUpperCase()}
+        <div className="flex items-center gap-2.5 px-2 py-2 group-data-[collapsible=icon]:hidden">
+          <div className="h-9 w-9 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden ring-1 ring-white/10">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              (profile?.full_name || profile?.email || "?").slice(0, 1).toUpperCase()
+            )}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium truncate">{profile?.full_name || profile?.email || "…"}</div>
-            <div className="text-[10px] text-muted-foreground truncate">
+          <div className="min-w-0 flex-1 leading-tight">
+            <div className="text-xs font-semibold text-sidebar-foreground truncate">{profile?.full_name || profile?.email || "…"}</div>
+            <div className="text-[10px] font-medium text-sidebar-foreground/70 truncate uppercase tracking-wider">
               {roles.length > 0 ? roles.join(" · ") : "sem papel"}
             </div>
           </div>
@@ -123,6 +127,7 @@ export function AppSidebar() {
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
+
       </SidebarFooter>
     </Sidebar>
   );
