@@ -628,18 +628,6 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
               <Square className="h-3.5 w-3.5" />
             </Button>
           )}
-          {tasks.length > 0 && (
-            <Select value={attachTaskId ?? ""} onValueChange={(v) => setAttachTaskId(v || null)}>
-              <SelectTrigger className="h-8 w-8 p-0 justify-center shrink-0" aria-label="Anexar tarefa">
-                <Briefcase className="h-3.5 w-3.5" />
-              </SelectTrigger>
-              <SelectContent>
-                {tasks.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           <div className="relative flex-1">
             {mention && (() => {
               const q = mention.query.toLowerCase();
