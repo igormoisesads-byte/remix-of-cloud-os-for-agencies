@@ -4,15 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  BarChart, Bar, Legend, LineChart, Line,
+  BarChart, Bar, Legend, ComposedChart, Line,
 } from "recharts";
 import {
   BarChart3, Globe2, MessageCircle, Image as ImageIcon, ExternalLink, MousePointerClick,
   TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap, Filter, X,
+  Calendar as CalendarIcon, ArrowUpDown,
 } from "lucide-react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
+import { geoCentroid } from "d3-geo";
 
 export type PerfData = {
   insights: any[];
