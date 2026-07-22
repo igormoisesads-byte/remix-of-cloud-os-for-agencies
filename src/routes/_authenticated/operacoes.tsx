@@ -414,10 +414,15 @@ function CalendarView({ tasks, onOpen }: { tasks: any[]; onOpen: (id: string) =>
           const items = d ? (byDay.get(ymd(d)) ?? []) : [];
           const isToday = d && ymd(d) === todayStr;
           return (
-            <div key={key} className={cn("border-r border-b p-1.5 min-h-[110px] flex flex-col gap-1", !d && "bg-muted/20")}>
+            <div key={key} className={cn("border-r border-b p-1.5 min-h-[110px] min-w-0 flex flex-col gap-1 overflow-hidden", !d && "bg-muted/20")}>
               {d && (
-                <div className={cn("text-[11px] font-semibold self-end", isToday && "bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center")}>
-                  {d.getDate()}
+                <div className="flex justify-end">
+                  <span className={cn(
+                    "text-[11px] font-semibold shrink-0 leading-none",
+                    isToday && "bg-primary text-primary-foreground rounded-full h-5 min-w-[1.25rem] px-1 flex items-center justify-center"
+                  )}>
+                    {d.getDate()}
+                  </span>
                 </div>
               )}
               <div className="flex-1 flex flex-col gap-1 overflow-hidden">
