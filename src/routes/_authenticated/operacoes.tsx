@@ -863,6 +863,10 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                   </SelectContent>
                 </Select>
               </SideField>
+              <SideField icon={<Tag className="h-3.5 w-3.5" />} label="Tags">
+                <TagsEditor value={t.tags ?? []} onChange={(next) => patch({ tags: next })} />
+              </SideField>
+
 
               <div className="pt-4 border-t">
                 <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive" onClick={async () => {
