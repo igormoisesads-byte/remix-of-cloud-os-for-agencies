@@ -869,3 +869,80 @@ function MembersDialog({
     </Dialog>
   );
 }
+
+function fmtTime(s: number) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function AudioPlayer({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const barsRef = useRef<number[]>(
+    Array.from({ length: 32 }, () => 0.35 + Math.random() * 0.65)
+  );
+
+  function toggle() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) a.pause();
+    else a.play();
+  }
+  function seek(e: React.MouseEvent<HTMLDivElement>) {
+    const a = audioRef.current;
+    if (!a || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    a.currentTime = pct * duration;
+  }
+  const progress = duration ? current / duration : 0;
+
+  return (
+    <div className="mt-1 inline-flex items-center gap-2 rounded-full border bg-muted/40 pl-1 pr-3 py-1 max-w-xs">
+      <button
+        type="button"
+        onClick={toggle}
+        className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:opacity-90"
+        aria-label={playing ? "Pausar" : "Reproduzir"}
+      >
+        {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
+      </button>
+      <div
+        className="flex items-center gap-[2px] h-6 flex-1 min-w-[120px] cursor-pointer"
+        onClick={seek}
+      >
+        {barsRef.current.map((h, i) => {
+          const active = i / barsRef.current.length <= progress;
+          return (
+            <span
+              key={i}
+              className={cn("w-[2px] rounded-full transition-colors", active ? "bg-primary" : "bg-muted-foreground/40")}
+              style={{ height: `${Math.round(h * 100)}%` }}
+            />
+          );
+        })}
+      </div>
+      <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
+        {fmtTime(playing || current ? current : duration)}
+      </span>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setCurrent(0); }}
+        onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => {
+          const d = e.currentTarget.duration;
+          setDuration(isFinite(d) ? d : 0);
+        }}
+        className="hidden"
+      />
+    </div>
+  );
+}
