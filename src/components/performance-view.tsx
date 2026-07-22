@@ -382,6 +382,19 @@ export function PerformanceView({ data }: { data: PerfData }) {
         <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" value={derived.freq.toFixed(2)} />
       </div>
 
+      {derived.hasSales && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Kpi icon={<Target className="h-4 w-4" />} label="Vendas" value={fmtInt(data.sales?.vendas ?? 0)} accent="emerald" />
+          <Kpi icon={<Zap className="h-4 w-4" />} label="CPV (custo por venda)" value={fmtBRL(derived.cpv)} accent="violet" />
+          <Kpi icon={<TrendingUp className="h-4 w-4" />} label="ROAS" value={`${derived.roas.toFixed(2)}x`} accent="primary" />
+          <Kpi icon={<DollarSign className="h-4 w-4" />} label="Lucro estimado" value={fmtBRL(derived.lucro)} accent={derived.lucro >= 0 ? "emerald" : undefined} />
+        </div>
+      )}
+
+      {/* Heatmap leads/dia (12 semanas) — baseado em resultados diários das campanhas */}
+      <LeadsHeatmap insights={dailyRows} />
+
+
       <Tabs defaultValue="visao">
         <TabsList>
           <TabsTrigger value="visao"><BarChart3 className="h-3.5 w-3.5" />Visão</TabsTrigger>
