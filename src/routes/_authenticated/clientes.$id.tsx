@@ -29,6 +29,8 @@ import ReactMarkdown from "react-markdown";
 import { PerformanceView } from "@/components/performance-view";
 import { ClientSales } from "@/components/client-sales";
 import { AiDataChat } from "@/components/ai-data-chat";
+import { CreativesView } from "@/components/creatives-view";
+
 
 const clientQueryOptions = (id: string) =>
   queryOptions({
