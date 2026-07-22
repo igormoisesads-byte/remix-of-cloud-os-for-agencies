@@ -61,6 +61,8 @@ function OperacoesPage() {
   const qc = useQueryClient();
   const [filterClient, setFilterClient] = useState<string>("all");
   const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [filterKind, setFilterKind] = useState<string>("all");
+  const [filterTag, setFilterTag] = useState<string>("all");
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [openGroup, setOpenGroup] = useState<{ label: string; items: any[] } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -69,14 +71,26 @@ function OperacoesPage() {
   const week = useMemo(() => currentRoutineWeek(), []);
 
   const tasks = useQuery({
-    queryKey: ["tasks", filterClient, filterAssignee],
+    queryKey: ["tasks", filterClient, filterAssignee, filterKind, filterTag],
     queryFn: async () => {
       let q = supabase.from("tasks").select("*, clients(name)").order("position");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       if (filterAssignee !== "all") q = q.eq("assignee_id", filterAssignee);
+      if (filterKind !== "all") q = q.eq("kind", filterKind as any);
+      if (filterTag !== "all") q = q.contains("tags", [filterTag]);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const allTags = useQuery({
+    queryKey: ["task-tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("tasks").select("tags");
+      const s = new Set<string>();
+      (data ?? []).forEach((r: any) => (r.tags ?? []).forEach((t: string) => t && s.add(t)));
+      return Array.from(s).sort();
     },
   });
 
@@ -182,6 +196,23 @@ function OperacoesPage() {
             <SelectContent>
               <SelectItem value="all">Toda equipe</SelectItem>
               {(team.data ?? []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterKind} onValueChange={setFilterKind}>
+            <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {Object.entries(KIND_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterTag} onValueChange={setFilterTag}>
+            <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Tag" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as tags</SelectItem>
+              {(allTags.data ?? []).length === 0 && (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhuma tag ainda</div>
+              )}
+              {(allTags.data ?? []).map((t: string) => <SelectItem key={t} value={t}>#{t}</SelectItem>)}
             </SelectContent>
           </Select>
           <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
@@ -383,10 +414,15 @@ function CalendarView({ tasks, onOpen }: { tasks: any[]; onOpen: (id: string) =>
           const items = d ? (byDay.get(ymd(d)) ?? []) : [];
           const isToday = d && ymd(d) === todayStr;
           return (
-            <div key={key} className={cn("border-r border-b p-1.5 min-h-[110px] flex flex-col gap-1", !d && "bg-muted/20")}>
+            <div key={key} className={cn("border-r border-b p-1.5 min-h-[110px] min-w-0 flex flex-col gap-1 overflow-hidden", !d && "bg-muted/20")}>
               {d && (
-                <div className={cn("text-[11px] font-semibold self-end", isToday && "bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center")}>
-                  {d.getDate()}
+                <div className="flex justify-end">
+                  <span className={cn(
+                    "text-[11px] font-semibold shrink-0 leading-none",
+                    isToday && "bg-primary text-primary-foreground rounded-full h-5 min-w-[1.25rem] px-1 flex items-center justify-center"
+                  )}>
+                    {d.getDate()}
+                  </span>
                 </div>
               )}
               <div className="flex-1 flex flex-col gap-1 overflow-hidden">
@@ -435,6 +471,13 @@ function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
           <Badge variant="outline" className="text-[10px] py-0 px-1.5">{KIND_LABEL[task.kind]}</Badge>
           {task.clients?.name && <span className="inline-flex items-center gap-1"><Building2 className="h-3 w-3" />{task.clients.name}</span>}
         </div>
+        {(task.tags?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {task.tags.slice(0, 4).map((tg: string) => (
+              <span key={tg} className="text-[10px] rounded-full bg-primary/10 text-primary px-1.5 py-0.5">#{tg}</span>
+            ))}
+          </div>
+        )}
         <div className="flex items-center justify-between pt-1">
           {task.due_date ? (
             <div className={cn("text-[11px] inline-flex items-center gap-1", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
@@ -586,6 +629,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     const { error } = await supabase.from("tasks").update(fields).eq("id", taskId);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["task", taskId] });
+    if ("tags" in fields) qc.invalidateQueries({ queryKey: ["task-tags"] });
     onChange();
   }
 
@@ -819,6 +863,10 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                   </SelectContent>
                 </Select>
               </SideField>
+              <SideField icon={<Tag className="h-3.5 w-3.5" />} label="Tags">
+                <TagsEditor value={t.tags ?? []} onChange={(next) => patch({ tags: next })} />
+              </SideField>
+
 
               <div className="pt-4 border-t">
                 <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive" onClick={async () => {
@@ -846,6 +894,43 @@ function SideField({ icon, label, children }: { icon: React.ReactNode; label: st
         {icon} {label}
       </div>
       {children}
+    </div>
+  );
+}
+
+function TagsEditor({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+  const [input, setInput] = useState("");
+  function add() {
+    const raw = input.trim().replace(/^#/, "");
+    if (!raw) return;
+    if (value.includes(raw)) { setInput(""); return; }
+    onChange([...value, raw]);
+    setInput("");
+  }
+  function remove(tag: string) {
+    onChange(value.filter((t) => t !== tag));
+  }
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
+        {value.length === 0 && <span className="text-xs text-muted-foreground">Sem tags</span>}
+        {value.map((tg) => (
+          <span key={tg} className="inline-flex items-center gap-1 text-[11px] rounded-full bg-primary/10 text-primary px-2 py-0.5">
+            #{tg}
+            <button type="button" onClick={() => remove(tg)} className="hover:text-destructive">
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <Input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }}
+        onBlur={add}
+        placeholder="Nova tag + Enter"
+        className="h-8 text-xs"
+      />
     </div>
   );
 }
