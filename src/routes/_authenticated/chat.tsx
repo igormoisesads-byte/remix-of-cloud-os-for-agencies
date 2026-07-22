@@ -322,7 +322,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
   const [tasks, setTasks] = useState<Task[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [attachTaskId, setAttachTaskId] = useState<string | null>(null);
-  const [mention, setMention] = useState<{ type: "@" | "#"; query: string; start: number } | null>(null);
+  const [mention, setMention] = useState<{ type: "@" | "#" | "/"; query: string; start: number } | null>(null);
   const [mentionIdx, setMentionIdx] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
@@ -628,45 +628,43 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
               <Square className="h-3.5 w-3.5" />
             </Button>
           )}
-          {tasks.length > 0 && (
-            <Select value={attachTaskId ?? ""} onValueChange={(v) => setAttachTaskId(v || null)}>
-              <SelectTrigger className="h-8 w-8 p-0 justify-center shrink-0" aria-label="Anexar tarefa">
-                <Briefcase className="h-3.5 w-3.5" />
-              </SelectTrigger>
-              <SelectContent>
-                {tasks.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           <div className="relative flex-1">
             {mention && (() => {
               const q = mention.query.toLowerCase();
-              const opts = mention.type === "@"
+              type Opt = { id: string; label: string; handle: string; sub?: string };
+              const opts: Opt[] = mention.type === "@"
                 ? profiles.filter((p) => (p.full_name || p.email).toLowerCase().includes(q)).slice(0, 6)
                     .map((p) => ({ id: p.id, label: p.full_name || p.email, handle: handleFromName(p.full_name || p.email) }))
-                : clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
-                    .map((c) => ({ id: c.id, label: c.name, handle: clientHandle(c.name) }));
+                : mention.type === "#"
+                ? clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
+                    .map((c) => ({ id: c.id, label: c.name, handle: clientHandle(c.name) }))
+                : tasks.filter((t) => t.title.toLowerCase().includes(q)).slice(0, 8)
+                    .map((t) => ({ id: t.id, label: t.title, handle: t.title, sub: t.status }));
               if (opts.length === 0) return null;
-              const pick = (o: { handle: string }) => {
+              const pick = (o: Opt) => {
                 const before = text.slice(0, mention.start);
                 const after = text.slice(mention.start + 1 + mention.query.length);
-                const insert = `${mention.type}${o.handle} `;
-                const next = before + insert + after;
-                setText(next);
+                if (mention.type === "/") {
+                  setAttachTaskId(o.id);
+                  setText(before + after);
+                } else {
+                  const insert = `${mention.type}${o.handle} `;
+                  setText(before + insert + after);
+                  setTimeout(() => {
+                    const pos = (before + insert).length;
+                    textareaRef.current?.focus();
+                    textareaRef.current?.setSelectionRange(pos, pos);
+                  }, 0);
+                }
                 setMention(null);
                 setMentionIdx(0);
-                setTimeout(() => {
-                  const pos = (before + insert).length;
-                  textareaRef.current?.focus();
-                  textareaRef.current?.setSelectionRange(pos, pos);
-                }, 0);
               };
+              const heading = mention.type === "@" ? "Pessoas" : mention.type === "#" ? "Clientes" : "Tarefas";
+              const color = mention.type === "@" ? "text-primary" : mention.type === "#" ? "text-blue-600" : "text-amber-600";
               return (
-                <div className="absolute bottom-full left-0 mb-1 w-64 rounded-md border bg-popover shadow-lg z-50 overflow-hidden">
+                <div className="absolute bottom-full left-0 mb-1 w-72 rounded-md border bg-popover shadow-lg z-50 overflow-hidden">
                   <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
-                    {mention.type === "@" ? "Pessoas" : "Clientes"}
+                    {heading}
                   </div>
                   {opts.map((o, i) => (
                     <button
@@ -678,8 +676,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                         i === mentionIdx ? "bg-accent" : "hover:bg-accent/60"
                       )}
                     >
-                      <span className={mention.type === "@" ? "text-primary" : "text-blue-600"}>{mention.type}{o.handle}</span>
-                      <span className="text-xs text-muted-foreground truncate">{o.label}</span>
+                      {mention.type === "/" ? <Briefcase className={cn("h-3 w-3 shrink-0", color)} /> : <span className={color}>{mention.type}</span>}
+                      <span className="truncate flex-1">{o.label}</span>
+                      {o.sub && <Badge variant="secondary" className="text-[10px]">{o.sub}</Badge>}
                     </button>
                   ))}
                 </div>
@@ -693,9 +692,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                 setText(v);
                 const pos = e.target.selectionStart ?? v.length;
                 const upto = v.slice(0, pos);
-                const m = upto.match(/(?:^|\s)([@#])([\w-]*)$/);
+                const m = upto.match(/(?:^|\s)([@#/])([\w-]*)$/);
                 if (m) {
-                  setMention({ type: m[1] as "@" | "#", query: m[2], start: pos - m[2].length - 1 });
+                  setMention({ type: m[1] as "@" | "#" | "/", query: m[2], start: pos - m[2].length - 1 });
                   setMentionIdx(0);
                 } else {
                   setMention(null);
@@ -704,11 +703,14 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
               onKeyDown={(e) => {
                 if (mention) {
                   const q = mention.query.toLowerCase();
-                  const opts = mention.type === "@"
+                  const opts: { id?: string; handle: string }[] = mention.type === "@"
                     ? profiles.filter((p) => (p.full_name || p.email).toLowerCase().includes(q)).slice(0, 6)
                         .map((p) => ({ handle: handleFromName(p.full_name || p.email) }))
-                    : clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
-                        .map((c) => ({ handle: clientHandle(c.name) }));
+                    : mention.type === "#"
+                    ? clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
+                        .map((c) => ({ handle: clientHandle(c.name) }))
+                    : tasks.filter((t) => t.title.toLowerCase().includes(q)).slice(0, 8)
+                        .map((t) => ({ id: t.id, handle: t.title }));
                   if (opts.length) {
                     if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx((i) => (i + 1) % opts.length); return; }
                     if (e.key === "ArrowUp")   { e.preventDefault(); setMentionIdx((i) => (i - 1 + opts.length) % opts.length); return; }
@@ -718,22 +720,26 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                       const o = opts[mentionIdx];
                       const before = text.slice(0, mention.start);
                       const after = text.slice(mention.start + 1 + mention.query.length);
-                      const insert = `${mention.type}${o.handle} `;
-                      const next = before + insert + after;
-                      setText(next);
+                      if (mention.type === "/") {
+                        if (o.id) setAttachTaskId(o.id);
+                        setText(before + after);
+                      } else {
+                        const insert = `${mention.type}${o.handle} `;
+                        setText(before + insert + after);
+                        setTimeout(() => {
+                          const pos = (before + insert).length;
+                          textareaRef.current?.setSelectionRange(pos, pos);
+                        }, 0);
+                      }
                       setMention(null);
                       setMentionIdx(0);
-                      setTimeout(() => {
-                        const pos = (before + insert).length;
-                        textareaRef.current?.setSelectionRange(pos, pos);
-                      }, 0);
                       return;
                     }
                   }
                 }
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
-              placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name} — @ pessoas, # clientes`}
+              placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name} — @ pessoas, # clientes, / tarefas`}
               className="min-h-9 max-h-32 resize-none text-sm py-1.5 px-2.5"
               rows={1}
               disabled={recording}
