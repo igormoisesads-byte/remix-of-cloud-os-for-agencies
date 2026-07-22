@@ -118,12 +118,13 @@ export function AppSidebar() {
                       {g.items.map((item) => (
                         <SidebarMenuItem key={item.url}>
                           <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                            <Link to={item.url}>
+                            <Link to={item.url} onClick={closeIfMobile}>
                               <item.icon className="h-4 w-4" />
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
+
                       ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
