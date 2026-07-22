@@ -930,74 +930,83 @@ function WorldMapPanel({
   );
 }
 
-/* ---------- Leads heatmap (GitHub-style, 12 semanas, baseado em resultados diários) ---------- */
+/* ---------- Heatmap dia da semana × hora do dia ---------- */
 const DOW_LBL = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-function LeadsHeatmap({ insights }: { insights: any[] }) {
-  const { weeks, max, best, total } = useMemo(() => {
-    const byDate: Record<string, number> = {};
-    for (const r of insights ?? []) {
-      const d = String(r.date);
-      byDate[d] = (byDate[d] ?? 0) + Number(r.results ?? 0);
-    }
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    // start = segunda 12 semanas atrás
-    const start = new Date(today);
-    const dow = (start.getDay() + 6) % 7;
-    start.setDate(start.getDate() - dow - 11 * 7);
-    const wks: { label: string; cells: { date: string; val: number }[] }[] = [];
+function HourDayHeatmap({ hourly }: { hourly: any[] }) {
+  const { grid, max, total, bestDay, bestHour, bestCell } = useMemo(() => {
+    const g: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+    const perDow = Array(7).fill(0);
+    const perHour = Array(24).fill(0);
     let max = 0, total = 0;
-    const perDow = [0, 0, 0, 0, 0, 0, 0];
-    for (let w = 0; w < 12; w++) {
-      const cells: { date: string; val: number }[] = [];
-      for (let d = 0; d < 7; d++) {
-        const cur = new Date(start);
-        cur.setDate(cur.getDate() + w * 7 + d);
-        const key = cur.toISOString().slice(0, 10);
-        const val = byDate[key] ?? 0;
-        cells.push({ date: key, val });
-        if (val > max) max = val;
-        total += val;
-        perDow[d] += val;
-      }
-      const s = new Date(start); s.setDate(s.getDate() + w * 7);
-      wks.push({ label: s.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }), cells });
+    let bestCell = { d: -1, h: -1, val: 0 };
+    for (const r of hourly ?? []) {
+      const d = Number(r.dow), h = Number(r.hour);
+      if (!(d >= 0 && d <= 6) || !(h >= 0 && h <= 23)) continue;
+      const v = Number(r.results ?? 0);
+      g[d][h] += v;
+      perDow[d] += v;
+      perHour[h] += v;
+      total += v;
+      if (g[d][h] > max) max = g[d][h];
+      if (g[d][h] > bestCell.val) bestCell = { d, h, val: g[d][h] };
     }
-    const bestIdx = perDow.indexOf(Math.max(...perDow));
-    return { weeks: wks, max: Math.max(1, max), best: perDow[bestIdx] ? { label: DOW_LBL[bestIdx], val: perDow[bestIdx] } : null, total };
-  }, [insights]);
+    const bd = perDow.indexOf(Math.max(...perDow));
+    const bh = perHour.indexOf(Math.max(...perHour));
+    return {
+      grid: g,
+      max: Math.max(1, max),
+      total,
+      bestDay: perDow[bd] ? { label: DOW_LBL[bd], val: perDow[bd] } : null,
+      bestHour: perHour[bh] ? { label: `${String(bh).padStart(2, "0")}h`, val: perHour[bh] } : null,
+      bestCell: bestCell.val > 0 ? bestCell : null,
+    };
+  }, [hourly]);
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Mapa de calor · leads por dia (12 semanas)</CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            {total === 0
-              ? "Sem dados suficientes ainda"
-              : best ? `Melhor dia: ${best.label} (${best.val} leads no período)` : ""}
-          </p>
-        </div>
+      <CardHeader>
+        <CardTitle className="text-base">Mapa de calor · melhor dia e horário para leads</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          {total === 0
+            ? "Sem dados horários ainda. Sincronize a conta para popular o heatmap por hora."
+            : (
+              <>
+                {bestDay && <>Melhor dia: <b>{bestDay.label}</b> ({fmtInt(bestDay.val)} leads) · </>}
+                {bestHour && <>melhor horário: <b>{bestHour.label}</b> ({fmtInt(bestHour.val)} leads)</>}
+                {bestCell && (
+                  <> · pico: <b>{DOW_LBL[bestCell.d]} {String(bestCell.h).padStart(2, "0")}h</b> ({fmtInt(bestCell.val)})</>
+                )}
+              </>
+            )}
+        </p>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2 w-full">
-          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground shrink-0" style={{ paddingTop: 16 }}>
-            {DOW_LBL.map((d) => <div key={d} className="h-5 flex items-center">{d}</div>)}
-          </div>
-          <div className="flex gap-1 flex-1 min-w-0">
-            {weeks.map((w, wi) => (
-              <div key={wi} className="flex flex-col gap-1 flex-1 min-w-0">
-                <div className="text-[9px] text-muted-foreground text-center h-3 leading-3 truncate">
-                  {wi % 2 === 0 ? w.label.split(" ")[0] : ""}
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[560px]">
+            {/* header hours */}
+            <div className="flex gap-[2px] pl-8 mb-1">
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} className="flex-1 text-center text-[9px] text-muted-foreground tabular-nums">
+                  {h % 3 === 0 ? String(h).padStart(2, "0") : ""}
                 </div>
-                {w.cells.map((c) => {
-                  const intensity = c.val / max;
-                  const bg = c.val === 0
+              ))}
+            </div>
+            {DOW_LBL.map((lbl, d) => (
+              <div key={lbl} className="flex items-center gap-[2px] mb-[2px]">
+                <div className="w-8 text-[10px] text-muted-foreground shrink-0">{lbl}</div>
+                {Array.from({ length: 24 }, (_, h) => {
+                  const v = grid[d][h];
+                  const intensity = v / max;
+                  const bg = v === 0
                     ? "hsl(220 14% 93%)"
-                    : `rgba(37, 99, 235, ${0.2 + intensity * 0.8})`;
+                    : `rgba(37, 99, 235, ${0.15 + intensity * 0.85})`;
                   return (
-                    <div key={c.date} className="h-5 w-full rounded-sm border border-border/50"
-                      style={{ background: bg }}
-                      title={`${new Date(c.date + "T00:00").toLocaleDateString("pt-BR")} · ${c.val} leads`} />
+                    <div
+                      key={h}
+                      className="flex-1 aspect-square rounded-[3px] border border-border/40"
+                      style={{ background: bg, minWidth: 8 }}
+                      title={`${lbl} · ${String(h).padStart(2, "0")}h — ${v} leads`}
+                    />
                   );
                 })}
               </div>
@@ -1007,7 +1016,7 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
         <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
           <span>Menos</span>
           {[0.1, 0.3, 0.6, 1].map((v) => (
-            <div key={v} className="h-3 w-3 rounded-sm border border-border/50" style={{ background: `rgba(37, 99, 235, ${0.2 + v * 0.8})` }} />
+            <div key={v} className="h-3 w-3 rounded-sm border border-border/40" style={{ background: `rgba(37, 99, 235, ${0.15 + v * 0.85})` }} />
           ))}
           <span>Mais</span>
         </div>
