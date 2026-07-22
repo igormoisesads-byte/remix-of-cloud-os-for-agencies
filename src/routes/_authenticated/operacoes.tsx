@@ -471,6 +471,13 @@ function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
           <Badge variant="outline" className="text-[10px] py-0 px-1.5">{KIND_LABEL[task.kind]}</Badge>
           {task.clients?.name && <span className="inline-flex items-center gap-1"><Building2 className="h-3 w-3" />{task.clients.name}</span>}
         </div>
+        {(task.tags?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {task.tags.slice(0, 4).map((tg: string) => (
+              <span key={tg} className="text-[10px] rounded-full bg-primary/10 text-primary px-1.5 py-0.5">#{tg}</span>
+            ))}
+          </div>
+        )}
         <div className="flex items-center justify-between pt-1">
           {task.due_date ? (
             <div className={cn("text-[11px] inline-flex items-center gap-1", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
