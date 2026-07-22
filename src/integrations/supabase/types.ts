@@ -73,6 +73,180 @@ export type Database = {
           },
         ]
       }
+      ad_creatives: {
+        Row: {
+          ad_account_id: string
+          clicks: number
+          cpc: number | null
+          created_at: string
+          ctr: number | null
+          destination_url: string | null
+          external_id: string
+          id: string
+          impressions: number
+          last_sync_at: string | null
+          name: string | null
+          preview_url: string | null
+          raw: Json | null
+          reach: number
+          results: number
+          spend: number
+          status: string | null
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          ad_account_id: string
+          clicks?: number
+          cpc?: number | null
+          created_at?: string
+          ctr?: number | null
+          destination_url?: string | null
+          external_id: string
+          id?: string
+          impressions?: number
+          last_sync_at?: string | null
+          name?: string | null
+          preview_url?: string | null
+          raw?: Json | null
+          reach?: number
+          results?: number
+          spend?: number
+          status?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ad_account_id?: string
+          clicks?: number
+          cpc?: number | null
+          created_at?: string
+          ctr?: number | null
+          destination_url?: string | null
+          external_id?: string
+          id?: string
+          impressions?: number
+          last_sync_at?: string | null
+          name?: string | null
+          preview_url?: string | null
+          raw?: Json | null
+          reach?: number
+          results?: number
+          spend?: number
+          status?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_creatives_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_funnel_whatsapp: {
+        Row: {
+          ad_account_id: string
+          conversations_started: number
+          created_at: string
+          date: string
+          first_replies: number
+          id: string
+          impressions: number
+          link_clicks: number
+          updated_at: string
+        }
+        Insert: {
+          ad_account_id: string
+          conversations_started?: number
+          created_at?: string
+          date: string
+          first_replies?: number
+          id?: string
+          impressions?: number
+          link_clicks?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_account_id?: string
+          conversations_started?: number
+          created_at?: string
+          date?: string
+          first_replies?: number
+          id?: string
+          impressions?: number
+          link_clicks?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_funnel_whatsapp_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_geo: {
+        Row: {
+          ad_account_id: string
+          clicks: number
+          country_code: string
+          country_name: string | null
+          created_at: string
+          id: string
+          impressions: number
+          period_end: string
+          period_start: string
+          reach: number
+          results: number
+          spend: number
+          updated_at: string
+        }
+        Insert: {
+          ad_account_id: string
+          clicks?: number
+          country_code: string
+          country_name?: string | null
+          created_at?: string
+          id?: string
+          impressions?: number
+          period_end: string
+          period_start: string
+          reach?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_account_id?: string
+          clicks?: number
+          country_code?: string
+          country_name?: string | null
+          created_at?: string
+          id?: string
+          impressions?: number
+          period_end?: string
+          period_start?: string
+          reach?: number
+          results?: number
+          spend?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_geo_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_insights: {
         Row: {
           ad_account_id: string
@@ -131,6 +305,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      app_settings: {
+        Row: {
+          agency_logo_url: string | null
+          agency_name: string | null
+          agency_primary_color: string | null
+          created_at: string
+          id: string
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          agency_logo_url?: string | null
+          agency_name?: string | null
+          agency_primary_color?: string | null
+          created_at?: string
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          agency_logo_url?: string | null
+          agency_name?: string | null
+          agency_primary_color?: string | null
+          created_at?: string
+          id?: string
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       channel_members: {
         Row: {
@@ -1298,6 +1502,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      public_reports: {
+        Row: {
+          active: boolean
+          client_id: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          password_hash: string | null
+          title: string | null
+          token: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          active?: boolean
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          password_hash?: string | null
+          title?: string | null
+          token: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          active?: boolean
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          password_hash?: string | null
+          title?: string | null
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_analises: {
         Row: {

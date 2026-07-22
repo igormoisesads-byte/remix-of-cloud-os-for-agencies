@@ -21,10 +21,12 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
+import { Route as PRelatorioTokenRouteImport } from './routes/p.relatorio.$token'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
 import { Route as AuthenticatedAjustesPerfilRouteImport } from './routes/_authenticated/ajustes.perfil'
 import { Route as AuthenticatedAjustesOnboardingRouteImport } from './routes/_authenticated/ajustes.onboarding'
+import { Route as AuthenticatedAjustesMarcaRouteImport } from './routes/_authenticated/ajustes.marca'
 import { Route as AuthenticatedAjustesIntegracoesRouteImport } from './routes/_authenticated/ajustes.integracoes'
 import { Route as AuthenticatedAjustesEquipeRouteImport } from './routes/_authenticated/ajustes.equipe'
 import { Route as AuthenticatedAjustesComissaoRouteImport } from './routes/_authenticated/ajustes.comissao'
@@ -92,6 +94,11 @@ const AuthenticatedAjustesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
+const PRelatorioTokenRoute = PRelatorioTokenRouteImport.update({
+  id: '/p/relatorio/$token',
+  path: '/p/relatorio/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -113,6 +120,12 @@ const AuthenticatedAjustesOnboardingRoute =
   AuthenticatedAjustesOnboardingRouteImport.update({
     id: '/onboarding',
     path: '/onboarding',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
+const AuthenticatedAjustesMarcaRoute =
+  AuthenticatedAjustesMarcaRouteImport.update({
+    id: '/marca',
+    path: '/marca',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
 const AuthenticatedAjustesIntegracoesRoute =
@@ -159,10 +172,12 @@ export interface FileRoutesByFullPath {
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
+  '/ajustes/marca': typeof AuthenticatedAjustesMarcaRoute
   '/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
@@ -179,10 +194,12 @@ export interface FileRoutesByTo {
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
+  '/ajustes/marca': typeof AuthenticatedAjustesMarcaRoute
   '/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes': typeof AuthenticatedAjustesIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
@@ -203,10 +220,12 @@ export interface FileRoutesById {
   '/_authenticated/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
   '/_authenticated/ajustes/equipe': typeof AuthenticatedAjustesEquipeRoute
   '/_authenticated/ajustes/integracoes': typeof AuthenticatedAjustesIntegracoesRoute
+  '/_authenticated/ajustes/marca': typeof AuthenticatedAjustesMarcaRoute
   '/_authenticated/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/_authenticated/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/_authenticated/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
@@ -227,10 +246,12 @@ export interface FileRouteTypes {
     | '/ajustes/comissao'
     | '/ajustes/equipe'
     | '/ajustes/integracoes'
+    | '/ajustes/marca'
     | '/ajustes/onboarding'
     | '/ajustes/perfil'
     | '/ajustes/planos'
     | '/clientes/$id'
+    | '/p/relatorio/$token'
     | '/ajustes/'
     | '/clientes/'
     | '/api/public/hooks/sync-ads'
@@ -247,10 +268,12 @@ export interface FileRouteTypes {
     | '/ajustes/comissao'
     | '/ajustes/equipe'
     | '/ajustes/integracoes'
+    | '/ajustes/marca'
     | '/ajustes/onboarding'
     | '/ajustes/perfil'
     | '/ajustes/planos'
     | '/clientes/$id'
+    | '/p/relatorio/$token'
     | '/ajustes'
     | '/clientes'
     | '/api/public/hooks/sync-ads'
@@ -270,10 +293,12 @@ export interface FileRouteTypes {
     | '/_authenticated/ajustes/comissao'
     | '/_authenticated/ajustes/equipe'
     | '/_authenticated/ajustes/integracoes'
+    | '/_authenticated/ajustes/marca'
     | '/_authenticated/ajustes/onboarding'
     | '/_authenticated/ajustes/perfil'
     | '/_authenticated/ajustes/planos'
     | '/_authenticated/clientes/$id'
+    | '/p/relatorio/$token'
     | '/_authenticated/ajustes/'
     | '/_authenticated/clientes/'
     | '/api/public/hooks/sync-ads'
@@ -283,6 +308,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PRelatorioTokenRoute: typeof PRelatorioTokenRoute
   ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
 }
 
@@ -372,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAjustesIndexRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
+    '/p/relatorio/$token': {
+      id: '/p/relatorio/$token'
+      path: '/p/relatorio/$token'
+      fullPath: '/p/relatorio/$token'
+      preLoaderRoute: typeof PRelatorioTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
       path: '/$id'
@@ -398,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/ajustes/onboarding'
       preLoaderRoute: typeof AuthenticatedAjustesOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
+    '/_authenticated/ajustes/marca': {
+      id: '/_authenticated/ajustes/marca'
+      path: '/marca'
+      fullPath: '/ajustes/marca'
+      preLoaderRoute: typeof AuthenticatedAjustesMarcaRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
     '/_authenticated/ajustes/integracoes': {
@@ -443,6 +483,7 @@ interface AuthenticatedAjustesRouteChildren {
   AuthenticatedAjustesComissaoRoute: typeof AuthenticatedAjustesComissaoRoute
   AuthenticatedAjustesEquipeRoute: typeof AuthenticatedAjustesEquipeRoute
   AuthenticatedAjustesIntegracoesRoute: typeof AuthenticatedAjustesIntegracoesRoute
+  AuthenticatedAjustesMarcaRoute: typeof AuthenticatedAjustesMarcaRoute
   AuthenticatedAjustesOnboardingRoute: typeof AuthenticatedAjustesOnboardingRoute
   AuthenticatedAjustesPerfilRoute: typeof AuthenticatedAjustesPerfilRoute
   AuthenticatedAjustesPlanosRoute: typeof AuthenticatedAjustesPlanosRoute
@@ -454,6 +495,7 @@ const AuthenticatedAjustesRouteChildren: AuthenticatedAjustesRouteChildren = {
   AuthenticatedAjustesComissaoRoute: AuthenticatedAjustesComissaoRoute,
   AuthenticatedAjustesEquipeRoute: AuthenticatedAjustesEquipeRoute,
   AuthenticatedAjustesIntegracoesRoute: AuthenticatedAjustesIntegracoesRoute,
+  AuthenticatedAjustesMarcaRoute: AuthenticatedAjustesMarcaRoute,
   AuthenticatedAjustesOnboardingRoute: AuthenticatedAjustesOnboardingRoute,
   AuthenticatedAjustesPerfilRoute: AuthenticatedAjustesPerfilRoute,
   AuthenticatedAjustesPlanosRoute: AuthenticatedAjustesPlanosRoute,
@@ -505,6 +547,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PRelatorioTokenRoute: PRelatorioTokenRoute,
   ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
 }
 export const routeTree = rootRouteImport
