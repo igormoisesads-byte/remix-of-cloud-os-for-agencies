@@ -51,7 +51,7 @@ function PublicReportPage() {
     );
   }
 
-  const { client, agency, insights, creatives, geo, whatsapp, accounts, report } = q.data as any;
+  const { client, agency, insights, creatives, geo, whatsapp, accounts, report, campaignInsights } = q.data as any;
 
   return (
     <div className="min-h-screen bg-muted/30">
