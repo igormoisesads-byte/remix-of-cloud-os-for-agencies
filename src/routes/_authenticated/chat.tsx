@@ -538,16 +538,16 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
       </header>
 
       <div className="flex-1 min-h-0 flex">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {messages.length === 0 && (
             <div className="text-sm text-muted-foreground text-center py-16">Sem mensagens. Diga oi 👋</div>
           )}
           {messages.map((m, i) => {
             const prev = messages[i - 1];
             const grouped = prev && prev.author_id === m.author_id && !m.parent_id
-              && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60_000);
+              && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 15 * 60_000);
             return (
-              <div key={m.id} className={cn("group flex gap-3", grouped && "pl-11")}>
+              <div key={m.id} className={cn("group flex gap-3", grouped ? "pl-11 mt-0.5" : "mt-4")}>
                 {!grouped && (
                   <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
                     {initials(m.author?.full_name || m.author?.email)}
@@ -579,8 +579,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                     </button>
                   )}
                   {m.attachment_url && m.attachment_kind === "audio" && (
-                    <audio controls src={m.attachment_url} className="mt-1 h-8" />
+                    <AudioPlayer src={m.attachment_url} />
                   )}
+
                   {m.attachment_url && m.attachment_kind === "file" && (
                     <a href={m.attachment_url} target="_blank" rel="noreferrer"
                        className="mt-1 inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-xs hover:bg-muted">
