@@ -94,12 +94,20 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
   // Filter helpers
   const inPeriod = (dateStr: string) => {
-    if (period === "all") return true;
-    const dayMs = 86400000;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
     const d = new Date(dateStr + "T00:00");
-    const diff = (now.getTime() - d.getTime()) / dayMs;
+    if (period === "all") return true;
+    if (period === "custom") {
+      if (customRange.from && d < customRange.from) return false;
+      if (customRange.to && d > customRange.to) return false;
+      return true;
+    }
+    if (period === "current_week") {
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const start = new Date(now); start.setDate(now.getDate() - now.getDay()); // sunday
+      return d >= start && d <= now;
+    }
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const diff = (now.getTime() - d.getTime()) / 86400000;
     return diff <= Number(period);
   };
   const inAccount = (row: any) => accountId === "all" || row.ad_account_id === accountId;
