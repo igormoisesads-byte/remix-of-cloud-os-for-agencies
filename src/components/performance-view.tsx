@@ -2,13 +2,15 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Legend, LineChart, Line,
 } from "recharts";
 import {
   BarChart3, Globe2, MessageCircle, Image as ImageIcon, ExternalLink, MousePointerClick,
-  TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap,
+  TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap, Filter, X,
 } from "lucide-react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 
@@ -18,6 +20,7 @@ export type PerfData = {
   geo: any[];
   whatsapp: any[];
   accounts?: any[];
+  campaignInsights?: any[];
 };
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
