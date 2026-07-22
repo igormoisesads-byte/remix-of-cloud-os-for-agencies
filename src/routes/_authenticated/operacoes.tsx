@@ -404,7 +404,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <CheckSquare className="h-4 w-4" /> Checklist
                     {(checklist.data ?? []).length > 0 && (

@@ -102,7 +102,7 @@ function ClienteDetail() {
 
   if (client.isLoading) {
     return (
-      <div className="p-8 space-y-4">
+      <div className="p-4 sm:p-8 space-y-4">
         <div className="h-8 w-64 rounded-md bg-muted animate-pulse" />
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="h-40 rounded-lg bg-muted animate-pulse" />
@@ -1158,7 +1158,7 @@ function Reunioes({ clientId }: { clientId: string }) {
         {(q.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Sem reuniões</p>}
         {(q.data ?? []).map((m: any) => (
           <div key={m.id} className="p-3 border rounded-md">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="font-medium text-sm">{m.title}</div>
               <div className="text-xs text-muted-foreground">{new Date(m.held_at).toLocaleString("pt-BR")}</div>
             </div>
