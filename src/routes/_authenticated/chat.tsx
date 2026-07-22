@@ -323,7 +323,7 @@ function NewDMDialog({ profiles, onCreated }: { profiles: Profile[]; onCreated: 
 
 /* -------- Channel view -------- */
 
-function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; profiles: Profile[]; isAgencyAdmin: boolean }) {
+function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Channel; profiles: Profile[]; isAgencyAdmin: boolean; onBack?: () => void }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
