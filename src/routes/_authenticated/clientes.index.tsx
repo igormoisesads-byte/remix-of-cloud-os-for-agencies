@@ -80,14 +80,15 @@ function ClientesList() {
                 <TableHead>Plataforma</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Mensalidade</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
               )}
               {!isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">
                   Nenhum cliente cadastrado. Comece adicionando o primeiro.
                 </TableCell></TableRow>
               )}
