@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicReport } from "@/lib/ads.functions";
 import { PerformanceView } from "@/components/performance-view";
+import { PublicReportLocal } from "@/components/public-report-local";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/p/relatorio/$token")({
