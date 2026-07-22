@@ -36,11 +36,13 @@ function AuthenticatedLayout() {
             <SidebarTrigger />
             <div className="text-sm text-muted-foreground">CloudOS</div>
           </header>
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 pb-[calc(env(safe-area-inset-bottom)+3.75rem)] md:pb-0">
             <Outlet />
           </main>
         </SidebarInset>
+        <MobileBottomNav />
       </div>
     </SidebarProvider>
   );
 }
+
