@@ -149,14 +149,14 @@ async function syncMetaAccountInternal(adAccountRowId: string) {
       // ignore geo errors
     }
 
-    // 4) Creatives (ads) with aggregated insights
+    // 4) Creatives (ads) with aggregated insights + campaign info
     try {
       const adsUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/ads`);
       adsUrl.searchParams.set(
         "fields",
-        `id,name,status,creative{thumbnail_url,image_url,object_story_spec,body,title,link_url},insights.time_range(${timeRange}){spend,impressions,clicks,reach,actions,ctr,cpc}`
+        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title,link_url},insights.time_range(${timeRange}){spend,impressions,clicks,reach,actions,ctr,cpc}`
       );
-      adsUrl.searchParams.set("limit", "50");
+      adsUrl.searchParams.set("limit", "100");
       adsUrl.searchParams.set("access_token", token);
       const ads = await metaFetch(adsUrl);
       for (const ad of ads.data ?? []) {
@@ -173,6 +173,10 @@ async function syncMetaAccountInternal(adAccountRowId: string) {
             ad_account_id: acc.id,
             external_id: String(ad.id),
             name: ad.name || creative.title || null,
+            campaign_id: ad.campaign_id || ad.campaign?.id || null,
+            campaign_name: ad.campaign?.name || null,
+            adset_id: ad.adset_id || ad.adset?.id || null,
+            adset_name: ad.adset?.name || null,
             thumbnail_url: creative.thumbnail_url || creative.image_url || null,
             preview_url: creative.image_url || null,
             destination_url: linkUrl,
@@ -195,12 +199,49 @@ async function syncMetaAccountInternal(adAccountRowId: string) {
       // ignore creatives errors
     }
 
+    // 5) Daily insights per campaign
+    let upsertedCampaignInsights = 0;
+    try {
+      const campUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/insights`);
+      campUrl.searchParams.set("fields", "campaign_id,campaign_name,spend,impressions,clicks,reach,actions,cpm,ctr,cpc");
+      campUrl.searchParams.set("level", "campaign");
+      campUrl.searchParams.set("time_increment", "1");
+      campUrl.searchParams.set("time_range", timeRange);
+      campUrl.searchParams.set("limit", "500");
+      campUrl.searchParams.set("access_token", token);
+      const camp = await metaFetch(campUrl);
+      for (const r of camp.data ?? []) {
+        if (!r.campaign_id) continue;
+        const { error: e } = await supabaseAdmin.from("ad_campaign_insights").upsert(
+          {
+            ad_account_id: acc.id,
+            date: r.date_start,
+            campaign_id: String(r.campaign_id),
+            campaign_name: r.campaign_name ?? null,
+            spend: Number(r.spend ?? 0),
+            impressions: Number(r.impressions ?? 0),
+            clicks: Number(r.clicks ?? 0),
+            reach: Number(r.reach ?? 0),
+            results: pickResults(r.actions ?? []),
+            cpm: r.cpm ? Number(r.cpm) : null,
+            ctr: r.ctr ? Number(r.ctr) : null,
+            cpc: r.cpc ? Number(r.cpc) : null,
+            raw: r,
+          },
+          { onConflict: "ad_account_id,date,campaign_id" }
+        );
+        if (!e) upsertedCampaignInsights++;
+      }
+    } catch {
+      // ignore campaign insights errors
+    }
+
     await supabaseAdmin
       .from("ad_accounts")
       .update({ last_sync_at: new Date().toISOString(), last_sync_error: null })
       .eq("id", acc.id);
 
-    return { ok: true, insights: upsertedInsights, creatives: upsertedCreatives, geo: upsertedGeo, whatsapp: upsertedWa };
+    return { ok: true, insights: upsertedInsights, creatives: upsertedCreatives, geo: upsertedGeo, whatsapp: upsertedWa, campaigns: upsertedCampaignInsights };
   } catch (e: any) {
     await supabaseAdmin
       .from("ad_accounts")
