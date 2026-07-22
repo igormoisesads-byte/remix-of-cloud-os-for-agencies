@@ -4,12 +4,14 @@ import {
   SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  Cloud, Home, MessageSquare, Users, ClipboardList, DollarSign, Settings, LogOut, UserCog,
+  Home, MessageSquare, Users, ClipboardList, DollarSign, Settings, LogOut, UserCog,
   HeartPulse, Smile, Target, Film,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import cloudosLogo from "@/assets/cloudos-logo.png.asset.json";
+
 
 const groups = [
   {
@@ -60,15 +62,16 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-          <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center shrink-0">
-            <Cloud className="h-4 w-4 text-primary-foreground" />
+        <div className="flex items-center gap-2.5 px-2 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+          <div className="h-9 w-9 rounded-lg bg-black flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10">
+            <img src={cloudosLogo.url} alt="CloudOS" className="h-7 w-7 object-contain" />
           </div>
-          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <div className="text-sm font-semibold truncate">CloudOS</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Agência</div>
+          <div className="min-w-0 group-data-[collapsible=icon]:hidden leading-tight">
+            <div className="text-sm font-semibold tracking-tight truncate">CloudOS</div>
+            <div className="text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/60 font-medium">Agência</div>
           </div>
         </div>
+
       </SidebarHeader>
       <SidebarContent className="gap-0">
         {groups.map((g, idx) => (
