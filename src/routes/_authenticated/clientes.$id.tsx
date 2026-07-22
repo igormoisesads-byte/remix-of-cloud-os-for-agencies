@@ -65,13 +65,14 @@ function fmtDate(v: string | null | undefined) {
 }
 
 type Section =
-  | "visao" | "performance" | "projecoes" | "seo" | "rotinas" | "health"
+  | "visao" | "performance" | "vendas" | "projecoes" | "seo" | "rotinas" | "health"
   | "pdas" | "nps" | "relatorios" | "reunioes" | "onboarding" | "moodboards"
   | "acesso" | "auditoria";
 
 const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "visao", label: "Visão Geral", icon: LayoutGrid },
   { key: "performance", label: "Performance", icon: BarChart3 },
+  { key: "vendas", label: "Vendas", icon: DollarSign },
   { key: "projecoes", label: "Projeções", icon: LineChart },
   { key: "seo", label: "SEO", icon: Search },
   { key: "rotinas", label: "Rotinas", icon: Repeat },
