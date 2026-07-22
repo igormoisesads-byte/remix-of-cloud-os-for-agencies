@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { registerPWA, requestNotificationPermission, notify } from "@/lib/pwa";
+import { createR2UploadUrl } from "@/lib/r2.functions";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   component: ChatPage,
