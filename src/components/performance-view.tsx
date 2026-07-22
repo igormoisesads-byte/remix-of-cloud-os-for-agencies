@@ -734,22 +734,23 @@ function Kpi({
   const showTrend = typeof trend === "number" && Number.isFinite(trend) && trend !== 0;
   const trendUp = (trend ?? 0) >= 0;
   return (
-    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow" title={hint}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs text-muted-foreground truncate">{label}</div>
-        {icon && <div className={`h-6 w-6 rounded flex items-center justify-center ${accentBg}`}>{icon}</div>}
+    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow min-w-0" title={hint}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-xs text-muted-foreground truncate min-w-0 flex-1">{label}</div>
+        {icon && <div className={`h-6 w-6 shrink-0 rounded flex items-center justify-center ${accentBg}`}>{icon}</div>}
       </div>
-      <div className="text-lg sm:text-xl font-semibold mt-1 tabular-nums">{value}</div>
-      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{hint}</div>}
+      <div className="text-base sm:text-lg font-semibold mt-1 tabular-nums truncate">{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{hint}</div>}
       {showTrend && (
-        <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 ${trendUp ? "text-emerald-600" : "text-rose-600"}`}>
-          {trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          {Math.abs(trend!).toFixed(1)}% vs. período anterior
+        <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 truncate ${trendUp ? "text-emerald-600" : "text-rose-600"}`}>
+          {trendUp ? <TrendingUp className="h-3 w-3 shrink-0" /> : <TrendingDown className="h-3 w-3 shrink-0" />}
+          <span className="truncate">{Math.abs(trend!).toFixed(1)}% vs. período anterior</span>
         </div>
       )}
     </div>
   );
 }
+
 
 function MiniStat({ k, v }: { k: string; v: string }) {
   return (
