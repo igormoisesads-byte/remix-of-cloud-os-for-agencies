@@ -26,6 +26,8 @@ import { generateAiReport } from "@/lib/reports.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ReactMarkdown from "react-markdown";
 import { PerformanceView } from "@/components/performance-view";
+import { ClientSales } from "@/components/client-sales";
+import { AiDataChat } from "@/components/ai-data-chat";
 
 const clientQueryOptions = (id: string) =>
   queryOptions({
