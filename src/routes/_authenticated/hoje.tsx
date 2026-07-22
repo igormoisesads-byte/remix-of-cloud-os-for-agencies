@@ -90,6 +90,41 @@ function HojePage() {
         <StatCard icon={TrendingUp} label="Recebido" value={fmtBRL(stats.data?.recebidoMes)} accent />
       </div>
 
+      {(lowBalance.data?.length ?? 0) > 0 && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-destructive" />
+              Contas de anúncio com saldo crítico
+            </CardTitle>
+            <Badge variant="destructive">{lowBalance.data?.length}</Badge>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(lowBalance.data ?? []).map((a: any) => {
+              const d = Number(a.last_low_balance_days ?? 0);
+              const tone = d <= 1 ? "destructive" : d <= 3 ? "warning" : "primary";
+              const cur = a.currency || "BRL";
+              const bal = a.balance_cents != null ? (Number(a.balance_cents) / 100) : null;
+              const balFmt = bal != null ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: cur }).format(bal) : "—";
+              return (
+                <Link
+                  key={a.id}
+                  to="/clientes/$id" params={{ id: a.clients?.id ?? "" }}
+                  className="flex items-center justify-between gap-2 text-sm border-b border-border/60 pb-2 last:border-0 hover:bg-muted/40 -mx-2 px-2 rounded"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{a.clients?.name ?? a.account_name ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground truncate">Saldo {balFmt} · imposto já considerado</div>
+                  </div>
+                  <Badge variant={tone === "destructive" ? "destructive" : "outline"} className={tone === "warning" ? "border-warning text-warning" : tone === "primary" ? "border-primary text-primary" : ""}>
+                    ~{d.toFixed(1)} dia(s)
+                  </Badge>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <TaskGroup title="Atrasadas" icon={CircleAlert} tone="destructive" tasks={stats.data?.overdue ?? []} empty="Nenhuma tarefa atrasada." />
