@@ -31,10 +31,12 @@ function NpsPage() {
   const { data: surveys } = useQuery({
     queryKey: ["nps-surveys"],
     queryFn: async () => {
-      const { data } = await supabase.from("nps_surveys").select("*").order("created_at", { ascending: false });
-      return data ?? [];
+      const { data } = await supabase.from("nps_surveys").select("*, clients(name)").order("created_at", { ascending: false });
+      return (data ?? []).map((s: any) => ({ ...s, client_name: s.clients?.name }));
     },
   });
+
+
 
   const selected = surveys?.find((s) => s.id === selectedId) ?? surveys?.[0];
 
