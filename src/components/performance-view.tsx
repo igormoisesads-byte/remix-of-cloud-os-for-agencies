@@ -428,7 +428,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
       )}
 
       {/* Heatmap leads/dia (12 semanas) — baseado em resultados diários das campanhas */}
-      <LeadsHeatmap insights={dailyRows} />
+      <HourDayHeatmap hourly={data.hourly ?? []} />
 
 
       <Tabs defaultValue="visao">
