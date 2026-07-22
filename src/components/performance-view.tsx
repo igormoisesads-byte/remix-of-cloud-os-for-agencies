@@ -701,8 +701,8 @@ export function PerformanceView({ data }: { data: PerfData }) {
 /* ---------- Sub components ---------- */
 
 function Kpi({
-  icon, label, value, trend, accent,
-}: { icon?: React.ReactNode; label: string; value: string; trend?: number; accent?: "primary" | "emerald" | "violet" }) {
+  icon, label, value, trend, accent, hint,
+}: { icon?: React.ReactNode; label: string; value: string; trend?: number; accent?: "primary" | "emerald" | "violet"; hint?: string }) {
   const accentBg =
     accent === "primary" ? "bg-primary/10 text-primary"
     : accent === "emerald" ? "bg-emerald-500/10 text-emerald-600"
@@ -711,12 +711,13 @@ function Kpi({
   const showTrend = typeof trend === "number" && Number.isFinite(trend) && trend !== 0;
   const trendUp = (trend ?? 0) >= 0;
   return (
-    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow">
+    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow" title={hint}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground truncate">{label}</div>
         {icon && <div className={`h-6 w-6 rounded flex items-center justify-center ${accentBg}`}>{icon}</div>}
       </div>
-      <div className="text-lg font-semibold mt-1 tabular-nums">{value}</div>
+      <div className="text-lg sm:text-xl font-semibold mt-1 tabular-nums">{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{hint}</div>}
       {showTrend && (
         <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 ${trendUp ? "text-emerald-600" : "text-rose-600"}`}>
           {trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
