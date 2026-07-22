@@ -275,7 +275,14 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
 
 export const syncAdAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ ad_account_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({
+      ad_account_id: z.string().uuid(),
+      preset: z.enum(["last_30d", "last_90d", "last_6m", "last_year", "maximum"]).optional(),
+      since: z.string().optional(),
+      until: z.string().optional(),
+    }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { data: acc, error } = await context.supabase
       .from("ad_accounts")
@@ -285,7 +292,11 @@ export const syncAdAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!acc) throw new Error("Conta não encontrada");
     if (acc.provider === "google") throw new Error("Google Ads: integração em breve. Meta Ads já está ativa.");
-    return await syncMetaAccountInternal(data.ad_account_id);
+    const range: SyncRange | undefined =
+      data.since && data.until ? { since: data.since, until: data.until }
+      : data.preset ? { preset: data.preset }
+      : undefined;
+    return await syncMetaAccountInternal(data.ad_account_id, range);
   });
 
 export const syncAllAdAccounts = createServerFn({ method: "POST" })
@@ -305,6 +316,7 @@ export const syncAllAdAccounts = createServerFn({ method: "POST" })
       try {
         const r = await syncMetaAccountInternal(a.id);
         results.push({ id: a.id, ...r });
+
       } catch (e: any) {
         results.push({ id: a.id, error: e.message });
       }
