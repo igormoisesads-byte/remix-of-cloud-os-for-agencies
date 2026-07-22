@@ -51,9 +51,17 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
   const [sort, setSort] = useState<string>("spend");
   const [selected, setSelected] = useState<any | null>(null);
 
-  const { data: accounts = [] } = useQuery({
+  const { data: accounts = [], isLoading: accountsLoading } = useQuery({
     queryKey: ["ad_accounts", clientId],
-    queryFn: async () => (await supabase.from("ad_accounts").select("id, name, provider").eq("client_id", clientId)).data ?? [],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ad_accounts")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
   });
   const accountIds = accounts.map((a: any) => a.id);
 
@@ -84,6 +92,10 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
   }, [creatives, q, status, sort]);
 
   const agg = useMemo(() => aggregateScores(filtered, focus), [filtered, focus]);
+
+  if (accountsLoading) {
+    return <div className="h-40 rounded-lg bg-muted animate-pulse" />;
+  }
 
   if (accountIds.length === 0) {
     return (
