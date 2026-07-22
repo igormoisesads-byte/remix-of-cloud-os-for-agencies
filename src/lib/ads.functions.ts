@@ -31,7 +31,28 @@ async function metaFetch(url: URL) {
   return body;
 }
 
-async function syncMetaAccountInternal(adAccountRowId: string) {
+type SyncRange =
+  | { preset: "last_30d" | "last_90d" | "last_6m" | "last_year" | "maximum" }
+  | { since: string; until: string };
+
+function resolveTimeRange(range?: SyncRange) {
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  const until = new Date();
+  if (!range || (range as any).preset === "last_30d") {
+    const s = new Date(); s.setDate(s.getDate() - 30);
+    return { since: fmt(s), until: fmt(until), preset: null };
+  }
+  if ("since" in range) return { since: range.since, until: range.until, preset: null };
+  const p = range.preset;
+  if (p === "maximum") return { since: "2015-01-01", until: fmt(until), preset: "maximum" as const };
+  const s = new Date();
+  if (p === "last_90d") s.setDate(s.getDate() - 90);
+  else if (p === "last_6m") s.setMonth(s.getMonth() - 6);
+  else if (p === "last_year") s.setFullYear(s.getFullYear() - 1);
+  return { since: fmt(s), until: fmt(until), preset: null };
+}
+
+async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: acc, error } = await supabaseAdmin
     .from("ad_accounts")
@@ -47,11 +68,12 @@ async function syncMetaAccountInternal(adAccountRowId: string) {
   const accountId = rawId.startsWith("act_") ? rawId : `act_${rawId}`;
   const token = acc.access_token;
 
-  const until = new Date();
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
+  const resolved = resolveTimeRange(range);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  const timeRange = JSON.stringify({ since: fmt(since), until: fmt(until) });
+  const since = new Date(resolved.since);
+  const until = new Date(resolved.until);
+  const timeRange = JSON.stringify({ since: resolved.since, until: resolved.until });
+
 
   let upsertedInsights = 0;
   let upsertedCreatives = 0;
@@ -253,7 +275,14 @@ async function syncMetaAccountInternal(adAccountRowId: string) {
 
 export const syncAdAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ ad_account_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({
+      ad_account_id: z.string().uuid(),
+      preset: z.enum(["last_30d", "last_90d", "last_6m", "last_year", "maximum"]).optional(),
+      since: z.string().optional(),
+      until: z.string().optional(),
+    }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { data: acc, error } = await context.supabase
       .from("ad_accounts")
@@ -263,7 +292,11 @@ export const syncAdAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!acc) throw new Error("Conta não encontrada");
     if (acc.provider === "google") throw new Error("Google Ads: integração em breve. Meta Ads já está ativa.");
-    return await syncMetaAccountInternal(data.ad_account_id);
+    const range: SyncRange | undefined =
+      data.since && data.until ? { since: data.since, until: data.until }
+      : data.preset ? { preset: data.preset }
+      : undefined;
+    return await syncMetaAccountInternal(data.ad_account_id, range);
   });
 
 export const syncAllAdAccounts = createServerFn({ method: "POST" })
@@ -283,6 +316,7 @@ export const syncAllAdAccounts = createServerFn({ method: "POST" })
       try {
         const r = await syncMetaAccountInternal(a.id);
         results.push({ id: a.id, ...r });
+
       } catch (e: any) {
         results.push({ id: a.id, error: e.message });
       }

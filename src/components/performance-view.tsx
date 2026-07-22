@@ -26,7 +26,9 @@ export type PerfData = {
   whatsapp: any[];
   accounts?: any[];
   campaignInsights?: any[];
+  sales?: { vendas: number; faturamento: number; custo_produto?: number }; // totais no período
 };
+
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -171,8 +173,15 @@ export function PerformanceView({ data }: { data: PerfData }) {
     const cpm = totals.impressions ? (totals.spend / totals.impressions) * 1000 : 0;
     const cpa = totals.results ? totals.spend / totals.results : 0;
     const freq = totals.reach ? totals.impressions / totals.reach : 0;
-    return { ctr, cpc, cpm, cpa, freq };
-  }, [totals]);
+    const salesTot = data.sales?.vendas ?? 0;
+    const revenue = data.sales?.faturamento ?? 0;
+    const cost = data.sales?.custo_produto ?? 0;
+    const cpv = salesTot ? totals.spend / salesTot : 0;
+    const roas = totals.spend ? revenue / totals.spend : 0;
+    const lucro = revenue - totals.spend - cost;
+    return { ctr, cpc, cpm, cpa, freq, cpv, roas, lucro, hasSales: salesTot > 0 };
+  }, [totals, data.sales]);
+
 
   const trend = useMemo(() => {
     const sorted = [...dailyRows].sort((a, b) => a.date.localeCompare(b.date));
@@ -372,6 +381,19 @@ export function PerformanceView({ data }: { data: PerfData }) {
         <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" value={fmtBRL(derived.cpc)} />
         <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" value={derived.freq.toFixed(2)} />
       </div>
+
+      {derived.hasSales && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Kpi icon={<Target className="h-4 w-4" />} label="Vendas" value={fmtInt(data.sales?.vendas ?? 0)} accent="emerald" />
+          <Kpi icon={<Zap className="h-4 w-4" />} label="CPV (custo por venda)" value={fmtBRL(derived.cpv)} accent="violet" />
+          <Kpi icon={<TrendingUp className="h-4 w-4" />} label="ROAS" value={`${derived.roas.toFixed(2)}x`} accent="primary" />
+          <Kpi icon={<DollarSign className="h-4 w-4" />} label="Lucro estimado" value={fmtBRL(derived.lucro)} accent={derived.lucro >= 0 ? "emerald" : undefined} />
+        </div>
+      )}
+
+      {/* Heatmap leads/dia (12 semanas) — baseado em resultados diários das campanhas */}
+      <LeadsHeatmap insights={dailyRows} />
+
 
       <Tabs defaultValue="visao">
         <TabsList>
@@ -580,53 +602,25 @@ export function PerformanceView({ data }: { data: PerfData }) {
         </TabsContent>
 
         <TabsContent value="whatsapp">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Funil de conversas</CardTitle></CardHeader>
-              <CardContent>
-                {waTotals.impressions === 0 && waTotals.conversations_started === 0 ? (
-                  <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
-                ) : (
-                  <VerticalFunnel
-                    steps={[
-                      { label: "Impressões", value: waTotals.impressions, color: "#3b82f6" },
-                      { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1" },
-                      { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366" },
-                      { label: "Primeiras respostas", value: waTotals.first_replies, color: "#059669" },
-                    ]}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-base">Evolução diária</CardTitle></CardHeader>
-              <CardContent>
-                {waSeries.length === 0 ? <EmptyMsg /> : (
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer>
-                      <ComposedChart data={waSeries} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-                        <defs>
-                          <linearGradient id="gWaConv" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#25D366" stopOpacity={0.5} />
-                            <stop offset="100%" stopColor="#25D366" stopOpacity={0.02} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" fontSize={11} />
-                        <YAxis fontSize={11} />
-                        <Tooltip />
-                        <Legend />
-                        <Area type="monotone" dataKey="conversas" stroke="#25D366" fill="url(#gWaConv)" strokeWidth={2} name="Conversas WhatsApp" />
-                        <Line type="monotone" dataKey="cliques" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} name="Cliques" />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Funil de conversas</CardTitle></CardHeader>
+            <CardContent>
+              {waTotals.impressions === 0 && waTotals.conversations_started === 0 ? (
+                <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
+              ) : (
+                <VerticalFunnel
+                  steps={[
+                    { label: "Impressões", value: waTotals.impressions, color: "#3b82f6" },
+                    { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1" },
+                    { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366" },
+                    { label: "Primeiras respostas", value: waTotals.first_replies, color: "#059669" },
+                  ]}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
+
 
         <TabsContent value="links">
           <Card>
@@ -885,5 +879,91 @@ function WorldMapPanel({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/* ---------- Leads heatmap (GitHub-style, 12 semanas, baseado em resultados diários) ---------- */
+const DOW_LBL = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+function LeadsHeatmap({ insights }: { insights: any[] }) {
+  const { weeks, max, best, total } = useMemo(() => {
+    const byDate: Record<string, number> = {};
+    for (const r of insights ?? []) {
+      const d = String(r.date);
+      byDate[d] = (byDate[d] ?? 0) + Number(r.results ?? 0);
+    }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    // start = segunda 12 semanas atrás
+    const start = new Date(today);
+    const dow = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - dow - 11 * 7);
+    const wks: { label: string; cells: { date: string; val: number }[] }[] = [];
+    let max = 0, total = 0;
+    const perDow = [0, 0, 0, 0, 0, 0, 0];
+    for (let w = 0; w < 12; w++) {
+      const cells: { date: string; val: number }[] = [];
+      for (let d = 0; d < 7; d++) {
+        const cur = new Date(start);
+        cur.setDate(cur.getDate() + w * 7 + d);
+        const key = cur.toISOString().slice(0, 10);
+        const val = byDate[key] ?? 0;
+        cells.push({ date: key, val });
+        if (val > max) max = val;
+        total += val;
+        perDow[d] += val;
+      }
+      const s = new Date(start); s.setDate(s.getDate() + w * 7);
+      wks.push({ label: s.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }), cells });
+    }
+    const bestIdx = perDow.indexOf(Math.max(...perDow));
+    return { weeks: wks, max: Math.max(1, max), best: perDow[bestIdx] ? { label: DOW_LBL[bestIdx], val: perDow[bestIdx] } : null, total };
+  }, [insights]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-base">Mapa de calor · leads por dia (12 semanas)</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            {total === 0
+              ? "Sem dados suficientes ainda"
+              : best ? `Melhor dia: ${best.label} (${best.val} leads no período)` : ""}
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex gap-3 overflow-x-auto">
+          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground pt-4">
+            {DOW_LBL.map((d) => <div key={d} className="h-4 flex items-center">{d}</div>)}
+          </div>
+          <div className="flex gap-1">
+            {weeks.map((w, wi) => (
+              <div key={wi} className="flex flex-col gap-1">
+                <div className="text-[9px] text-muted-foreground h-3 text-center" style={{ width: 16 }}>
+                  {wi % 2 === 0 ? w.label.split(" ")[0] : ""}
+                </div>
+                {w.cells.map((c) => {
+                  const intensity = c.val / max;
+                  const bg = c.val === 0
+                    ? "hsl(var(--muted))"
+                    : `color-mix(in oklch, hsl(var(--primary)) ${20 + intensity * 80}%, transparent)`;
+                  return (
+                    <div key={c.date} className="h-4 w-4 rounded-sm border border-border/50"
+                      style={{ background: bg }}
+                      title={`${new Date(c.date + "T00:00").toLocaleDateString("pt-BR")} · ${c.val} leads`} />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
+          <span>Menos</span>
+          {[0.1, 0.3, 0.6, 1].map((v) => (
+            <div key={v} className="h-3 w-3 rounded-sm" style={{ background: `color-mix(in oklch, hsl(var(--primary)) ${20 + v * 80}%, transparent)` }} />
+          ))}
+          <span>Mais</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
