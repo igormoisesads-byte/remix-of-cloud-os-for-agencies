@@ -279,21 +279,22 @@ export function PerformanceView({ data }: { data: PerfData }) {
     : "Resultados";
 
   const geoData = useMemo(() => {
-    // Country-level only (no region)
+    // Country-level only (no region) — deduplica agregando por country_code
     const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
-    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
-    return [...src]
-      .sort((a, b) => Number(b.spend) - Number(a.spend))
-      .map((g) => ({
-        code: g.country_code,
-        name: regionName(g.country_code),
-        spend: Number(g.spend),
-        results: Number(g.results),
-        clicks: Number(g.clicks),
-        impressions: Number(g.impressions),
-        reach: Number(g.reach),
-        pct: (Number(g.spend) / total) * 100,
-      }));
+    const map = new Map<string, { spend: number; results: number; clicks: number; impressions: number; reach: number }>();
+    for (const g of src) {
+      const code = String(g.country_code || "").toUpperCase();
+      if (!code) continue;
+      const cur = map.get(code) ?? { spend: 0, results: 0, clicks: 0, impressions: 0, reach: 0 };
+      cur.spend += Number(g.spend); cur.results += Number(g.results);
+      cur.clicks += Number(g.clicks); cur.impressions += Number(g.impressions);
+      cur.reach += Number(g.reach);
+      map.set(code, cur);
+    }
+    const total = [...map.values()].reduce((s, g) => s + g.spend, 0) || 1;
+    return [...map.entries()]
+      .map(([code, g]) => ({ code, name: regionName(code), ...g, pct: (g.spend / total) * 100 }))
+      .sort((a, b) => b.spend - a.spend);
   }, [data.geo, accountId]);
 
   const regionData = useMemo(() => {
