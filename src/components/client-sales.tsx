@@ -192,7 +192,7 @@ export function ClientSales({ clientId }: { clientId: string }) {
                     <div className="grid grid-cols-4 gap-2 text-xs">
                       <Cell k="Leads" v={String(w.leads)} />
                       <Cell k="Agend." v={String(w.agendamentos)} />
-                      <Cell k="Vendas" v={String(w.vendas)} />
+                      <Cell k="Matríc." v={String(w.vendas)} />
                       <Cell k="R$" v={fmtBRL(w.faturamento)} />
                     </div>
                   </div>
