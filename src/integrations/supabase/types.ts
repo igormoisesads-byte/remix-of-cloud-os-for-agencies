@@ -20,15 +20,24 @@ export type Database = {
           account_id: string
           account_name: string | null
           active: boolean
+          amount_spent_cents: number | null
+          balance_cents: number | null
+          balance_synced_at: string | null
           client_id: string
           created_at: string
           created_by: string | null
           currency: string | null
+          funding_type: string | null
           id: string
+          last_low_balance_days: number | null
           last_sync_at: string | null
           last_sync_error: string | null
+          low_balance_days_threshold: number
+          low_balance_notified_at: string | null
           provider: string
           refresh_token: string | null
+          spend_cap_cents: number | null
+          tax_rate: number
           updated_at: string
         }
         Insert: {
@@ -36,15 +45,24 @@ export type Database = {
           account_id: string
           account_name?: string | null
           active?: boolean
+          amount_spent_cents?: number | null
+          balance_cents?: number | null
+          balance_synced_at?: string | null
           client_id: string
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          funding_type?: string | null
           id?: string
+          last_low_balance_days?: number | null
           last_sync_at?: string | null
           last_sync_error?: string | null
+          low_balance_days_threshold?: number
+          low_balance_notified_at?: string | null
           provider: string
           refresh_token?: string | null
+          spend_cap_cents?: number | null
+          tax_rate?: number
           updated_at?: string
         }
         Update: {
@@ -52,15 +70,24 @@ export type Database = {
           account_id?: string
           account_name?: string | null
           active?: boolean
+          amount_spent_cents?: number | null
+          balance_cents?: number | null
+          balance_synced_at?: string | null
           client_id?: string
           created_at?: string
           created_by?: string | null
           currency?: string | null
+          funding_type?: string | null
           id?: string
+          last_low_balance_days?: number | null
           last_sync_at?: string | null
           last_sync_error?: string | null
+          low_balance_days_threshold?: number
+          low_balance_notified_at?: string | null
           provider?: string
           refresh_token?: string | null
+          spend_cap_cents?: number | null
+          tax_rate?: number
           updated_at?: string
         }
         Relationships: [
@@ -69,6 +96,71 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_billing_transactions: {
+        Row: {
+          ad_account_id: string
+          amount_cents: number
+          billing_end_time: string | null
+          billing_start_time: string | null
+          charge_type: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          net_cents: number
+          payment_option: string | null
+          product_type: string | null
+          raw: Json | null
+          status: string | null
+          transaction_id: string
+          updated_at: string
+          vat_cents: number
+        }
+        Insert: {
+          ad_account_id: string
+          amount_cents?: number
+          billing_end_time?: string | null
+          billing_start_time?: string | null
+          charge_type?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          net_cents?: number
+          payment_option?: string | null
+          product_type?: string | null
+          raw?: Json | null
+          status?: string | null
+          transaction_id: string
+          updated_at?: string
+          vat_cents?: number
+        }
+        Update: {
+          ad_account_id?: string
+          amount_cents?: number
+          billing_end_time?: string | null
+          billing_start_time?: string | null
+          charge_type?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          net_cents?: number
+          payment_option?: string | null
+          product_type?: string | null
+          raw?: Json | null
+          status?: string | null
+          transaction_id?: string
+          updated_at?: string
+          vat_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_billing_transactions_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "ad_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1982,6 +2074,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       role_analises: {
         Row: {

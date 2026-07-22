@@ -40,6 +40,7 @@ import { Route as AuthenticatedAjustesEquipeRouteImport } from './routes/_authen
 import { Route as AuthenticatedAjustesComissaoRouteImport } from './routes/_authenticated/ajustes.comissao'
 import { Route as AuthenticatedAjustesCargosRouteImport } from './routes/_authenticated/ajustes.cargos'
 import { Route as ApiPublicHooksSyncAdsRouteImport } from './routes/api/public/hooks/sync-ads'
+import { Route as ApiPublicHooksCheckBalancesRouteImport } from './routes/api/public/hooks/check-balances'
 
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
@@ -206,6 +207,12 @@ const ApiPublicHooksSyncAdsRoute = ApiPublicHooksSyncAdsRouteImport.update({
   path: '/api/public/hooks/sync-ads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCheckBalancesRoute =
+  ApiPublicHooksCheckBalancesRouteImport.update({
+    id: '/api/public/hooks/check-balances',
+    path: '/api/public/hooks/check-balances',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/api/public/hooks/check-balances': typeof ApiPublicHooksCheckBalancesRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRoutesByTo {
@@ -267,6 +275,7 @@ export interface FileRoutesByTo {
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes': typeof AuthenticatedAjustesIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
+  '/api/public/hooks/check-balances': typeof ApiPublicHooksCheckBalancesRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRoutesById {
@@ -301,6 +310,7 @@ export interface FileRoutesById {
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
+  '/api/public/hooks/check-balances': typeof ApiPublicHooksCheckBalancesRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
 }
 export interface FileRouteTypes {
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/p/relatorio/$token'
     | '/ajustes/'
     | '/clientes/'
+    | '/api/public/hooks/check-balances'
     | '/api/public/hooks/sync-ads'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/p/relatorio/$token'
     | '/ajustes'
     | '/clientes'
+    | '/api/public/hooks/check-balances'
     | '/api/public/hooks/sync-ads'
   id:
     | '__root__'
@@ -398,6 +410,7 @@ export interface FileRouteTypes {
     | '/p/relatorio/$token'
     | '/_authenticated/ajustes/'
     | '/_authenticated/clientes/'
+    | '/api/public/hooks/check-balances'
     | '/api/public/hooks/sync-ads'
   fileRoutesById: FileRoutesById
 }
@@ -410,6 +423,7 @@ export interface RootRouteChildren {
   ApiR2UploadRoute: typeof ApiR2UploadRoute
   NpsTokenRoute: typeof NpsTokenRoute
   PRelatorioTokenRoute: typeof PRelatorioTokenRoute
+  ApiPublicHooksCheckBalancesRoute: typeof ApiPublicHooksCheckBalancesRoute
   ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
 }
 
@@ -632,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/check-balances': {
+      id: '/api/public/hooks/check-balances'
+      path: '/api/public/hooks/check-balances'
+      fullPath: '/api/public/hooks/check-balances'
+      preLoaderRoute: typeof ApiPublicHooksCheckBalancesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -717,18 +738,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiR2UploadRoute: ApiR2UploadRoute,
   NpsTokenRoute: NpsTokenRoute,
   PRelatorioTokenRoute: PRelatorioTokenRoute,
+  ApiPublicHooksCheckBalancesRoute: ApiPublicHooksCheckBalancesRoute,
   ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
