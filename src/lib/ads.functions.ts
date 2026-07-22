@@ -359,6 +359,5 @@ export const getPublicReport = createServerFn({ method: "GET" })
       geo: geo ?? [],
       whatsapp: wa ?? [],
       campaignInsights: campaignInsights ?? [],
-      campaignInsights: campaignInsights ?? [],
     };
   });
