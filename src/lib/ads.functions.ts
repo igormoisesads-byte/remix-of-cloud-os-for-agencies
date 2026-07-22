@@ -324,18 +324,21 @@ export const getPublicReport = createServerFn({ method: "GET" })
     const since = new Date();
     since.setDate(since.getDate() - daysBack);
     const sinceStr = since.toISOString().slice(0, 10);
-    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }] = await Promise.all([
+    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }, { data: campaignInsights }] = await Promise.all([
       accountIds.length
         ? supabaseAdmin.from("ad_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
-        ? supabaseAdmin.from("ad_creatives").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(20)
+        ? supabaseAdmin.from("ad_creatives").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
         ? supabaseAdmin.from("ad_geo").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
         ? supabaseAdmin.from("ad_funnel_whatsapp").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
+        : Promise.resolve({ data: [] as any[] }),
+      accountIds.length
+        ? supabaseAdmin.from("ad_campaign_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -355,5 +358,6 @@ export const getPublicReport = createServerFn({ method: "GET" })
       creatives: creatives ?? [],
       geo: geo ?? [],
       whatsapp: wa ?? [],
+      campaignInsights: campaignInsights ?? [],
     };
   });
