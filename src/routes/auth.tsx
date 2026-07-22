@@ -26,21 +26,31 @@ function AuthPage() {
   }, [session, loading, nav]);
 
   return (
-    <div className="min-h-screen w-full bg-background bg-grid relative flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-background bg-grid relative flex items-center justify-center px-4 py-10">
       <div className="absolute inset-0 bg-radial-fade pointer-events-none" />
       <div className="relative w-full max-w-md">
-        <div className="flex flex-col items-center gap-3 mb-6">
-          <div className="h-16 w-16 rounded-2xl bg-black flex items-center justify-center shadow-lg">
-            <img src={cloudosLogo.url} alt="CloudOS" className="h-10 w-10 object-contain" />
+        <div className="rounded-2xl border bg-card p-8 shadow-2xl">
+          <div className="flex flex-col items-center gap-3 mb-6">
+            <div className="h-16 w-16 rounded-2xl bg-black flex items-center justify-center shadow-md">
+              <img src={cloudosLogo.url} alt="CloudOS" className="h-10 w-10 object-contain" />
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold tracking-tight">CloudOS</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Sistema operacional da agência</div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold tracking-tight">CloudOS</div>
-            <div className="text-xs text-muted-foreground">Sistema operacional da agência</div>
-          </div>
-        </div>
-        <div className="rounded-xl border bg-card p-6 shadow-2xl">
           <SignInForm />
+          <p className="mt-6 text-[11px] text-muted-foreground text-center leading-relaxed">
+            Ao entrar, você concorda com os{" "}
+            <a href="/termos" className="underline hover:text-foreground">Termos de Uso</a>{" "}
+            e a{" "}
+            <a href="/privacidade" className="underline hover:text-foreground">Política de Privacidade</a>{" "}
+            do CloudOS.
+          </p>
         </div>
+        <p className="mt-4 text-center text-[11px] text-muted-foreground">
+          © {new Date().getFullYear()} CloudOS · Todos os direitos reservados
+        </p>
       </div>
     </div>
   );
