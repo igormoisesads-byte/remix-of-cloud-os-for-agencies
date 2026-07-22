@@ -173,10 +173,17 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
 
     // 4) Creatives (ads) with aggregated insights + campaign info
     try {
+      const insightsFields = [
+        "spend","impressions","reach","frequency","clicks","ctr","cpc","cpm","cpp",
+        "actions","action_values","unique_actions","cost_per_action_type","cost_per_unique_action_type",
+        "unique_link_clicks_ctr","cost_per_unique_link_click","unique_outbound_clicks",
+        "unique_outbound_clicks_ctr","cost_per_unique_outbound_click","outbound_clicks",
+        "video_play_actions","video_p75_watched_actions","video_p25_watched_actions",
+      ].join(",");
       const adsUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/ads`);
       adsUrl.searchParams.set(
         "fields",
-        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title,link_url},insights.time_range(${timeRange}){spend,impressions,clicks,reach,actions,ctr,cpc}`
+        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title,link_url},insights.time_range(${timeRange}){${insightsFields}}`
       );
       adsUrl.searchParams.set("limit", "100");
       adsUrl.searchParams.set("access_token", token);
@@ -184,12 +191,35 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
       for (const ad of ads.data ?? []) {
         const ins = ad.insights?.data?.[0];
         const actions = ins?.actions ?? [];
+        const actionValues = ins?.action_values ?? [];
+        const uniqueActions = ins?.unique_actions ?? [];
+        const costPerUnique = ins?.cost_per_unique_action_type ?? [];
         const creative = ad.creative ?? {};
         const linkUrl =
           creative.link_url ||
           creative?.object_story_spec?.link_data?.link ||
           creative?.object_story_spec?.video_data?.call_to_action?.value?.link ||
           null;
+
+        const uniqueLinkClicks = pickAction(uniqueActions, "link_click");
+        const landingViews = pickAction(actions, "landing_page_view");
+        const costPerLanding = pickAction(costPerUnique, "landing_page_view") || null;
+        const initCheckout = pickAction(actions, "initiate_checkout") || pickAction(actions, "offsite_conversion.fb_pixel_initiate_checkout");
+        const initCheckoutValue = pickAction(actionValues, "initiate_checkout") || pickAction(actionValues, "offsite_conversion.fb_pixel_initiate_checkout");
+        const costPerInit = pickAction(costPerUnique, "initiate_checkout") || null;
+        const purchases = pickAction(actions, "purchase") || pickAction(actions, "offsite_conversion.fb_pixel_purchase");
+        const purchaseValue = pickAction(actionValues, "purchase") || pickAction(actionValues, "offsite_conversion.fb_pixel_purchase");
+        const costPerPurchase = pickAction(costPerUnique, "purchase") || null;
+        const spend = Number(ins?.spend ?? 0);
+        const roas = spend > 0 ? purchaseValue / spend : null;
+        const videoPlays = pickAction(ins?.video_play_actions ?? [], "video_view");
+        const videoP3s = videoPlays; // Meta: video_play_actions ~ 3s+
+        const videoP75 = pickAction(ins?.video_p75_watched_actions ?? [], "video_view");
+        const uniqueOutbound = pickAction(ins?.unique_outbound_clicks ?? [], "outbound_click");
+        const uniqueOutboundCtr = ins?.unique_outbound_clicks_ctr?.[0]?.value ?? null;
+        const costPerUniqueOutbound = ins?.cost_per_unique_outbound_click?.[0]?.value ?? null;
+        const messagingConversations = pickAction(actions, "onsite_conversion.messaging_conversation_started_7d");
+
         const { error: e } = await supabaseAdmin.from("ad_creatives").upsert(
           {
             ad_account_id: acc.id,
@@ -203,13 +233,35 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
             preview_url: creative.image_url || null,
             destination_url: linkUrl,
             status: ad.status || null,
-            spend: Number(ins?.spend ?? 0),
+            spend,
             impressions: Number(ins?.impressions ?? 0),
             clicks: Number(ins?.clicks ?? 0),
             reach: Number(ins?.reach ?? 0),
             results: pickResults(actions),
             ctr: ins?.ctr ? Number(ins.ctr) : null,
             cpc: ins?.cpc ? Number(ins.cpc) : null,
+            cpm: ins?.cpm ? Number(ins.cpm) : null,
+            cpp: ins?.cpp ? Number(ins.cpp) : null,
+            frequency: ins?.frequency ? Number(ins.frequency) : null,
+            unique_link_clicks: uniqueLinkClicks,
+            unique_link_ctr: ins?.unique_link_clicks_ctr ? Number(ins.unique_link_clicks_ctr) : null,
+            unique_link_cpc: ins?.cost_per_unique_link_click ? Number(ins.cost_per_unique_link_click) : null,
+            unique_outbound_clicks: uniqueOutbound,
+            unique_outbound_ctr: uniqueOutboundCtr ? Number(uniqueOutboundCtr) : null,
+            unique_outbound_cpc: costPerUniqueOutbound ? Number(costPerUniqueOutbound) : null,
+            landing_page_views: landingViews,
+            cost_per_landing_page_view: costPerLanding ? Number(costPerLanding) : null,
+            initiate_checkout: initCheckout,
+            cost_per_initiate_checkout: costPerInit ? Number(costPerInit) : null,
+            initiate_checkout_value: initCheckoutValue,
+            purchases,
+            cost_per_purchase: costPerPurchase ? Number(costPerPurchase) : null,
+            purchase_value: purchaseValue,
+            roas,
+            video_plays: videoPlays,
+            video_p3s: videoP3s,
+            video_p75: videoP75,
+            messaging_conversations_started: messagingConversations,
             last_sync_at: new Date().toISOString(),
             raw: ad,
           },
@@ -218,6 +270,7 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         if (!e) upsertedCreatives++;
       }
     } catch {
+
       // ignore creatives errors
     }
 

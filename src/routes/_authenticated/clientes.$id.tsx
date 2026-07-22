@@ -17,8 +17,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import {
   ChevronLeft, Plus, Check, LayoutGrid, BarChart3, LineChart, Search, Repeat, HeartPulse,
   AlertTriangle, Star, FileText, Calendar, Video, ImageIcon, Key, ListChecks, ClipboardList,
-  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy, DollarSign,
+  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy, DollarSign, Film,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { syncAdAccount } from "@/lib/ads.functions";
@@ -28,6 +29,8 @@ import ReactMarkdown from "react-markdown";
 import { PerformanceView } from "@/components/performance-view";
 import { ClientSales } from "@/components/client-sales";
 import { AiDataChat } from "@/components/ai-data-chat";
+import { CreativesView } from "@/components/creatives-view";
+
 
 const clientQueryOptions = (id: string) =>
   queryOptions({
@@ -67,13 +70,14 @@ function fmtDate(v: string | null | undefined) {
 }
 
 type Section =
-  | "visao" | "performance" | "vendas" | "projecoes" | "seo" | "rotinas" | "health"
+  | "visao" | "performance" | "criativos" | "vendas" | "projecoes" | "seo" | "rotinas" | "health"
   | "pdas" | "nps" | "relatorios" | "reunioes" | "onboarding" | "moodboards"
   | "acesso" | "auditoria";
 
 const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "visao", label: "Visão Geral", icon: LayoutGrid },
   { key: "performance", label: "Performance", icon: BarChart3 },
+  { key: "criativos", label: "Criativos", icon: Film },
   { key: "vendas", label: "Vendas", icon: DollarSign },
   { key: "projecoes", label: "Projeções", icon: LineChart },
   { key: "seo", label: "SEO", icon: Search },
@@ -88,6 +92,7 @@ const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "acesso", label: "Acesso", icon: Key },
   { key: "auditoria", label: "Auditoria", icon: ClipboardList },
 ];
+
 
 function ClienteDetail() {
   const { id } = Route.useParams();
@@ -170,7 +175,9 @@ function ClienteDetail() {
         <div className="p-6">
           {section === "visao" && <VisaoGeral c={c} />}
           {section === "performance" && <Performance clientId={id} clientType={c.type} />}
+          {section === "criativos" && <CreativesView clientId={id} clientType={c.type} />}
           {section === "vendas" && <ClientSales clientId={id} />}
+
           {section === "projecoes" && <Projecoes c={c} />}
           {section === "seo" && <Placeholder title="SEO" text="Em breve: rastreio de posições e páginas do cliente." />}
           {section === "rotinas" && <Rotinas clientId={id} />}
