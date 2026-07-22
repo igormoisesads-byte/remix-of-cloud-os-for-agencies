@@ -605,15 +605,21 @@ export function PerformanceView({ data }: { data: PerfData }) {
                 {waSeries.length === 0 ? <EmptyMsg /> : (
                   <div className="h-72 w-full">
                     <ResponsiveContainer>
-                      <BarChart data={waSeries}>
+                      <ComposedChart data={waSeries} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+                        <defs>
+                          <linearGradient id="gWaConv" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#25D366" stopOpacity={0.5} />
+                            <stop offset="100%" stopColor="#25D366" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="label" fontSize={11} />
                         <YAxis fontSize={11} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="cliques" fill="hsl(var(--primary))" name="Cliques" />
-                        <Bar dataKey="conversas" fill="#25D366" name="Conversas WhatsApp" />
-                      </BarChart>
+                        <Area type="monotone" dataKey="conversas" stroke="#25D366" fill="url(#gWaConv)" strokeWidth={2} name="Conversas WhatsApp" />
+                        <Line type="monotone" dataKey="cliques" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} name="Cliques" />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 )}
