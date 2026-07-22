@@ -70,7 +70,14 @@ function PublicReportPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {client.logo_url ? (
-              <img src={client.logo_url} alt={client.name} className="h-9 w-9 sm:h-11 sm:w-11 rounded-lg object-cover ring-1 ring-border" />
+              <img
+                src={client.logo_url}
+                alt={client.name}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                className="h-9 w-9 sm:h-11 sm:w-11 rounded-lg object-cover ring-1 ring-border"
+              />
             ) : (
               <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-semibold">
                 {client.name.slice(0, 1)}
@@ -86,10 +93,18 @@ function PublicReportPage() {
           <div className="flex items-center gap-2 shrink-0">
             <div className="hidden sm:block text-[10px] uppercase tracking-wide text-muted-foreground">Entregue por</div>
             {agency.agency_logo_url ? (
-              <img src={agency.agency_logo_url} alt={agency.agency_name || "Agência"} className="h-7 sm:h-9 max-w-[120px] sm:max-w-[160px] object-contain" />
+              <img
+                src={agency.agency_logo_url}
+                alt={agency.agency_name || "Agência"}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                className="h-7 sm:h-9 max-w-[120px] sm:max-w-[160px] object-contain"
+              />
             ) : (
               <div className="font-semibold text-xs sm:text-sm">{agency.agency_name || "CloudOS"}</div>
             )}
+
           </div>
         </div>
       </header>
