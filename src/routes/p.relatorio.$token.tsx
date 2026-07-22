@@ -88,7 +88,7 @@ function PublicReportPage() {
             <span> · Última sincronização: {new Date(accounts[0].last_sync_at).toLocaleString("pt-BR")}</span>
           )}
         </div>
-        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts }} />
+        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights }} />
         <div className="text-center text-xs text-muted-foreground pt-4">
           Powered by {agency.agency_name || "CloudOS"}
         </div>
