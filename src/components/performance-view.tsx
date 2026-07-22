@@ -264,7 +264,12 @@ export function PerformanceView({ data }: { data: PerfData }) {
       map.set(c.destination_url, cur);
     }
     return [...map.values()].sort((a, b) => b.clicks - a.clicks).slice(0, 10);
-  }, [data.creatives]);
+  }, [filteredCreatives]);
+
+  const hasFilters = accountId !== "all" || campaignId !== "all" || creativeId !== "all" || period !== "30";
+  function clearFilters() {
+    setAccountId("all"); setCampaignId("all"); setCreativeId("all"); setPeriod("30");
+  }
 
   return (
     <div className="space-y-4">
