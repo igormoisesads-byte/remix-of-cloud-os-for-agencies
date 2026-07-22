@@ -415,16 +415,16 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
-        <Kpi icon={<Target className="h-4 w-4" />} label="Resultados" value={fmtInt(totals.results)} trend={trend.results} accent="emerald" />
-        <Kpi icon={<Zap className="h-4 w-4" />} label="CPA" value={fmtBRL(derived.cpa)} accent="violet" />
-        <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" value={fmtInt(totals.clicks)} trend={trend.clicks} />
-        <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" value={fmtPct(derived.ctr)} />
-        <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" value={fmtInt(totals.impressions)} trend={trend.impressions} />
-        <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" value={fmtInt(totals.reach)} />
-        <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" value={fmtBRL(derived.cpm)} />
-        <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" value={fmtBRL(derived.cpc)} />
-        <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" value={derived.freq.toFixed(2)} />
+        <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
+        <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint={data.clientType === "local" ? "Conversas de WhatsApp iniciadas" : "Compras, leads ou conversões que a campanha otimiza"} value={fmtInt(totals.results)} trend={trend.results} accent="emerald" />
+        <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por resultado" hint="Investimento ÷ resultados" value={fmtBRL(derived.cpa)} accent="violet" />
+        <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" hint="Cliques no anúncio" value={fmtInt(totals.clicks)} trend={trend.clicks} />
+        <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" hint="Cliques ÷ impressões" value={fmtPct(derived.ctr)} />
+        <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" hint="Vezes que o anúncio foi exibido" value={fmtInt(totals.impressions)} trend={trend.impressions} />
+        <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" hint="Pessoas únicas alcançadas" value={fmtInt(totals.reach)} />
+        <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" hint="Custo por mil impressões" value={fmtBRL(derived.cpm)} />
+        <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" hint="Custo por clique" value={fmtBRL(derived.cpc)} />
+        <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" hint="Média de vezes por pessoa" value={derived.freq.toFixed(2)} />
       </div>
 
       {derived.hasSales && (
