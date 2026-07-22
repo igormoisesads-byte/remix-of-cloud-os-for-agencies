@@ -76,17 +76,34 @@ function MarcaPage() {
             <Input value={form.agency_name} onChange={(e) => setForm({ ...form, agency_name: e.target.value })} disabled={!isAdmin} />
           </div>
           <div>
-            <Label>Logo (URL)</Label>
-            <Input value={form.agency_logo_url} onChange={(e) => setForm({ ...form, agency_logo_url: e.target.value })} disabled={!isAdmin} placeholder="https://..." />
+            <Label>Logo da agência</Label>
+            {form.agency_logo_url && (
+              <img src={form.agency_logo_url} alt="Logo" className="mt-2 h-16 object-contain border rounded p-2 bg-white" />
+            )}
             {isAdmin && (
-              <div className="mt-2">
-                <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} className="text-xs" />
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+                />
+                <Button asChild variant="outline" size="sm" disabled={busy}>
+                  <label htmlFor="logo-upload" className="cursor-pointer">
+                    {form.agency_logo_url ? "Trocar logo" : "Enviar logo"}
+                  </label>
+                </Button>
+                {form.agency_logo_url && (
+                  <Button variant="ghost" size="sm" onClick={() => setForm((f) => ({ ...f, agency_logo_url: "" }))}>
+                    Remover
+                  </Button>
+                )}
               </div>
             )}
-            {form.agency_logo_url && (
-              <img src={form.agency_logo_url} alt="Logo" className="mt-3 h-16 object-contain border rounded p-2 bg-white" />
-            )}
+            <p className="text-xs text-muted-foreground mt-2">PNG/JPG até 5MB. O arquivo é armazenado no Cloudflare R2.</p>
           </div>
+
           <div>
             <Label>Cor primária (opcional)</Label>
             <Input value={form.agency_primary_color} onChange={(e) => setForm({ ...form, agency_primary_color: e.target.value })} disabled={!isAdmin} placeholder="#2563eb" />
