@@ -439,7 +439,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
         return (
           <div className="space-y-3">
             {/* Linha 1: Investimento, Conversas iniciadas, Custo por mensagem, Cliques, CTR */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2 md:[&>*:last-child:nth-child(odd)]:col-span-1">
               <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
               {isLocal ? (
                 <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Conversas iniciadas" hint="Conversas de WhatsApp iniciadas — resultado principal" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
@@ -452,7 +452,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
             </div>
 
             {/* Linha 2: Impressões, Alcance, CPM, CPC, Frequência */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2 md:[&>*:last-child:nth-child(odd)]:col-span-1">
               <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" hint="Vezes que o anúncio foi exibido" value={fmtInt(totals.impressions)} trend={trend.impressions} />
               <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" hint="Pessoas únicas alcançadas" value={fmtInt(totals.reach)} />
               <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" hint="Custo por mil impressões" value={fmtBRL(derived.cpm)} />
@@ -462,7 +462,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
             {/* Linha 3 (local/WhatsApp): Novos contatos, custo, retornam, custo, IG */}
             {isLocal && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2 md:[&>*:last-child:nth-child(odd)]:col-span-1">
                 <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Novos contatos" hint="Novos contatos por mensagem" value={fmtInt(waExtras.newContacts)} accent="emerald" />
                 <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por novo contato" hint="Investimento ÷ novos contatos" value={fmtBRL(cpNew)} accent="violet" />
                 <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Contatos que retornam" hint="Contatos por mensagem recorrentes" value={fmtInt(waExtras.retContacts)} />
