@@ -629,6 +629,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     const { error } = await supabase.from("tasks").update(fields).eq("id", taskId);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["task", taskId] });
+    if ("tags" in fields) qc.invalidateQueries({ queryKey: ["task-tags"] });
     onChange();
   }
 
