@@ -279,21 +279,22 @@ export function PerformanceView({ data }: { data: PerfData }) {
     : "Resultados";
 
   const geoData = useMemo(() => {
-    // Country-level only (no region)
+    // Country-level only (no region) — deduplica agregando por country_code
     const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
-    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
-    return [...src]
-      .sort((a, b) => Number(b.spend) - Number(a.spend))
-      .map((g) => ({
-        code: g.country_code,
-        name: regionName(g.country_code),
-        spend: Number(g.spend),
-        results: Number(g.results),
-        clicks: Number(g.clicks),
-        impressions: Number(g.impressions),
-        reach: Number(g.reach),
-        pct: (Number(g.spend) / total) * 100,
-      }));
+    const map = new Map<string, { spend: number; results: number; clicks: number; impressions: number; reach: number }>();
+    for (const g of src) {
+      const code = String(g.country_code || "").toUpperCase();
+      if (!code) continue;
+      const cur = map.get(code) ?? { spend: 0, results: 0, clicks: 0, impressions: 0, reach: 0 };
+      cur.spend += Number(g.spend); cur.results += Number(g.results);
+      cur.clicks += Number(g.clicks); cur.impressions += Number(g.impressions);
+      cur.reach += Number(g.reach);
+      map.set(code, cur);
+    }
+    const total = [...map.values()].reduce((s, g) => s + g.spend, 0) || 1;
+    return [...map.entries()]
+      .map(([code, g]) => ({ code, name: regionName(code), ...g, pct: (g.spend / total) * 100 }))
+      .sort((a, b) => b.spend - a.spend);
   }, [data.geo, accountId]);
 
   const regionData = useMemo(() => {
@@ -347,36 +348,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="h-8 w-[150px]"><SelectValue placeholder="Período" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="current_week">Semana atual</SelectItem>
-            <SelectItem value="7">Últimos 7 dias</SelectItem>
-            <SelectItem value="15">Últimos 15 dias</SelectItem>
-            <SelectItem value="30">Últimos 30 dias</SelectItem>
-            <SelectItem value="90">Últimos 90 dias</SelectItem>
-            <SelectItem value="365">Último ano</SelectItem>
-            <SelectItem value="all">Todo o período</SelectItem>
-            <SelectItem value="custom">Personalizado…</SelectItem>
-          </SelectContent>
-        </Select>
-        {period === "custom" && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs">
-                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                {customRange.from ? customRange.from.toLocaleDateString("pt-BR") : "Início"}
-                {" → "}
-                {customRange.to ? customRange.to.toLocaleDateString("pt-BR") : "Fim"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="range" selected={customRange as any}
-                onSelect={(r: any) => setCustomRange(r || {})}
-                numberOfMonths={2} className="pointer-events-auto p-3" />
-            </PopoverContent>
-          </Popover>
-        )}
+        <PeriodPicker period={period} setPeriod={setPeriod} customRange={customRange} setCustomRange={setCustomRange} />
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
             <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
@@ -426,8 +398,13 @@ export function PerformanceView({ data }: { data: PerfData }) {
         const costValue = resultsValue ? totals.spend / resultsValue : 0;
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {isLocal && (
+              <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Conversas iniciadas" hint="Conversas de WhatsApp iniciadas — resultado principal" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+            )}
             <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
-            <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint={isLocal ? "Conversas de WhatsApp iniciadas" : "Compras, leads ou conversões que a campanha otimiza"} value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+            {!isLocal && (
+              <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint="Compras, leads ou conversões que a campanha otimiza" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+            )}
             <Kpi icon={<Zap className="h-4 w-4" />} label={costLabel} hint={costHint} value={fmtBRL(costValue)} accent="violet" />
             <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" hint="Cliques no anúncio" value={fmtInt(totals.clicks)} trend={trend.clicks} />
             <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" hint="Cliques ÷ impressões" value={fmtPct(derived.ctr)} />
@@ -1001,14 +978,14 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-3 overflow-x-auto">
-          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground" style={{ paddingTop: 16 }}>
-            {DOW_LBL.map((d) => <div key={d} className="h-4 flex items-center">{d}</div>)}
+        <div className="flex gap-2 w-full">
+          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground shrink-0" style={{ paddingTop: 16 }}>
+            {DOW_LBL.map((d) => <div key={d} className="h-5 flex items-center">{d}</div>)}
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-1 min-w-0">
             {weeks.map((w, wi) => (
-              <div key={wi} className="flex flex-col gap-1">
-                <div className="text-[9px] text-muted-foreground text-center" style={{ width: 16, height: 12, lineHeight: "12px" }}>
+              <div key={wi} className="flex flex-col gap-1 flex-1 min-w-0">
+                <div className="text-[9px] text-muted-foreground text-center h-3 leading-3 truncate">
                   {wi % 2 === 0 ? w.label.split(" ")[0] : ""}
                 </div>
                 {w.cells.map((c) => {
@@ -1017,7 +994,7 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
                     ? "hsl(220 14% 93%)"
                     : `rgba(37, 99, 235, ${0.2 + intensity * 0.8})`;
                   return (
-                    <div key={c.date} className="h-4 w-4 rounded-sm border border-border/50"
+                    <div key={c.date} className="h-5 w-full rounded-sm border border-border/50"
                       style={{ background: bg }}
                       title={`${new Date(c.date + "T00:00").toLocaleDateString("pt-BR")} · ${c.val} leads`} />
                   );
@@ -1105,5 +1082,72 @@ function RegionRanking({ regions }: { regions: { region: string; country: string
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/* Period picker: presets + range calendar in one popover */
+const PERIOD_PRESETS: { value: string; label: string }[] = [
+  { value: "current_week", label: "Hoje" },
+  { value: "7", label: "Últimos 7 dias" },
+  { value: "15", label: "Últimos 15 dias" },
+  { value: "30", label: "Últimos 30 dias" },
+  { value: "90", label: "Últimos 3 meses" },
+  { value: "365", label: "Último ano" },
+  { value: "all", label: "Todo o período" },
+];
+function periodLabel(period: string, customRange: { from?: Date; to?: Date }) {
+  if (period === "custom") {
+    const f = customRange.from?.toLocaleDateString("pt-BR");
+    const t = customRange.to?.toLocaleDateString("pt-BR");
+    return f && t ? `${f} → ${t}` : "Personalizado";
+  }
+  return PERIOD_PRESETS.find((p) => p.value === period)?.label ?? "Período";
+}
+function PeriodPicker({
+  period, setPeriod, customRange, setCustomRange,
+}: {
+  period: string;
+  setPeriod: (v: string) => void;
+  customRange: { from?: Date; to?: Date };
+  setCustomRange: (r: { from?: Date; to?: Date }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+          <CalendarIcon className="h-3.5 w-3.5" />
+          {periodLabel(period, customRange)}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <div className="flex">
+          <div className="border-r p-2 min-w-[160px] space-y-0.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-2">Selecione</div>
+            {PERIOD_PRESETS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => { setPeriod(p.value); setCustomRange({}); }}
+                className={cn(
+                  "w-full text-left text-sm rounded px-2 py-1.5 transition-colors",
+                  period === p.value ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="p-2">
+            <Calendar
+              mode="range"
+              selected={period === "custom" ? (customRange as any) : undefined}
+              onSelect={(r: any) => { setPeriod("custom"); setCustomRange(r || {}); }}
+              numberOfMonths={2}
+              className="pointer-events-auto"
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
