@@ -321,6 +321,8 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
       qc.invalidateQueries({ queryKey: ["ad_creatives", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_geo", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_campaign_insights", clientId] });
     } catch (e: any) { toast.error(e.message); } finally { setSyncing(null); }
   }
   async function remove(id: string) {
