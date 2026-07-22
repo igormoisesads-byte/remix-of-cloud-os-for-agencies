@@ -2400,6 +2400,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      unaccent: { Args: { "": string }; Returns: string }
       update_employee_hr: {
         Args: {
           _admissao: string
