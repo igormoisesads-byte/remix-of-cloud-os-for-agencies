@@ -107,7 +107,7 @@ function ChatPage() {
   }), [channels]);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] bg-background">
+    <div className="flex h-[calc(100dvh-3.5rem)] md:h-[calc(100vh-3.5rem)] bg-background -mb-[calc(env(safe-area-inset-bottom)+3.75rem)] md:mb-0">
       {/* Channel sidebar */}
       <aside
         className={cn(
