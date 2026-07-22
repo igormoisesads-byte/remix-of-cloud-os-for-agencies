@@ -27,7 +27,8 @@ function PublicReportPage() {
     queryKey: ["public_report", token],
     queryFn: async () => fetchReport({ data: { token } }),
     refetchInterval: 5 * 60 * 1000,
-    retry: false,
+    retry: 3,
+    retryDelay: (n) => Math.min(1000 * 2 ** n, 8000),
   });
 
   if (q.isLoading) {
@@ -44,12 +45,21 @@ function PublicReportPage() {
           <AlertTriangle className="h-8 w-8 mx-auto text-destructive mb-2" />
           <div className="font-semibold">Relatório indisponível</div>
           <div className="text-sm text-muted-foreground mt-1">
-            {(q.error as any)?.message || "Este link pode ter expirado ou sido desativado."}
+            {(q.error as any)?.message === "Failed to fetch"
+              ? "Não foi possível conectar. Verifique sua internet e tente novamente."
+              : (q.error as any)?.message || "Este link pode ter expirado ou sido desativado."}
           </div>
+          <button
+            onClick={() => q.refetch()}
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );
   }
+
 
   const { client, agency, insights, creatives, geo, whatsapp, accounts, report, campaignInsights } = q.data as any;
 
