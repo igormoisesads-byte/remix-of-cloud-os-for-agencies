@@ -2,11 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, Upload, Loader2 } from "lucide-react";
+import { LogOut, Upload, Loader2, Bell, BellOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadToR2 } from "@/lib/upload-r2";
 import { toast } from "sonner";
+import { usePushNotifications } from "@/hooks/use-push";
 
 export const Route = createFileRoute("/_authenticated/ajustes/perfil")({
   component: PerfilPage,
@@ -17,6 +18,7 @@ function PerfilPage() {
   const nav = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const push = usePushNotifications();
 
   async function onFile(file: File) {
     if (!user) return;
@@ -100,6 +102,32 @@ function PerfilPage() {
           <Row k="Nome" v={profile?.full_name || "—"} />
           <Row k="E-mail" v={profile?.email || "—"} />
           <Row k="Papéis" v={roles.join(", ") || "—"} last />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Notificações</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Receba alertas de saldo baixo em contas de anúncio, menções no chat e novas tarefas — direto no celular ou desktop, mesmo com o app fechado.
+          </p>
+          {push.permission === "unsupported" ? (
+            <p className="text-sm text-destructive">Seu navegador não suporta notificações.</p>
+          ) : push.subscribed ? (
+            <Button variant="outline" size="sm" disabled={push.loading} onClick={push.disable}>
+              <BellOff className="h-4 w-4" /> Desativar notificações
+            </Button>
+          ) : (
+            <Button size="sm" disabled={push.loading} onClick={push.enable}>
+              {push.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+              Ativar notificações
+            </Button>
+          )}
+          {push.permission === "denied" && (
+            <p className="text-xs text-muted-foreground">
+              Permissão bloqueada no navegador. Habilite manualmente nas configurações do site.
+            </p>
+          )}
         </CardContent>
       </Card>
 
