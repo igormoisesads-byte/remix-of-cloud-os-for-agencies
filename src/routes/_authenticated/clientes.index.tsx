@@ -119,6 +119,38 @@ function ClientesList() {
                   <TableCell className="text-right font-medium">
                     {c.monthly_fee_amount ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(c.monthly_fee_amount)) : "—"}
                   </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" title="Excluir cliente">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação remove <strong>{c.name}</strong> e todos os dados relacionados (tarefas, mensalidades, relatórios, etc.). Não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={async () => {
+                              const { error } = await supabase.from("clients").delete().eq("id", c.id);
+                              if (error) { toast.error("Erro ao excluir: " + error.message); return; }
+                              toast.success("Cliente excluído");
+                              qc.invalidateQueries({ queryKey: ["clients"] });
+                              qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+                            }}
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
