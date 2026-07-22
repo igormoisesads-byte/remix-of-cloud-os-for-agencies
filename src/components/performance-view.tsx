@@ -1079,3 +1079,70 @@ function RegionRanking({ regions }: { regions: { region: string; country: string
     </Card>
   );
 }
+
+/* Period picker: presets + range calendar in one popover */
+const PERIOD_PRESETS: { value: string; label: string }[] = [
+  { value: "current_week", label: "Hoje" },
+  { value: "7", label: "Últimos 7 dias" },
+  { value: "15", label: "Últimos 15 dias" },
+  { value: "30", label: "Últimos 30 dias" },
+  { value: "90", label: "Últimos 3 meses" },
+  { value: "365", label: "Último ano" },
+  { value: "all", label: "Todo o período" },
+];
+function periodLabel(period: string, customRange: { from?: Date; to?: Date }) {
+  if (period === "custom") {
+    const f = customRange.from?.toLocaleDateString("pt-BR");
+    const t = customRange.to?.toLocaleDateString("pt-BR");
+    return f && t ? `${f} → ${t}` : "Personalizado";
+  }
+  return PERIOD_PRESETS.find((p) => p.value === period)?.label ?? "Período";
+}
+function PeriodPicker({
+  period, setPeriod, customRange, setCustomRange,
+}: {
+  period: string;
+  setPeriod: (v: string) => void;
+  customRange: { from?: Date; to?: Date };
+  setCustomRange: (r: { from?: Date; to?: Date }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+          <CalendarIcon className="h-3.5 w-3.5" />
+          {periodLabel(period, customRange)}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <div className="flex">
+          <div className="border-r p-2 min-w-[160px] space-y-0.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-2">Selecione</div>
+            {PERIOD_PRESETS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => { setPeriod(p.value); setCustomRange({}); }}
+                className={cn(
+                  "w-full text-left text-sm rounded px-2 py-1.5 transition-colors",
+                  period === p.value ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="p-2">
+            <Calendar
+              mode="range"
+              selected={period === "custom" ? (customRange as any) : undefined}
+              onSelect={(r: any) => { setPeriod("custom"); setCustomRange(r || {}); }}
+              numberOfMonths={2}
+              className="pointer-events-auto"
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
