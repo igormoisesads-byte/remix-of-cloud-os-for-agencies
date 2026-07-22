@@ -4,15 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  BarChart, Bar, Legend, LineChart, Line,
+  BarChart, Bar, Legend, ComposedChart, Line,
 } from "recharts";
 import {
   BarChart3, Globe2, MessageCircle, Image as ImageIcon, ExternalLink, MousePointerClick,
   TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap, Filter, X,
+  Calendar as CalendarIcon, ArrowUpDown,
 } from "lucide-react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
+import { geoCentroid } from "d3-geo";
 
 export type PerfData = {
   insights: any[];
@@ -71,7 +76,9 @@ export function PerformanceView({ data }: { data: PerfData }) {
   const [accountId, setAccountId] = useState<string>("all");
   const [campaignId, setCampaignId] = useState<string>("all");
   const [creativeId, setCreativeId] = useState<string>("all");
-  const [period, setPeriod] = useState<string>("30"); // days from most recent data
+  const [period, setPeriod] = useState<string>("30"); // presets: 7|15|30|90|365|current_week|all|custom
+  const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
+  const [campaignSort, setCampaignSort] = useState<"spend" | "cpl" | "results" | "ctr">("cpl");
 
   // Options for campaigns come from campaignInsights + creatives (union)
   const campaignOptions = useMemo(() => {
@@ -87,12 +94,20 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
   // Filter helpers
   const inPeriod = (dateStr: string) => {
-    if (period === "all") return true;
-    const dayMs = 86400000;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
     const d = new Date(dateStr + "T00:00");
-    const diff = (now.getTime() - d.getTime()) / dayMs;
+    if (period === "all") return true;
+    if (period === "custom") {
+      if (customRange.from && d < customRange.from) return false;
+      if (customRange.to && d > customRange.to) return false;
+      return true;
+    }
+    if (period === "current_week") {
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const start = new Date(now); start.setDate(now.getDate() - now.getDay()); // sunday
+      return d >= start && d <= now;
+    }
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const diff = (now.getTime() - d.getTime()) / 86400000;
     return diff <= Number(period);
   };
   const inAccount = (row: any) => accountId === "all" || row.ad_account_id === accountId;
@@ -279,14 +294,35 @@ export function PerformanceView({ data }: { data: PerfData }) {
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[150px]"><SelectValue placeholder="Período" /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="current_week">Semana atual</SelectItem>
             <SelectItem value="7">Últimos 7 dias</SelectItem>
-            <SelectItem value="14">Últimos 14 dias</SelectItem>
+            <SelectItem value="15">Últimos 15 dias</SelectItem>
             <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="90">Últimos 90 dias</SelectItem>
+            <SelectItem value="365">Último ano</SelectItem>
             <SelectItem value="all">Todo o período</SelectItem>
+            <SelectItem value="custom">Personalizado…</SelectItem>
           </SelectContent>
         </Select>
+        {period === "custom" && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-xs">
+                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                {customRange.from ? customRange.from.toLocaleDateString("pt-BR") : "Início"}
+                {" → "}
+                {customRange.to ? customRange.to.toLocaleDateString("pt-BR") : "Fim"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={customRange as any}
+                onSelect={(r: any) => setCustomRange(r || {})}
+                numberOfMonths={2} className="pointer-events-auto p-3" />
+            </PopoverContent>
+          </Popover>
+        )}
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
             <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
@@ -381,22 +417,58 @@ export function PerformanceView({ data }: { data: PerfData }) {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="text-base">CPA × CTR</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">Melhores campanhas</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Ordenadas por {campaignSort === "cpl" ? "menor CPL" : campaignSort === "spend" ? "maior gasto" : campaignSort === "results" ? "mais resultados" : "maior CTR"}</p>
+                </div>
+                <Select value={campaignSort} onValueChange={(v: any) => setCampaignSort(v)}>
+                  <SelectTrigger className="h-8 w-[160px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cpl">Menor CPL</SelectItem>
+                    <SelectItem value="results">Mais resultados</SelectItem>
+                    <SelectItem value="spend">Maior gasto</SelectItem>
+                    <SelectItem value="ctr">Maior CTR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardHeader>
               <CardContent>
-                {chartData.length === 0 ? <EmptyMsg /> : (
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" fontSize={11} />
-                        <YAxis yAxisId="l" fontSize={11} />
-                        <YAxis yAxisId="r" orientation="right" fontSize={11} />
-                        <Tooltip formatter={(v: any, k: string) => (k === "CPA" ? fmtBRL(Number(v)) : fmtPct(Number(v)))} />
-                        <Legend />
-                        <Line yAxisId="l" type="monotone" dataKey="cpa" stroke="#8b5cf6" strokeWidth={2} dot={false} name="CPA" />
-                        <Line yAxisId="r" type="monotone" dataKey="ctr" stroke="#f59e0b" strokeWidth={2} dot={false} name="CTR" />
-                      </LineChart>
-                    </ResponsiveContainer>
+                {campaignBreakdown.length === 0 ? <EmptyMsg /> : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    {[...campaignBreakdown].sort((a, b) => {
+                      if (campaignSort === "spend") return b.spend - a.spend;
+                      if (campaignSort === "results") return b.results - a.results;
+                      if (campaignSort === "ctr") {
+                        const ca = a.impressions ? a.clicks / a.impressions : 0;
+                        const cb = b.impressions ? b.clicks / b.impressions : 0;
+                        return cb - ca;
+                      }
+                      // CPL asc, mas coloca campanhas sem resultado no fim
+                      const ca = a.results ? a.spend / a.results : Infinity;
+                      const cb = b.results ? b.spend / b.results : Infinity;
+                      return ca - cb;
+                    }).slice(0, 8).map((c, i) => {
+                      const cpl = c.results ? c.spend / c.results : 0;
+                      const ctr = c.impressions ? (c.clicks / c.impressions) * 100 : 0;
+                      return (
+                        <button key={c.id} onClick={() => setCampaignId(campaignId === c.id ? "all" : c.id)}
+                          className={cn("w-full text-left rounded-md border p-2.5 hover:bg-accent transition", campaignId === c.id && "border-primary bg-primary/5")}>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">{i + 1}</div>
+                            <div className="text-sm font-medium truncate flex-1">{c.name}</div>
+                            <div className="text-right shrink-0">
+                              <div className="text-xs text-muted-foreground">CPL</div>
+                              <div className="text-sm font-bold text-emerald-600 tabular-nums">{c.results ? fmtBRL(cpl) : "—"}</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-[11px]">
+                            <div><span className="text-muted-foreground">Gasto:</span> <b>{fmtBRL(c.spend)}</b></div>
+                            <div><span className="text-muted-foreground">Result:</span> <b>{fmtInt(c.results)}</b></div>
+                            <div><span className="text-muted-foreground">CTR:</span> <b>{fmtPct(ctr)}</b></div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -533,15 +605,21 @@ export function PerformanceView({ data }: { data: PerfData }) {
                 {waSeries.length === 0 ? <EmptyMsg /> : (
                   <div className="h-72 w-full">
                     <ResponsiveContainer>
-                      <BarChart data={waSeries}>
+                      <ComposedChart data={waSeries} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+                        <defs>
+                          <linearGradient id="gWaConv" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#25D366" stopOpacity={0.5} />
+                            <stop offset="100%" stopColor="#25D366" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="label" fontSize={11} />
                         <YAxis fontSize={11} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="cliques" fill="hsl(var(--primary))" name="Cliques" />
-                        <Bar dataKey="conversas" fill="#25D366" name="Conversas WhatsApp" />
-                      </BarChart>
+                        <Area type="monotone" dataKey="conversas" stroke="#25D366" fill="url(#gWaConv)" strokeWidth={2} name="Conversas WhatsApp" />
+                        <Line type="monotone" dataKey="cliques" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} name="Cliques" />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 )}
@@ -623,35 +701,43 @@ function EmptyMsg({ text = "Sem dados no período. Sincronize a conta para ver m
   return <div className="text-sm text-muted-foreground text-center py-8">{text}</div>;
 }
 
-/* Vertical funnel */
+/* Vertical funnel — visual moderno com barras degradê e setas de conversão */
 function VerticalFunnel({ steps }: { steps: { label: string; value: number; color: string }[] }) {
   const max = Math.max(...steps.map((s) => s.value), 1);
   return (
-    <div className="space-y-2 py-2">
+    <div className="space-y-1 py-2">
       {steps.map((s, i) => {
         const pct = (s.value / max) * 100;
         const conv = i === 0 ? 100 : steps[0].value ? (s.value / steps[0].value) * 100 : 0;
         const stepConv = i === 0 ? null : steps[i - 1].value ? (s.value / steps[i - 1].value) * 100 : 0;
+        const dropoff = stepConv !== null ? 100 - stepConv : null;
         return (
-          <div key={s.label} className="flex flex-col items-center">
-            <div
-              className="relative flex items-center justify-center text-white font-semibold text-sm shadow-sm transition-all"
-              style={{
-                width: `${Math.max(30, pct)}%`,
-                minWidth: 160,
-                background: s.color,
-                clipPath: "polygon(6% 0, 94% 0, 88% 100%, 12% 100%)",
-                padding: "18px 24px",
-              }}
-            >
-              <div className="text-center leading-tight">
-                <div className="text-[11px] opacity-90 font-normal">{s.label}</div>
-                <div className="text-xl tabular-nums">{fmtInt(s.value)}</div>
-                <div className="text-[10px] opacity-90 font-normal">{conv.toFixed(1)}% do topo</div>
+          <div key={s.label}>
+            <div className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="h-8 w-8 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: s.color }}>
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{s.label}</div>
+                    <div className="text-[11px] text-muted-foreground">{conv.toFixed(1)}% do topo</div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xl font-bold tabular-nums">{fmtInt(s.value)}</div>
+                </div>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full transition-all"
+                  style={{ width: `${Math.max(2, pct)}%`, background: `linear-gradient(90deg, ${s.color}dd, ${s.color})` }} />
               </div>
             </div>
             {stepConv !== null && (
-              <div className="text-[10px] text-muted-foreground py-1">↓ {stepConv.toFixed(1)}% de conversão</div>
+              <div className="flex items-center justify-center gap-2 py-1.5 text-[10px]">
+                <div className="text-emerald-600 font-medium">→ {stepConv.toFixed(1)}% seguiu</div>
+                {dropoff! > 0 && <div className="text-rose-500">↓ {dropoff!.toFixed(1)}% caiu</div>}
+              </div>
             )}
           </div>
         );
@@ -669,14 +755,31 @@ function WorldMapPanel({
   maxSpend: number;
 }) {
   const [selected, setSelected] = useState<string | null>(geoData[0]?.code ?? null);
+  const [center, setCenter] = useState<[number, number]>([0, 20]);
+  const [zoom, setZoom] = useState<number>(1);
   const sel = selected ? geoByCode[selected] : null;
+
+  function focusOn(iso2: string, feature?: any) {
+    setSelected(iso2);
+    if (feature) {
+      try {
+        const c = geoCentroid(feature) as [number, number];
+        if (c && isFinite(c[0]) && isFinite(c[1])) {
+          setCenter(c);
+          setZoom(4);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+  function resetView() {
+    setCenter([0, 20]); setZoom(1);
+  }
 
   function fillFor(code?: string) {
     if (!code) return "hsl(var(--muted))";
     const g = geoByCode[code];
     if (!g) return "hsl(var(--muted))";
     const intensity = Math.min(1, Math.sqrt(g.spend / maxSpend));
-    // primary at variable opacity
     return `color-mix(in oklch, hsl(var(--primary)) ${20 + intensity * 80}%, transparent)`;
   }
 
@@ -685,7 +788,10 @@ function WorldMapPanel({
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Mapa-múndi de investimento</CardTitle>
-          <div className="text-xs text-muted-foreground">Clique num país para detalhar</div>
+          <div className="flex items-center gap-2">
+            {zoom > 1 && <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={resetView}>Ver mundo</Button>}
+            <div className="text-xs text-muted-foreground">Clique num país para focar</div>
+          </div>
         </CardHeader>
         <CardContent>
           {geoData.length === 0 ? (
@@ -693,7 +799,7 @@ function WorldMapPanel({
           ) : (
             <div className="w-full aspect-[2/1] bg-muted/30 rounded-md overflow-hidden border">
               <ComposableMap projectionConfig={{ scale: 140 }} style={{ width: "100%", height: "100%" }}>
-                <ZoomableGroup>
+                <ZoomableGroup center={center} zoom={zoom} onMoveEnd={({ coordinates, zoom: z }) => { setCenter(coordinates as any); setZoom(z); }}>
                   <Geographies geography={GEO_URL}>
                     {({ geographies }: any) =>
                       geographies.map((geo: any) => {
@@ -703,12 +809,12 @@ function WorldMapPanel({
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
-                            onClick={() => iso2 && setSelected(iso2)}
+                            onClick={() => iso2 && focusOn(iso2, geo)}
                             style={{
                               default: {
-                                fill: fillFor(iso2),
-                                stroke: "hsl(var(--border))",
-                                strokeWidth: 0.4,
+                                fill: isSel ? "hsl(var(--primary))" : fillFor(iso2),
+                                stroke: isSel ? "hsl(var(--primary))" : "hsl(var(--border))",
+                                strokeWidth: isSel ? 1.2 : 0.4,
                                 outline: "none",
                               },
                               hover: {
@@ -718,8 +824,6 @@ function WorldMapPanel({
                               },
                               pressed: { fill: "hsl(var(--primary))", outline: "none" },
                             }}
-                            stroke={isSel ? "hsl(var(--primary))" : undefined}
-                            strokeWidth={isSel ? 1.2 : undefined}
                           />
                         );
                       })

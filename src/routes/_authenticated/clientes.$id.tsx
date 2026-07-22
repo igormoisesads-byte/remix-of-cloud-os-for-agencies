@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import {
   ChevronLeft, Plus, Check, LayoutGrid, BarChart3, LineChart, Search, Repeat, HeartPulse,
   AlertTriangle, Star, FileText, Calendar, Video, ImageIcon, Key, ListChecks, ClipboardList,
-  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy,
+  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy, DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -26,6 +26,8 @@ import { generateAiReport } from "@/lib/reports.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ReactMarkdown from "react-markdown";
 import { PerformanceView } from "@/components/performance-view";
+import { ClientSales } from "@/components/client-sales";
+import { AiDataChat } from "@/components/ai-data-chat";
 
 const clientQueryOptions = (id: string) =>
   queryOptions({
@@ -65,13 +67,14 @@ function fmtDate(v: string | null | undefined) {
 }
 
 type Section =
-  | "visao" | "performance" | "projecoes" | "seo" | "rotinas" | "health"
+  | "visao" | "performance" | "vendas" | "projecoes" | "seo" | "rotinas" | "health"
   | "pdas" | "nps" | "relatorios" | "reunioes" | "onboarding" | "moodboards"
   | "acesso" | "auditoria";
 
 const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "visao", label: "Visão Geral", icon: LayoutGrid },
   { key: "performance", label: "Performance", icon: BarChart3 },
+  { key: "vendas", label: "Vendas", icon: DollarSign },
   { key: "projecoes", label: "Projeções", icon: LineChart },
   { key: "seo", label: "SEO", icon: Search },
   { key: "rotinas", label: "Rotinas", icon: Repeat },
@@ -167,6 +170,7 @@ function ClienteDetail() {
         <div className="p-6">
           {section === "visao" && <VisaoGeral c={c} />}
           {section === "performance" && <Performance clientId={id} clientType={c.type} />}
+          {section === "vendas" && <ClientSales clientId={id} />}
           {section === "projecoes" && <Projecoes c={c} />}
           {section === "seo" && <Placeholder title="SEO" text="Em breve: rastreio de posições e páginas do cliente." />}
           {section === "rotinas" && <Rotinas clientId={id} />}
@@ -368,14 +372,21 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
             </div>
           ) : (
             <>
-              <PerformanceView data={{
-                insights: insights.data ?? [],
-                creatives: creatives.data ?? [],
-                geo: geo.data ?? [],
-                whatsapp: wa.data ?? [],
-                campaignInsights: campaignInsights.data ?? [],
-                accounts: accounts.data ?? [],
-              }} />
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4">
+                <div className="min-w-0">
+                  <PerformanceView data={{
+                    insights: insights.data ?? [],
+                    creatives: creatives.data ?? [],
+                    geo: geo.data ?? [],
+                    whatsapp: wa.data ?? [],
+                    campaignInsights: campaignInsights.data ?? [],
+                    accounts: accounts.data ?? [],
+                  }} />
+                </div>
+                <div className="hidden xl:block">
+                  <AiDataChat clientId={clientId} period={{}} />
+                </div>
+              </div>
               <div className="mt-4 space-y-2">
                 {(accounts.data ?? []).map((a: any) => (
                   <div key={a.id} className="flex items-center justify-between rounded-md border p-3">

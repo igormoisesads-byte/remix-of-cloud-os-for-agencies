@@ -746,6 +746,62 @@ export type Database = {
           },
         ]
       }
+      client_sales: {
+        Row: {
+          agendamentos: number
+          client_id: string
+          created_at: string
+          created_by: string | null
+          faturamento: number
+          hour: number | null
+          id: string
+          leads: number
+          notes: string | null
+          ref_date: string
+          updated_at: string
+          vendas: number
+          weekday: number | null
+        }
+        Insert: {
+          agendamentos?: number
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          faturamento?: number
+          hour?: number | null
+          id?: string
+          leads?: number
+          notes?: string | null
+          ref_date: string
+          updated_at?: string
+          vendas?: number
+          weekday?: number | null
+        }
+        Update: {
+          agendamentos?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          faturamento?: number
+          hour?: number | null
+          id?: string
+          leads?: number
+          notes?: string | null
+          ref_date?: string
+          updated_at?: string
+          vendas?: number
+          weekday?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
