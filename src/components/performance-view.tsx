@@ -1002,20 +1002,20 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
       </CardHeader>
       <CardContent>
         <div className="flex gap-3 overflow-x-auto">
-          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground pt-4">
+          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground" style={{ paddingTop: 16 }}>
             {DOW_LBL.map((d) => <div key={d} className="h-4 flex items-center">{d}</div>)}
           </div>
           <div className="flex gap-1">
             {weeks.map((w, wi) => (
               <div key={wi} className="flex flex-col gap-1">
-                <div className="text-[9px] text-muted-foreground h-3 text-center" style={{ width: 16 }}>
+                <div className="text-[9px] text-muted-foreground text-center" style={{ width: 16, height: 12, lineHeight: "12px" }}>
                   {wi % 2 === 0 ? w.label.split(" ")[0] : ""}
                 </div>
                 {w.cells.map((c) => {
                   const intensity = c.val / max;
                   const bg = c.val === 0
-                    ? "hsl(var(--muted))"
-                    : `color-mix(in oklch, hsl(var(--primary)) ${20 + intensity * 80}%, transparent)`;
+                    ? "hsl(220 14% 93%)"
+                    : `rgba(37, 99, 235, ${0.2 + intensity * 0.8})`;
                   return (
                     <div key={c.date} className="h-4 w-4 rounded-sm border border-border/50"
                       style={{ background: bg }}
@@ -1029,7 +1029,7 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
         <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
           <span>Menos</span>
           {[0.1, 0.3, 0.6, 1].map((v) => (
-            <div key={v} className="h-3 w-3 rounded-sm" style={{ background: `color-mix(in oklch, hsl(var(--primary)) ${20 + v * 80}%, transparent)` }} />
+            <div key={v} className="h-3 w-3 rounded-sm border border-border/50" style={{ background: `rgba(37, 99, 235, ${0.2 + v * 0.8})` }} />
           ))}
           <span>Mais</span>
         </div>
