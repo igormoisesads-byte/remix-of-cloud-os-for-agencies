@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Home, MessageSquare, Users, ClipboardList, DollarSign, Settings, LogOut, UserCog,
-  HeartPulse, Smile, Target, Film,
+  HeartPulse, Smile, Target, Film, LayoutDashboard, Headphones, Briefcase, Wallet, Cog, ChevronDown,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
@@ -16,6 +18,7 @@ import cloudosLogo from "@/assets/cloudos-logo.png.asset.json";
 const groups = [
   {
     label: "Visão geral",
+    icon: LayoutDashboard,
     items: [
       { title: "Hoje", url: "/hoje", icon: Home },
       { title: "Chat", url: "/chat", icon: MessageSquare },
@@ -23,6 +26,7 @@ const groups = [
   },
   {
     label: "CS",
+    icon: Headphones,
     items: [
       { title: "Clientes", url: "/clientes", icon: Users },
       { title: "Health Score", url: "/health-score", icon: HeartPulse },
@@ -32,6 +36,7 @@ const groups = [
   },
   {
     label: "Operações",
+    icon: Briefcase,
     items: [
       { title: "Tarefas", url: "/operacoes", icon: ClipboardList },
       { title: "Criativos", url: "/criativos", icon: Film },
@@ -40,12 +45,14 @@ const groups = [
 
   {
     label: "Financeiro",
+    icon: Wallet,
     items: [
       { title: "Mensalidades", url: "/financeiro", icon: DollarSign },
     ],
   },
   {
     label: "Configurações",
+    icon: Cog,
     items: [
       { title: "Equipe", url: "/equipe", icon: UserCog },
       { title: "Ajustes", url: "/ajustes", icon: Settings },
@@ -58,6 +65,9 @@ export function AppSidebar() {
   const { profile, roles, signOut } = useAuth();
   const nav = useNavigate();
   const isActive = (url: string) => pathname === url || pathname.startsWith(url + "/");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groups.map((g) => [g.label, true]))
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -74,35 +84,66 @@ export function AppSidebar() {
 
       </SidebarHeader>
       <SidebarContent className="gap-0">
-        {groups.map((g, idx) => (
-          <SidebarGroup
-            key={g.label}
-            className={
-              idx > 0
-                ? "border-t border-sidebar-border/40 pt-3 mt-2 group-data-[collapsible=icon]:mt-1 group-data-[collapsible=icon]:pt-2"
-                : "pt-2"
-            }
-          >
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/55 font-semibold px-2">
-              {g.label}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {g.items.map((item) => (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {groups.map((g, idx) => {
+          const open = openGroups[g.label] ?? true;
+          const GroupIcon = g.icon;
+          return (
+            <Collapsible
+              key={g.label}
+              open={open}
+              onOpenChange={(v) => setOpenGroups((s) => ({ ...s, [g.label]: v }))}
+            >
+              <SidebarGroup
+                className={
+                  idx > 0
+                    ? "border-t border-sidebar-border/40 pt-3 mt-2 group-data-[collapsible=icon]:mt-1 group-data-[collapsible=icon]:pt-2"
+                    : "pt-2"
+                }
+              >
+                <SidebarGroupLabel asChild className="text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/55 font-semibold px-2 group-data-[collapsible=icon]:hidden">
+                  <CollapsibleTrigger className="flex w-full items-center gap-2 hover:text-sidebar-foreground transition-colors">
+                    <GroupIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="flex-1 text-left truncate">{g.label}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? "" : "-rotate-90"}`} />
+                  </CollapsibleTrigger>
+                </SidebarGroupLabel>
+                <CollapsibleContent className="group-data-[collapsible=icon]:!hidden data-[state=closed]:hidden data-[state=open]:block">
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {g.items.map((item) => (
+                        <SidebarMenuItem key={item.url}>
+                          <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                            <Link to={item.url}>
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+                {/* When sidebar itself is icon-collapsed, always show items as icons */}
+                <SidebarGroupContent className="hidden group-data-[collapsible=icon]:block">
+                  <SidebarMenu>
+                    {g.items.map((item) => (
+                      <SidebarMenuItem key={item.url}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                          <Link to={item.url}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </Collapsible>
+          );
+        })}
       </SidebarContent>
+
       <SidebarFooter className="border-t border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-2 group-data-[collapsible=icon]:hidden">
           <div className="h-9 w-9 rounded-full bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden ring-1 ring-white/10">
