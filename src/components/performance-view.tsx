@@ -396,22 +396,58 @@ export function PerformanceView({ data }: { data: PerfData }) {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="text-base">CPA × CTR</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">Melhores campanhas</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Ordenadas por {campaignSort === "cpl" ? "menor CPL" : campaignSort === "spend" ? "maior gasto" : campaignSort === "results" ? "mais resultados" : "maior CTR"}</p>
+                </div>
+                <Select value={campaignSort} onValueChange={(v: any) => setCampaignSort(v)}>
+                  <SelectTrigger className="h-8 w-[160px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cpl">Menor CPL</SelectItem>
+                    <SelectItem value="results">Mais resultados</SelectItem>
+                    <SelectItem value="spend">Maior gasto</SelectItem>
+                    <SelectItem value="ctr">Maior CTR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardHeader>
               <CardContent>
-                {chartData.length === 0 ? <EmptyMsg /> : (
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" fontSize={11} />
-                        <YAxis yAxisId="l" fontSize={11} />
-                        <YAxis yAxisId="r" orientation="right" fontSize={11} />
-                        <Tooltip formatter={(v: any, k: string) => (k === "CPA" ? fmtBRL(Number(v)) : fmtPct(Number(v)))} />
-                        <Legend />
-                        <Line yAxisId="l" type="monotone" dataKey="cpa" stroke="#8b5cf6" strokeWidth={2} dot={false} name="CPA" />
-                        <Line yAxisId="r" type="monotone" dataKey="ctr" stroke="#f59e0b" strokeWidth={2} dot={false} name="CTR" />
-                      </LineChart>
-                    </ResponsiveContainer>
+                {campaignBreakdown.length === 0 ? <EmptyMsg /> : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    {[...campaignBreakdown].sort((a, b) => {
+                      if (campaignSort === "spend") return b.spend - a.spend;
+                      if (campaignSort === "results") return b.results - a.results;
+                      if (campaignSort === "ctr") {
+                        const ca = a.impressions ? a.clicks / a.impressions : 0;
+                        const cb = b.impressions ? b.clicks / b.impressions : 0;
+                        return cb - ca;
+                      }
+                      // CPL asc, mas coloca campanhas sem resultado no fim
+                      const ca = a.results ? a.spend / a.results : Infinity;
+                      const cb = b.results ? b.spend / b.results : Infinity;
+                      return ca - cb;
+                    }).slice(0, 8).map((c, i) => {
+                      const cpl = c.results ? c.spend / c.results : 0;
+                      const ctr = c.impressions ? (c.clicks / c.impressions) * 100 : 0;
+                      return (
+                        <button key={c.id} onClick={() => setCampaignId(campaignId === c.id ? "all" : c.id)}
+                          className={cn("w-full text-left rounded-md border p-2.5 hover:bg-accent transition", campaignId === c.id && "border-primary bg-primary/5")}>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">{i + 1}</div>
+                            <div className="text-sm font-medium truncate flex-1">{c.name}</div>
+                            <div className="text-right shrink-0">
+                              <div className="text-xs text-muted-foreground">CPL</div>
+                              <div className="text-sm font-bold text-emerald-600 tabular-nums">{c.results ? fmtBRL(cpl) : "—"}</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-[11px]">
+                            <div><span className="text-muted-foreground">Gasto:</span> <b>{fmtBRL(c.spend)}</b></div>
+                            <div><span className="text-muted-foreground">Result:</span> <b>{fmtInt(c.results)}</b></div>
+                            <div><span className="text-muted-foreground">CTR:</span> <b>{fmtPct(ctr)}</b></div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
