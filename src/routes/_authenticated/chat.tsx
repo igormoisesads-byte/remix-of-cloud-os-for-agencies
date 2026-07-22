@@ -179,13 +179,14 @@ function DMRow({
   meId?: string; profiles: Profile[];
 }) {
   const [otherName, setOtherName] = useState<string>(channel.name);
+  const [otherAvatar, setOtherAvatar] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("channel_members").select("user_id").eq("channel_id", channel.id);
       const other = (data ?? []).find((m) => m.user_id !== meId);
       if (other) {
         const p = profiles.find((x) => x.id === other.user_id);
-        if (p) setOtherName(p.full_name || p.email);
+        if (p) { setOtherName(p.full_name || p.email); setOtherAvatar(p.avatar_url); }
       }
     })();
   }, [channel.id, meId, profiles]);
@@ -197,8 +198,8 @@ function DMRow({
         activeId === channel.id && "bg-accent text-accent-foreground"
       )}
     >
-      <div className="h-5 w-5 rounded-full bg-primary/30 text-[10px] flex items-center justify-center shrink-0">
-        {initials(otherName)}
+      <div className="h-5 w-5 rounded-full bg-primary/30 text-[10px] flex items-center justify-center shrink-0 overflow-hidden">
+        {otherAvatar ? <img src={otherAvatar} alt="" className="h-full w-full object-cover" /> : initials(otherName)}
       </div>
       <span className="truncate">{otherName}</span>
     </button>
