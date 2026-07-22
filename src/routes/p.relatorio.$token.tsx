@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicReport } from "@/lib/ads.functions";
 import { PerformanceView } from "@/components/performance-view";
+import { PublicReportLocal } from "@/components/public-report-local";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/p/relatorio/$token")({
@@ -106,7 +107,11 @@ function PublicReportPage() {
             </>
           )}
         </div>
-        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
+        {client.type === "local" ? (
+          <PublicReportLocal insights={insights} creatives={creatives} geo={geo} whatsapp={whatsapp} client={client} />
+        ) : (
+          <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
+        )}
         <div className="text-center text-[11px] sm:text-xs text-muted-foreground pt-6 pb-4">
           Powered by <span className="font-medium text-foreground/70">{agency.agency_name || "CloudOS"}</span>
         </div>
