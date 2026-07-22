@@ -300,6 +300,16 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
       return data ?? [];
     },
   });
+  const campaignInsights = useQuery({
+    queryKey: ["ad_campaign_insights", clientId, days, accountIds.join(",")],
+    enabled: accountIds.length > 0,
+    queryFn: async () => {
+      const since = new Date(); since.setDate(since.getDate() - days);
+      const { data } = await supabase.from("ad_campaign_insights").select("*")
+        .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
+      return data ?? [];
+    },
+  });
 
   async function sync(accId: string) {
     setSyncing(accId);
@@ -311,6 +321,8 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
       qc.invalidateQueries({ queryKey: ["ad_creatives", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_geo", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_campaign_insights", clientId] });
     } catch (e: any) { toast.error(e.message); } finally { setSyncing(null); }
   }
   async function remove(id: string) {
@@ -361,6 +373,8 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                 creatives: creatives.data ?? [],
                 geo: geo.data ?? [],
                 whatsapp: wa.data ?? [],
+                campaignInsights: campaignInsights.data ?? [],
+                accounts: accounts.data ?? [],
               }} />
               <div className="mt-4 space-y-2">
                 {(accounts.data ?? []).map((a: any) => (

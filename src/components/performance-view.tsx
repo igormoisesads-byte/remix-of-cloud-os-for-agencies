@@ -2,13 +2,15 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Legend, LineChart, Line,
 } from "recharts";
 import {
   BarChart3, Globe2, MessageCircle, Image as ImageIcon, ExternalLink, MousePointerClick,
-  TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap,
+  TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap, Filter, X,
 } from "lucide-react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 
@@ -18,6 +20,7 @@ export type PerfData = {
   geo: any[];
   whatsapp: any[];
   accounts?: any[];
+  campaignInsights?: any[];
 };
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -63,14 +66,89 @@ function regionName(code: string) {
 }
 
 export function PerformanceView({ data }: { data: PerfData }) {
+  // ---------- Filters ----------
+  const accountsList = data.accounts ?? [];
+  const [accountId, setAccountId] = useState<string>("all");
+  const [campaignId, setCampaignId] = useState<string>("all");
+  const [creativeId, setCreativeId] = useState<string>("all");
+  const [period, setPeriod] = useState<string>("30"); // days from most recent data
+
+  // Options for campaigns come from campaignInsights + creatives (union)
+  const campaignOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of data.campaignInsights ?? []) {
+      if (c.campaign_id) m.set(String(c.campaign_id), c.campaign_name || String(c.campaign_id));
+    }
+    for (const c of data.creatives ?? []) {
+      if (c.campaign_id && !m.has(String(c.campaign_id))) m.set(String(c.campaign_id), c.campaign_name || String(c.campaign_id));
+    }
+    return [...m.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [data.campaignInsights, data.creatives]);
+
+  // Filter helpers
+  const inPeriod = (dateStr: string) => {
+    if (period === "all") return true;
+    const dayMs = 86400000;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const d = new Date(dateStr + "T00:00");
+    const diff = (now.getTime() - d.getTime()) / dayMs;
+    return diff <= Number(period);
+  };
+  const inAccount = (row: any) => accountId === "all" || row.ad_account_id === accountId;
+
+  // ---------- Filtered creatives ----------
+  const filteredCreatives = useMemo(() => {
+    return (data.creatives ?? []).filter((c) => {
+      if (!inAccount(c)) return false;
+      if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
+      if (creativeId !== "all" && String(c.id) !== creativeId) return false;
+      return true;
+    });
+  }, [data.creatives, accountId, campaignId, creativeId]);
+
+  // Creative options depend on account/campaign selection
+  const creativeOptions = useMemo(() => {
+    return (data.creatives ?? [])
+      .filter((c) => inAccount(c) && (campaignId === "all" || String(c.campaign_id ?? "") === campaignId))
+      .map((c) => ({ id: String(c.id), name: c.name || "(sem nome)" }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [data.creatives, accountId, campaignId]);
+
+  // ---------- Daily series (source depends on filters) ----------
+  // Use campaign-level daily insights when campaignId filter is active;
+  // when a specific creative is selected, we can't get daily (creatives are aggregated),
+  // so we synthesize a single-bucket series with the creative's totals.
+  const dailyRows = useMemo(() => {
+    if (creativeId !== "all") {
+      // Single aggregated row → fake into a series showing totals as a single point
+      const c = filteredCreatives[0];
+      if (!c) return [] as any[];
+      const today = new Date().toISOString().slice(0, 10);
+      return [{
+        date: today,
+        spend: Number(c.spend ?? 0),
+        impressions: Number(c.impressions ?? 0),
+        clicks: Number(c.clicks ?? 0),
+        reach: Number(c.reach ?? 0),
+        results: Number(c.results ?? 0),
+      }];
+    }
+    if (campaignId !== "all") {
+      return (data.campaignInsights ?? []).filter((r) => inAccount(r) && String(r.campaign_id) === campaignId && inPeriod(r.date));
+    }
+    // No campaign/creative filter → account-level daily insights (aggregate all campaigns for the account)
+    return (data.insights ?? []).filter((r) => inAccount(r) && inPeriod(r.date));
+  }, [data.insights, data.campaignInsights, accountId, campaignId, creativeId, period, filteredCreatives]);
+
   const totals = useMemo(() => {
     const t = { spend: 0, impressions: 0, clicks: 0, reach: 0, results: 0 };
-    for (const r of data.insights) {
+    for (const r of dailyRows) {
       t.spend += Number(r.spend); t.impressions += Number(r.impressions);
       t.clicks += Number(r.clicks); t.reach += Number(r.reach); t.results += Number(r.results);
     }
     return t;
-  }, [data.insights]);
+  }, [dailyRows]);
 
   const derived = useMemo(() => {
     const ctr = totals.impressions ? (totals.clicks / totals.impressions) * 100 : 0;
@@ -81,9 +159,8 @@ export function PerformanceView({ data }: { data: PerfData }) {
     return { ctr, cpc, cpm, cpa, freq };
   }, [totals]);
 
-  // Compare last 15 days vs previous 15 days
   const trend = useMemo(() => {
-    const sorted = [...data.insights].sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = [...dailyRows].sort((a, b) => a.date.localeCompare(b.date));
     const half = Math.floor(sorted.length / 2);
     const prev = sorted.slice(0, half);
     const curr = sorted.slice(half);
@@ -94,11 +171,11 @@ export function PerformanceView({ data }: { data: PerfData }) {
       return ((c - p) / p) * 100;
     };
     return { spend: calc("spend"), results: calc("results"), clicks: calc("clicks"), impressions: calc("impressions") };
-  }, [data.insights]);
+  }, [dailyRows]);
 
   const chartData = useMemo(() => {
     const byDate: Record<string, any> = {};
-    for (const r of data.insights) {
+    for (const r of dailyRows) {
       const d = r.date;
       if (!byDate[d]) byDate[d] = { date: d, spend: 0, results: 0, clicks: 0, impressions: 0 };
       byDate[d].spend += Number(r.spend);
@@ -114,30 +191,46 @@ export function PerformanceView({ data }: { data: PerfData }) {
         cpa: r.results ? r.spend / r.results : 0,
         ctr: r.impressions ? (r.clicks / r.impressions) * 100 : 0,
       }));
-  }, [data.insights]);
+  }, [dailyRows]);
+
+  // Top-campaign breakdown (aggregated for current filters, ignoring campaign filter itself so user can compare)
+  const campaignBreakdown = useMemo(() => {
+    const src = (data.campaignInsights ?? []).filter((r) => inAccount(r) && inPeriod(r.date));
+    const m = new Map<string, { id: string; name: string; spend: number; results: number; clicks: number; impressions: number }>();
+    for (const r of src) {
+      const id = String(r.campaign_id);
+      const cur = m.get(id) ?? { id, name: r.campaign_name || id, spend: 0, results: 0, clicks: 0, impressions: 0 };
+      cur.spend += Number(r.spend); cur.results += Number(r.results); cur.clicks += Number(r.clicks); cur.impressions += Number(r.impressions);
+      m.set(id, cur);
+    }
+    return [...m.values()].sort((a, b) => b.spend - a.spend).slice(0, 10);
+  }, [data.campaignInsights, accountId, period]);
 
   const waTotals = useMemo(() => {
     const t = { impressions: 0, link_clicks: 0, conversations_started: 0, first_replies: 0 };
-    for (const r of data.whatsapp) {
+    for (const r of (data.whatsapp ?? []).filter((r) => inAccount(r) && inPeriod(r.date))) {
       t.impressions += Number(r.impressions);
       t.link_clicks += Number(r.link_clicks);
       t.conversations_started += Number(r.conversations_started);
       t.first_replies += Number(r.first_replies);
     }
     return t;
-  }, [data.whatsapp]);
+  }, [data.whatsapp, accountId, period]);
 
   const waSeries = useMemo(() => {
-    return data.whatsapp.map((r) => ({
-      label: new Date(r.date + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      conversas: Number(r.conversations_started),
-      cliques: Number(r.link_clicks),
-    }));
-  }, [data.whatsapp]);
+    return (data.whatsapp ?? [])
+      .filter((r) => inAccount(r) && inPeriod(r.date))
+      .map((r) => ({
+        label: new Date(r.date + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        conversas: Number(r.conversations_started),
+        cliques: Number(r.link_clicks),
+      }));
+  }, [data.whatsapp, accountId, period]);
 
   const geoData = useMemo(() => {
-    const total = data.geo.reduce((s, g) => s + Number(g.spend), 0) || 1;
-    return [...data.geo]
+    const src = (data.geo ?? []).filter((r) => inAccount(r));
+    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
+    return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
       .map((g) => ({
         code: g.country_code,
@@ -149,7 +242,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
         reach: Number(g.reach),
         pct: (Number(g.spend) / total) * 100,
       }));
-  }, [data.geo]);
+  }, [data.geo, accountId]);
 
   const geoByCode = useMemo(() => {
     const m: Record<string, typeof geoData[number]> = {};
@@ -161,7 +254,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
   const links = useMemo(() => {
     const map = new Map<string, { url: string; clicks: number; spend: number; results: number; count: number }>();
-    for (const c of data.creatives) {
+    for (const c of filteredCreatives) {
       if (!c.destination_url) continue;
       const cur = map.get(c.destination_url) ?? { url: c.destination_url, clicks: 0, spend: 0, results: 0, count: 0 };
       cur.clicks += Number(c.clicks);
@@ -171,10 +264,65 @@ export function PerformanceView({ data }: { data: PerfData }) {
       map.set(c.destination_url, cur);
     }
     return [...map.values()].sort((a, b) => b.clicks - a.clicks).slice(0, 10);
-  }, [data.creatives]);
+  }, [filteredCreatives]);
+
+  const hasFilters = accountId !== "all" || campaignId !== "all" || creativeId !== "all" || period !== "30";
+  function clearFilters() {
+    setAccountId("all"); setCampaignId("all"); setCreativeId("all"); setPeriod("30");
+  }
 
   return (
     <div className="space-y-4">
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
+          <Filter className="h-3.5 w-3.5" /> Filtros
+        </div>
+        <Select value={period} onValueChange={setPeriod}>
+          <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">Últimos 7 dias</SelectItem>
+            <SelectItem value="14">Últimos 14 dias</SelectItem>
+            <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="all">Todo o período</SelectItem>
+          </SelectContent>
+        </Select>
+        {accountsList.length > 1 && (
+          <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
+            <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as contas</SelectItem>
+              {accountsList.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.account_name || a.account_id}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <Select value={campaignId} onValueChange={(v) => { setCampaignId(v); setCreativeId("all"); }}>
+          <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as campanhas</SelectItem>
+            {campaignOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={creativeId} onValueChange={setCreativeId}>
+          <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os anúncios</SelectItem>
+            {creativeOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearFilters}>
+            <X className="h-3.5 w-3.5 mr-1" /> Limpar
+          </Button>
+        )}
+      </div>
+
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
         <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
@@ -276,15 +424,49 @@ export function PerformanceView({ data }: { data: PerfData }) {
               )}
             </CardContent>
           </Card>
+
+          {campaignBreakdown.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Campanhas — top 10 por investimento</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {campaignBreakdown.map((c) => {
+                    const cpa = c.results ? c.spend / c.results : 0;
+                    const ctr = c.impressions ? (c.clicks / c.impressions) * 100 : 0;
+                    const maxSp = campaignBreakdown[0].spend || 1;
+                    const isActive = campaignId === c.id;
+                    return (
+                      <button key={c.id} onClick={() => setCampaignId(isActive ? "all" : c.id)}
+                        className={`w-full text-left rounded-md border p-3 hover:bg-accent transition ${isActive ? "border-primary bg-primary/5" : ""}`}>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="text-sm font-medium truncate">{c.name}</div>
+                          <div className="text-sm font-semibold tabular-nums">{fmtBRL(c.spend)}</div>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded overflow-hidden mb-2">
+                          <div className="h-full bg-primary" style={{ width: `${(c.spend / maxSp) * 100}%` }} />
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-[11px] text-muted-foreground">
+                          <div><span className="text-foreground font-medium">{fmtInt(c.results)}</span> result.</div>
+                          <div>CPA <span className="text-foreground font-medium">{fmtBRL(cpa)}</span></div>
+                          <div>CTR <span className="text-foreground font-medium">{fmtPct(ctr)}</span></div>
+                          <div><span className="text-foreground font-medium">{fmtInt(c.clicks)}</span> cliques</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="criativos">
           <Card>
             <CardHeader><CardTitle className="text-base">Top criativos por investimento</CardTitle></CardHeader>
             <CardContent>
-              {data.creatives.length === 0 ? <EmptyMsg /> : (
+              {filteredCreatives.length === 0 ? <EmptyMsg /> : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {data.creatives.slice(0, 12).map((c) => (
+                  {filteredCreatives.slice(0, 24).map((c) => (
                     <div key={c.id} className="rounded-md border overflow-hidden bg-card">
                       <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
                         {c.thumbnail_url ? (
@@ -295,6 +477,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
                       </div>
                       <div className="p-3 space-y-2">
                         <div className="text-sm font-medium truncate" title={c.name || ""}>{c.name || "Sem nome"}</div>
+                        {c.campaign_name && <div className="text-[10px] text-muted-foreground truncate" title={c.campaign_name}>📁 {c.campaign_name}</div>}
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           <MiniStat k="Gasto" v={fmtBRL(c.spend)} />
                           <MiniStat k="Cliques" v={fmtInt(c.clicks)} />
@@ -305,7 +488,12 @@ export function PerformanceView({ data }: { data: PerfData }) {
                             <ExternalLink className="h-3 w-3" /> {c.destination_url}
                           </a>
                         )}
-                        {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
+                          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 ml-auto" onClick={() => setCreativeId(String(c.id))}>
+                            Filtrar
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
