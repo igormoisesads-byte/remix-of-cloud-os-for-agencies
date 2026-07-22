@@ -21,6 +21,7 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
+import { Route as PRelatorioTokenRouteImport } from './routes/p.relatorio.$token'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
 import { Route as AuthenticatedAjustesPerfilRouteImport } from './routes/_authenticated/ajustes.perfil'
@@ -92,6 +93,11 @@ const AuthenticatedAjustesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
+const PRelatorioTokenRoute = PRelatorioTokenRouteImport.update({
+  id: '/p/relatorio/$token',
+  path: '/p/relatorio/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes': typeof AuthenticatedAjustesIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/_authenticated/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/_authenticated/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
   '/api/public/hooks/sync-ads': typeof ApiPublicHooksSyncAdsRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/ajustes/perfil'
     | '/ajustes/planos'
     | '/clientes/$id'
+    | '/p/relatorio/$token'
     | '/ajustes/'
     | '/clientes/'
     | '/api/public/hooks/sync-ads'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/ajustes/perfil'
     | '/ajustes/planos'
     | '/clientes/$id'
+    | '/p/relatorio/$token'
     | '/ajustes'
     | '/clientes'
     | '/api/public/hooks/sync-ads'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ajustes/perfil'
     | '/_authenticated/ajustes/planos'
     | '/_authenticated/clientes/$id'
+    | '/p/relatorio/$token'
     | '/_authenticated/ajustes/'
     | '/_authenticated/clientes/'
     | '/api/public/hooks/sync-ads'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PRelatorioTokenRoute: typeof PRelatorioTokenRoute
   ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
 }
 
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ajustes/'
       preLoaderRoute: typeof AuthenticatedAjustesIndexRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
+    }
+    '/p/relatorio/$token': {
+      id: '/p/relatorio/$token'
+      path: '/p/relatorio/$token'
+      fullPath: '/p/relatorio/$token'
+      preLoaderRoute: typeof PRelatorioTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
@@ -505,6 +525,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PRelatorioTokenRoute: PRelatorioTokenRoute,
   ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
 }
 export const routeTree = rootRouteImport
