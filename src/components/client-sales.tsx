@@ -159,7 +159,7 @@ export function ClientSales({ clientId }: { clientId: string }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiSm label="Leads (total)" value={String(totals.leads)} accent="primary" />
         <KpiSm label="Agendamentos" value={String(totals.agendamentos)} accent="violet" />
-        <KpiSm label="Vendas" value={String(totals.vendas)} accent="emerald" />
+        <KpiSm label="Matrículas/Cadastros" value={String(totals.vendas)} accent="emerald" />
         <KpiSm label="Faturamento" value={fmtBRL(totals.faturamento)} accent="emerald" />
       </div>
 
