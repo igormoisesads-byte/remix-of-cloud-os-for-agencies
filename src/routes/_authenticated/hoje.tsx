@@ -72,7 +72,7 @@ function HojePage() {
         <p className="text-muted-foreground mt-1">Resumo da operação — clientes, tarefas e financeiro.</p>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard icon={Users} label="Clientes ativos" value={String(stats.data?.activos ?? "—")} />
         <StatCard icon={ClipboardList} label="Onboarding" value={String(stats.data?.onboarding ?? "—")} />
         <StatCard icon={CircleAlert} label="Tarefas atrasadas" value={String(stats.data?.overdue.length ?? "—")} accent={!!stats.data?.overdue.length} />
@@ -80,6 +80,7 @@ function HojePage() {
         <StatCard icon={DollarSign} label="Receita do mês" value={fmtBRL(stats.data?.receitaMes)} />
         <StatCard icon={TrendingUp} label="Recebido" value={fmtBRL(stats.data?.recebidoMes)} accent />
       </div>
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <TaskGroup title="Atrasadas" icon={CircleAlert} tone="destructive" tasks={stats.data?.overdue ?? []} empty="Nenhuma tarefa atrasada." />
@@ -144,16 +145,17 @@ function HojePage() {
 function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent?: boolean }) {
   return (
     <Card className={accent ? "border-primary/40" : ""}>
-      <CardContent className="pt-5 pb-4">
-        <div className={`h-8 w-8 rounded-md flex items-center justify-center mb-2 ${accent ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+      <CardContent className="pt-4 pb-3 px-3 sm:pt-5 sm:pb-4 sm:px-4 min-w-0">
+        <div className={`h-8 w-8 rounded-md flex items-center justify-center mb-2 shrink-0 ${accent ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
           <Icon className="h-4 w-4" />
         </div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className="text-xl font-bold mt-0.5">{value}</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</div>
+        <div className="text-base sm:text-lg lg:text-xl font-bold mt-0.5 truncate" title={value}>{value}</div>
       </CardContent>
     </Card>
   );
 }
+
 
 function TaskGroup({ title, icon: Icon, tone, tasks, empty }: { title: string; icon: any; tone: "destructive" | "primary" | "muted"; tasks: any[]; empty: string }) {
   const toneCls = tone === "destructive" ? "text-destructive" : tone === "primary" ? "text-primary" : "text-muted-foreground";
