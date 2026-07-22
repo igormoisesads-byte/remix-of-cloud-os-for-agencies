@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { uploadToR2 } from "@/lib/upload-r2";
+
 
 export const Route = createFileRoute("/_authenticated/ajustes/marca")({
   component: MarcaPage,
@@ -45,13 +47,20 @@ function MarcaPage() {
   }
 
   async function upload(file: File) {
-    const path = `agency/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("chat-attachments").upload(path, file, { upsert: true });
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from("chat-attachments").getPublicUrl(path);
-    setForm((f) => ({ ...f, agency_logo_url: data.publicUrl }));
-    toast.success("Logo carregada.");
+    if (!file.type.startsWith("image/")) return toast.error("Envie uma imagem.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Máximo 5MB.");
+    setBusy(true);
+    try {
+      const url = await uploadToR2(file, { folder: "agency/logo", filename: file.name });
+      setForm((f) => ({ ...f, agency_logo_url: url }));
+      toast.success("Logo carregada.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar.");
+    } finally {
+      setBusy(false);
+    }
   }
+
 
   return (
     <div className="space-y-6">

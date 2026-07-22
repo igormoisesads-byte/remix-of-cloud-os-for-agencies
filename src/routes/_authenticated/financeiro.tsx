@@ -32,7 +32,7 @@ function FinanceiroPage() {
   const pago = (data ?? []).filter((f: any) => f.status === "pago").reduce((s, f: any) => s + Number(f.amount), 0);
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
         <p className="text-muted-foreground mt-1">Mensalidades geradas para todos os clientes.</p>

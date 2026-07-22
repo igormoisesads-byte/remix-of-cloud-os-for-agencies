@@ -75,7 +75,7 @@ function OperacoesPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden p-6 lg:p-8 gap-6">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Operações</h1>
@@ -404,7 +404,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <CheckSquare className="h-4 w-4" /> Checklist
                     {(checklist.data ?? []).length > 0 && (

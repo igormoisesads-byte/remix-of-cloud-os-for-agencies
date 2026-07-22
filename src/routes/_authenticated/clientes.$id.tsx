@@ -102,7 +102,7 @@ function ClienteDetail() {
 
   if (client.isLoading) {
     return (
-      <div className="p-8 space-y-4">
+      <div className="p-4 sm:p-8 space-y-4">
         <div className="h-8 w-64 rounded-md bg-muted animate-pulse" />
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="h-40 rounded-lg bg-muted animate-pulse" />
@@ -128,15 +128,15 @@ function ClienteDetail() {
   const c = client.data;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* Header top bar */}
-      <div className="w-56 shrink-0 border-r bg-card overflow-y-auto">
+    <div className="flex flex-col md:flex-row md:h-[calc(100vh-3.5rem)] md:overflow-hidden">
+      {/* Sub-sidebar do cliente */}
+      <div className="md:w-56 md:shrink-0 border-b md:border-b-0 md:border-r bg-card md:overflow-y-auto">
         <div className="p-3 border-b">
           <Link to="/clientes" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
             <ChevronLeft className="h-3.5 w-3.5" /> Voltar
           </Link>
           <div className="mt-2 flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center shrink-0">
               {c.name?.slice(0, 1)?.toUpperCase() || "?"}
             </div>
             <div className="min-w-0">
@@ -145,13 +145,13 @@ function ClienteDetail() {
             </div>
           </div>
         </div>
-        <nav className="p-2 space-y-0.5">
+        <nav className="flex md:block gap-1 md:gap-0 p-2 md:space-y-0.5 overflow-x-auto md:overflow-visible">
           {NAV.map((n) => {
             const Icon = n.icon;
             const active = section === n.key;
             return (
               <button key={n.key} onClick={() => setSection(n.key)}
-                className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                className={`shrink-0 md:shrink w-auto md:w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                   active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}>
                 <Icon className="h-4 w-4" /> {n.label}
@@ -161,18 +161,18 @@ function ClienteDetail() {
         </nav>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="border-b px-6 py-3 flex flex-wrap items-center gap-2 bg-card/40">
-          <h1 className="text-xl font-bold tracking-tight">{c.name}</h1>
+      <div className="flex-1 md:overflow-y-auto min-w-0">
+        <div className="border-b px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2 bg-card/40">
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight break-words min-w-0">{c.name}</h1>
           <Badge variant="outline">{TYPE_LABEL[c.type]}</Badge>
           <Badge>{c.status}</Badge>
           {c.niches?.name && <Badge variant="secondary">{c.niches.name}</Badge>}
-          <div className="ml-auto text-xs text-muted-foreground">
+          <div className="w-full sm:w-auto sm:ml-auto text-xs text-muted-foreground truncate">
             {[c.site, c.city_uf].filter(Boolean).join(" · ")}
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {section === "visao" && <VisaoGeral c={c} />}
           {section === "performance" && <Performance clientId={id} clientType={c.type} />}
           {section === "criativos" && <CreativesView clientId={id} clientType={c.type} />}
@@ -195,6 +195,7 @@ function ClienteDetail() {
     </div>
   );
 }
+
 
 /* ============ VISÃO GERAL ============ */
 function VisaoGeral({ c }: { c: any }) {
@@ -1157,7 +1158,7 @@ function Reunioes({ clientId }: { clientId: string }) {
         {(q.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Sem reuniões</p>}
         {(q.data ?? []).map((m: any) => (
           <div key={m.id} className="p-3 border rounded-md">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="font-medium text-sm">{m.title}</div>
               <div className="text-xs text-muted-foreground">{new Date(m.held_at).toLocaleString("pt-BR")}</div>
             </div>

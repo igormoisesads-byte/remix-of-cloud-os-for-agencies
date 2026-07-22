@@ -61,7 +61,7 @@ function NpsPage() {
   }, [responses]);
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">NPS</h1>
@@ -109,7 +109,7 @@ function NpsPage() {
               <CardContent className="space-y-2">
                 {(responses ?? []).map((r: any) => (
                   <div key={r.id} className="border rounded-md p-3 text-sm">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         {r.score != null && (
                           <span className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 text-xs font-semibold ${
@@ -246,7 +246,7 @@ function SurveyEditor({ survey, onChange }: { survey: any; onChange: () => void 
         <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" />
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h4 className="text-sm font-medium">Perguntas</h4>
             <Button size="sm" variant="outline" onClick={addQ}><Plus className="h-3 w-3 mr-1" />Adicionar</Button>
           </div>
