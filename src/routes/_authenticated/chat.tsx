@@ -781,6 +781,25 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
         channel={channel} members={members} profiles={profiles}
         canManage={meIsAdmin} onChanged={loadMembers}
       />
+
+      <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
+        <DialogContent
+          className="max-w-[100vw] w-screen h-screen sm:rounded-none p-0 bg-black/95 border-0 flex items-center justify-center"
+          onClick={() => setLightbox(null)}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>{lightbox?.name || "Imagem"}</DialogTitle>
+          </DialogHeader>
+          {lightbox && (
+            <img
+              src={lightbox.url}
+              alt={lightbox.name}
+              className="max-w-[95vw] max-h-[95vh] object-contain select-none"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
