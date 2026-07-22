@@ -322,7 +322,7 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
   const [tasks, setTasks] = useState<Task[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [attachTaskId, setAttachTaskId] = useState<string | null>(null);
-  const [mention, setMention] = useState<{ type: "@" | "#"; query: string; start: number } | null>(null);
+  const [mention, setMention] = useState<{ type: "@" | "#" | "/"; query: string; start: number } | null>(null);
   const [mentionIdx, setMentionIdx] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
