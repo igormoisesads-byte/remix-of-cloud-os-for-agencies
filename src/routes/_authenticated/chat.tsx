@@ -692,9 +692,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                 setText(v);
                 const pos = e.target.selectionStart ?? v.length;
                 const upto = v.slice(0, pos);
-                const m = upto.match(/(?:^|\s)([@#])([\w-]*)$/);
+                const m = upto.match(/(?:^|\s)([@#/])([\w-]*)$/);
                 if (m) {
-                  setMention({ type: m[1] as "@" | "#", query: m[2], start: pos - m[2].length - 1 });
+                  setMention({ type: m[1] as "@" | "#" | "/", query: m[2], start: pos - m[2].length - 1 });
                   setMentionIdx(0);
                 } else {
                   setMention(null);
@@ -703,11 +703,14 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
               onKeyDown={(e) => {
                 if (mention) {
                   const q = mention.query.toLowerCase();
-                  const opts = mention.type === "@"
+                  const opts: { id?: string; handle: string }[] = mention.type === "@"
                     ? profiles.filter((p) => (p.full_name || p.email).toLowerCase().includes(q)).slice(0, 6)
                         .map((p) => ({ handle: handleFromName(p.full_name || p.email) }))
-                    : clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
-                        .map((c) => ({ handle: clientHandle(c.name) }));
+                    : mention.type === "#"
+                    ? clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
+                        .map((c) => ({ handle: clientHandle(c.name) }))
+                    : tasks.filter((t) => t.title.toLowerCase().includes(q)).slice(0, 8)
+                        .map((t) => ({ id: t.id, handle: t.title }));
                   if (opts.length) {
                     if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx((i) => (i + 1) % opts.length); return; }
                     if (e.key === "ArrowUp")   { e.preventDefault(); setMentionIdx((i) => (i - 1 + opts.length) % opts.length); return; }
@@ -717,22 +720,26 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                       const o = opts[mentionIdx];
                       const before = text.slice(0, mention.start);
                       const after = text.slice(mention.start + 1 + mention.query.length);
-                      const insert = `${mention.type}${o.handle} `;
-                      const next = before + insert + after;
-                      setText(next);
+                      if (mention.type === "/") {
+                        if (o.id) setAttachTaskId(o.id);
+                        setText(before + after);
+                      } else {
+                        const insert = `${mention.type}${o.handle} `;
+                        setText(before + insert + after);
+                        setTimeout(() => {
+                          const pos = (before + insert).length;
+                          textareaRef.current?.setSelectionRange(pos, pos);
+                        }, 0);
+                      }
                       setMention(null);
                       setMentionIdx(0);
-                      setTimeout(() => {
-                        const pos = (before + insert).length;
-                        textareaRef.current?.setSelectionRange(pos, pos);
-                      }, 0);
                       return;
                     }
                   }
                 }
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
               }}
-              placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name} — @ pessoas, # clientes`}
+              placeholder={recording ? "Gravando áudio…" : `Mensagem em #${channel.name} — @ pessoas, # clientes, / tarefas`}
               className="min-h-9 max-h-32 resize-none text-sm py-1.5 px-2.5"
               rows={1}
               disabled={recording}
