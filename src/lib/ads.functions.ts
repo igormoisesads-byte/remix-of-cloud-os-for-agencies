@@ -489,7 +489,7 @@ export const getPublicReport = createServerFn({ method: "GET" })
     const since = new Date();
     since.setDate(since.getDate() - daysBack);
     const sinceStr = since.toISOString().slice(0, 10);
-    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }, { data: campaignInsights }] = await Promise.all([
+    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }, { data: campaignInsights }, { data: hourly }] = await Promise.all([
       accountIds.length
         ? supabaseAdmin.from("ad_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
         : Promise.resolve({ data: [] as any[] }),
@@ -504,6 +504,9 @@ export const getPublicReport = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
         ? supabaseAdmin.from("ad_campaign_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
+        : Promise.resolve({ data: [] as any[] }),
+      accountIds.length
+        ? supabaseAdmin.from("ad_hourly_leads").select("*").in("ad_account_id", accountIds)
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -524,5 +527,6 @@ export const getPublicReport = createServerFn({ method: "GET" })
       geo: geo ?? [],
       whatsapp: wa ?? [],
       campaignInsights: campaignInsights ?? [],
+      hourly: hourly ?? [],
     };
   });
