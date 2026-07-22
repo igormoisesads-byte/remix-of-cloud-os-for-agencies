@@ -109,7 +109,12 @@ function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] bg-background">
       {/* Channel sidebar */}
-      <aside className="w-64 shrink-0 border-r bg-card text-foreground flex flex-col">
+      <aside
+        className={cn(
+          "w-full md:w-64 shrink-0 border-r bg-card text-foreground flex-col md:flex",
+          active ? "hidden md:flex" : "flex"
+        )}
+      >
         <div className="p-3 border-b border-border flex items-center justify-between">
           <div className="font-semibold text-sm">Mensagens</div>
           <NewChannelDialog onCreated={(id) => { loadChannels(); setActiveId(id); }} />
@@ -134,9 +139,9 @@ function ChatPage() {
       </aside>
 
       {/* Main pane */}
-      <section className="flex-1 min-w-0 flex flex-col">
+      <section className={cn("flex-1 min-w-0 flex-col", active ? "flex" : "hidden md:flex")}>
         {active ? (
-          <ChannelView channel={active} profiles={profiles} isAgencyAdmin={hasRole("admin")} />
+          <ChannelView channel={active} profiles={profiles} isAgencyAdmin={hasRole("admin")} onBack={() => setActiveId(null)} />
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             Selecione um canal
@@ -146,6 +151,7 @@ function ChatPage() {
     </div>
   );
 }
+
 
 function ChannelGroup({
   label, icon: Icon, items, activeId, onSelect,
