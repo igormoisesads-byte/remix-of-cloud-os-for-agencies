@@ -854,8 +854,12 @@ function MembersDialog({
         <div className="max-h-80 overflow-y-auto divide-y">
           {members.map((m) => (
             <div key={m.id} className="flex items-center gap-3 py-2">
-              <div className="h-7 w-7 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center">
-                {initials(m.profile?.full_name || m.profile?.email)}
+              <div className="h-7 w-7 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center overflow-hidden">
+                {m.profile?.avatar_url ? (
+                  <img src={m.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials(m.profile?.full_name || m.profile?.email)
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm truncate">{m.profile?.full_name || m.profile?.email || m.user_id}</div>
