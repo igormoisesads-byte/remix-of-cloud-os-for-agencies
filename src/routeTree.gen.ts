@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NpsTokenRouteImport } from './routes/nps.$token'
+import { Route as ApiR2UploadRouteImport } from './routes/api/r2-upload'
 import { Route as AuthenticatedPdasRouteImport } from './routes/_authenticated/pdas'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedNpsRouteImport } from './routes/_authenticated/nps'
@@ -54,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
 const NpsTokenRoute = NpsTokenRouteImport.update({
   id: '/nps/$token',
   path: '/nps/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiR2UploadRoute = ApiR2UploadRouteImport.update({
+  id: '/api/r2-upload',
+  path: '/api/r2-upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPdasRoute = AuthenticatedPdasRouteImport.update({
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/nps': typeof AuthenticatedNpsRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/pdas': typeof AuthenticatedPdasRoute
+  '/api/r2-upload': typeof ApiR2UploadRoute
   '/nps/$token': typeof NpsTokenRoute
   '/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/nps': typeof AuthenticatedNpsRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/pdas': typeof AuthenticatedPdasRoute
+  '/api/r2-upload': typeof ApiR2UploadRoute
   '/nps/$token': typeof NpsTokenRoute
   '/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/_authenticated/nps': typeof AuthenticatedNpsRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/pdas': typeof AuthenticatedPdasRoute
+  '/api/r2-upload': typeof ApiR2UploadRoute
   '/nps/$token': typeof NpsTokenRoute
   '/_authenticated/ajustes/cargos': typeof AuthenticatedAjustesCargosRoute
   '/_authenticated/ajustes/comissao': typeof AuthenticatedAjustesComissaoRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/nps'
     | '/operacoes'
     | '/pdas'
+    | '/api/r2-upload'
     | '/nps/$token'
     | '/ajustes/cargos'
     | '/ajustes/comissao'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/nps'
     | '/operacoes'
     | '/pdas'
+    | '/api/r2-upload'
     | '/nps/$token'
     | '/ajustes/cargos'
     | '/ajustes/comissao'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nps'
     | '/_authenticated/operacoes'
     | '/_authenticated/pdas'
+    | '/api/r2-upload'
     | '/nps/$token'
     | '/_authenticated/ajustes/cargos'
     | '/_authenticated/ajustes/comissao'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiR2UploadRoute: typeof ApiR2UploadRoute
   NpsTokenRoute: typeof NpsTokenRoute
   PRelatorioTokenRoute: typeof PRelatorioTokenRoute
   ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
@@ -390,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/nps/$token'
       fullPath: '/nps/$token'
       preLoaderRoute: typeof NpsTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/r2-upload': {
+      id: '/api/r2-upload'
+      path: '/api/r2-upload'
+      fullPath: '/api/r2-upload'
+      preLoaderRoute: typeof ApiR2UploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/pdas': {
@@ -631,6 +651,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiR2UploadRoute: ApiR2UploadRoute,
   NpsTokenRoute: NpsTokenRoute,
   PRelatorioTokenRoute: PRelatorioTokenRoute,
   ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
