@@ -299,6 +299,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
         .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
       return data ?? [];
     },
+  });
   const campaignInsights = useQuery({
     queryKey: ["ad_campaign_insights", clientId, days, accountIds.join(",")],
     enabled: accountIds.length > 0,
