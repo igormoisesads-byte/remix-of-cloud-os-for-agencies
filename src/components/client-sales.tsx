@@ -146,7 +146,7 @@ export function ClientSales({ clientId }: { clientId: string }) {
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Leads</Label><Input type="number" min={0} value={form.leads} onChange={(e) => setForm({ ...form, leads: e.target.value })} /></div>
                 <div><Label>Agendamentos</Label><Input type="number" min={0} value={form.agendamentos} onChange={(e) => setForm({ ...form, agendamentos: e.target.value })} /></div>
-                <div><Label>Vendas</Label><Input type="number" min={0} value={form.vendas} onChange={(e) => setForm({ ...form, vendas: e.target.value })} /></div>
+                <div><Label>Matrículas / Cadastros</Label><Input type="number" min={0} value={form.vendas} onChange={(e) => setForm({ ...form, vendas: e.target.value })} /></div>
               </div>
               <div><Label>Faturamento (R$)</Label><Input type="number" min={0} step="0.01" value={form.faturamento} onChange={(e) => setForm({ ...form, faturamento: e.target.value })} /></div>
               <div><Label>Observações</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
