@@ -550,8 +550,12 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
             return (
               <div key={m.id} className={cn("group flex gap-3", grouped ? "pl-11 mt-0.5" : "mt-4")}>
                 {!grouped && (
-                  <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                    {initials(m.author?.full_name || m.author?.email)}
+                  <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0 overflow-hidden">
+                    {m.author?.avatar_url ? (
+                      <img src={m.author.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initials(m.author?.full_name || m.author?.email)
+                    )}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
