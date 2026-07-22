@@ -602,53 +602,25 @@ export function PerformanceView({ data }: { data: PerfData }) {
         </TabsContent>
 
         <TabsContent value="whatsapp">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Funil de conversas</CardTitle></CardHeader>
-              <CardContent>
-                {waTotals.impressions === 0 && waTotals.conversations_started === 0 ? (
-                  <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
-                ) : (
-                  <VerticalFunnel
-                    steps={[
-                      { label: "Impressões", value: waTotals.impressions, color: "#3b82f6" },
-                      { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1" },
-                      { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366" },
-                      { label: "Primeiras respostas", value: waTotals.first_replies, color: "#059669" },
-                    ]}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-base">Evolução diária</CardTitle></CardHeader>
-              <CardContent>
-                {waSeries.length === 0 ? <EmptyMsg /> : (
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer>
-                      <ComposedChart data={waSeries} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-                        <defs>
-                          <linearGradient id="gWaConv" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#25D366" stopOpacity={0.5} />
-                            <stop offset="100%" stopColor="#25D366" stopOpacity={0.02} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" fontSize={11} />
-                        <YAxis fontSize={11} />
-                        <Tooltip />
-                        <Legend />
-                        <Area type="monotone" dataKey="conversas" stroke="#25D366" fill="url(#gWaConv)" strokeWidth={2} name="Conversas WhatsApp" />
-                        <Line type="monotone" dataKey="cliques" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} name="Cliques" />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Funil de conversas</CardTitle></CardHeader>
+            <CardContent>
+              {waTotals.impressions === 0 && waTotals.conversations_started === 0 ? (
+                <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
+              ) : (
+                <VerticalFunnel
+                  steps={[
+                    { label: "Impressões", value: waTotals.impressions, color: "#3b82f6" },
+                    { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1" },
+                    { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366" },
+                    { label: "Primeiras respostas", value: waTotals.first_replies, color: "#059669" },
+                  ]}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
+
 
         <TabsContent value="links">
           <Card>
