@@ -452,7 +452,7 @@ export const getPublicReport = createServerFn({ method: "GET" })
         ? supabaseAdmin.from("ad_creatives").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
-        ? supabaseAdmin.from("ad_geo").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
+        ? supabaseAdmin.from("ad_geo").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(300)
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
         ? supabaseAdmin.from("ad_funnel_whatsapp").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
