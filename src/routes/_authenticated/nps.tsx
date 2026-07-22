@@ -74,20 +74,22 @@ function NpsPage() {
         <Card>
           <CardHeader><CardTitle className="text-sm">Formulários</CardTitle></CardHeader>
           <CardContent className="space-y-1 p-2">
-            {(surveys ?? []).map((s) => (
+            {(surveys ?? []).map((s: any) => (
               <button
                 key={s.id}
                 onClick={() => setSelectedId(s.id)}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-accent ${selected?.id === s.id ? "bg-accent" : ""}`}
               >
                 <div className="font-medium truncate">{s.title}</div>
-                <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                   {s.active ? <Badge variant="default" className="h-4 px-1 text-[10px]">ativo</Badge> : <Badge variant="secondary" className="h-4 px-1 text-[10px]">inativo</Badge>}
-                  {(s.questions as any[])?.length ?? 0} perguntas
+                  {s.ref_month && <span>{new Date(s.ref_month).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>}
                 </div>
+                {s.client_name && <div className="text-[11px] text-muted-foreground truncate mt-0.5">{s.client_name}</div>}
               </button>
             ))}
             {!surveys?.length && <p className="text-xs text-muted-foreground p-2">Crie o primeiro formulário.</p>}
+
           </CardContent>
         </Card>
 
