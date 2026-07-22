@@ -268,59 +268,51 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
     queryKey: ["ad_accounts", clientId],
     queryFn: async () => (await supabase.from("ad_accounts").select("*").eq("client_id", clientId).order("created_at")).data ?? [],
   });
-
   const accountIds = (accounts.data ?? []).map((a: any) => a.id);
+
   const insights = useQuery({
     queryKey: ["ad_insights", clientId, days, accountIds.join(",")],
     enabled: accountIds.length > 0,
     queryFn: async () => {
       const since = new Date(); since.setDate(since.getDate() - days);
       const { data } = await supabase.from("ad_insights").select("*")
-        .in("ad_account_id", accountIds)
-        .gte("date", since.toISOString().slice(0, 10))
-        .order("date");
+        .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
+      return data ?? [];
+    },
+  });
+  const creatives = useQuery({
+    queryKey: ["ad_creatives", clientId, accountIds.join(",")],
+    enabled: accountIds.length > 0,
+    queryFn: async () => (await supabase.from("ad_creatives").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false })).data ?? [],
+  });
+  const geo = useQuery({
+    queryKey: ["ad_geo", clientId, accountIds.join(",")],
+    enabled: accountIds.length > 0,
+    queryFn: async () => (await supabase.from("ad_geo").select("*").in("ad_account_id", accountIds)).data ?? [],
+  });
+  const wa = useQuery({
+    queryKey: ["ad_wa", clientId, days, accountIds.join(",")],
+    enabled: accountIds.length > 0,
+    queryFn: async () => {
+      const since = new Date(); since.setDate(since.getDate() - days);
+      const { data } = await supabase.from("ad_funnel_whatsapp").select("*")
+        .in("ad_account_id", accountIds).gte("date", since.toISOString().slice(0, 10)).order("date");
       return data ?? [];
     },
   });
 
-  const totals = useMemo(() => {
-    const rows = insights.data ?? [];
-    const t = { spend: 0, impressions: 0, clicks: 0, reach: 0, results: 0 };
-    for (const r of rows) {
-      t.spend += Number(r.spend); t.impressions += Number(r.impressions);
-      t.clicks += Number(r.clicks); t.reach += Number(r.reach); t.results += Number(r.results);
-    }
-    return t;
-  }, [insights.data]);
-
-  const chartData = useMemo(() => {
-    const rows = insights.data ?? [];
-    const byDate: Record<string, any> = {};
-    for (const r of rows) {
-      const d = r.date;
-      if (!byDate[d]) byDate[d] = { date: d, spend: 0, results: 0, clicks: 0 };
-      byDate[d].spend += Number(r.spend);
-      byDate[d].results += Number(r.results);
-      byDate[d].clicks += Number(r.clicks);
-    }
-    return Object.values(byDate).map((r: any) => ({
-      ...r,
-      label: new Date(r.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-    }));
-  }, [insights.data]);
-
   async function sync(accId: string) {
     setSyncing(accId);
     try {
-      const r = await syncFn({ data: { ad_account_id: accId } });
-      toast.success(`Sincronizado: ${(r as any).upserted} dias`);
+      const r: any = await syncFn({ data: { ad_account_id: accId } });
+      toast.success(`Sincronizado: ${r.insights || 0} dias, ${r.creatives || 0} criativos, ${r.geo || 0} regiões`);
       qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] });
       qc.invalidateQueries({ queryKey: ["ad_insights", clientId] });
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally { setSyncing(null); }
+      qc.invalidateQueries({ queryKey: ["ad_creatives", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_geo", clientId] });
+      qc.invalidateQueries({ queryKey: ["ad_wa", clientId] });
+    } catch (e: any) { toast.error(e.message); } finally { setSyncing(null); }
   }
-
   async function remove(id: string) {
     if (!confirm("Remover esta conta de anúncio? O histórico salvo também será apagado.")) return;
     const { error } = await supabase.from("ad_accounts").delete().eq("id", id);
@@ -349,6 +341,7 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                 <SelectItem value="30">Últimos 30 dias</SelectItem>
               </SelectContent>
             </Select>
+            {canManage && <SharePublicLinkDialog clientId={clientId} />}
             {canManage && <ConnectAdAccountDialog clientId={clientId} onSaved={() => qc.invalidateQueries({ queryKey: ["ad_accounts", clientId] })} />}
           </div>
         </CardHeader>
@@ -363,34 +356,12 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                <Stat label="Investimento" value={fmtBRL(totals.spend)} />
-                <Stat label="Impressões" value={totals.impressions.toLocaleString("pt-BR")} />
-                <Stat label="Cliques" value={totals.clicks.toLocaleString("pt-BR")} />
-                <Stat label="Alcance" value={totals.reach.toLocaleString("pt-BR")} />
-                <Stat label="Resultados" value={totals.results.toLocaleString("pt-BR")} />
-              </div>
-
-              {chartData.length > 0 && (
-                <div className="h-64 w-full">
-                  <ResponsiveContainer>
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="label" fontSize={11} />
-                      <YAxis fontSize={11} />
-                      <Tooltip formatter={(v: any, k: string) => (k === "spend" ? fmtBRL(Number(v)) : v)} />
-                      <Area type="monotone" dataKey="spend" stroke="hsl(var(--primary))" fill="url(#gSpend)" name="Investimento" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-
+              <PerformanceView data={{
+                insights: insights.data ?? [],
+                creatives: creatives.data ?? [],
+                geo: geo.data ?? [],
+                whatsapp: wa.data ?? [],
+              }} />
               <div className="mt-4 space-y-2">
                 {(accounts.data ?? []).map((a: any) => (
                   <div key={a.id} className="flex items-center justify-between rounded-md border p-3">
@@ -426,14 +397,77 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function SharePublicLinkDialog({ clientId }: { clientId: string }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [title, setTitle] = useState("Relatório de performance");
+  const [existing, setExisting] = useState<any[]>([]);
+
+  async function refresh() {
+    const { data } = await supabase.from("public_reports").select("*").eq("client_id", clientId).order("created_at", { ascending: false });
+    setExisting(data ?? []);
+  }
+  async function create() {
+    setBusy(true);
+    const token = crypto.randomUUID().replace(/-/g, "") + Math.random().toString(36).slice(2, 8);
+    const { error } = await supabase.from("public_reports").insert({ client_id: clientId, token, title });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Link público criado.");
+    refresh();
+  }
+  async function toggle(r: any) {
+    await supabase.from("public_reports").update({ active: !r.active }).eq("id", r.id);
+    refresh();
+  }
+  async function copyLink(token: string) {
+    const url = `${window.location.origin}/p/relatorio/${token}`;
+    await navigator.clipboard.writeText(url);
+    toast.success("Link copiado!");
+  }
+
   return (
-    <div className="rounded-md border p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold mt-1">{value}</div>
-    </div>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) refresh(); }}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline"><Share2 className="h-4 w-4" />Link público</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Compartilhar com o cliente</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="text-sm text-muted-foreground">Crie um link para o cliente ver o dashboard em tempo real, sem login.</div>
+          <div className="flex gap-2">
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título do relatório" />
+            <Button onClick={create} disabled={busy}><Plus className="h-4 w-4" />Criar</Button>
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {existing.map((r) => {
+              const url = `${typeof window !== "undefined" ? window.location.origin : ""}/p/relatorio/${r.token}`;
+              return (
+                <div key={r.id} className="rounded-md border p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm font-medium">{r.title || "Sem título"}</div>
+                    <Badge variant={r.active ? "default" : "outline"}>{r.active ? "Ativo" : "Desativado"}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input readOnly value={url} className="h-8 text-xs" />
+                    <Button size="icon" variant="ghost" onClick={() => copyLink(r.token)}><Copy className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => window.open(url, "_blank")}><ExternalLink className="h-4 w-4" /></Button>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{r.view_count} visualizações</span>
+                    <button className="underline" onClick={() => toggle(r)}>{r.active ? "Desativar" : "Reativar"}</button>
+                  </div>
+                </div>
+              );
+            })}
+            {existing.length === 0 && <div className="text-sm text-muted-foreground text-center py-4">Nenhum link criado ainda.</div>}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
+
 
 function ConnectAdAccountDialog({ clientId, onSaved }: { clientId: string; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
