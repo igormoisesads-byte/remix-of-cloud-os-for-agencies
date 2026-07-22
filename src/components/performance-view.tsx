@@ -398,8 +398,13 @@ export function PerformanceView({ data }: { data: PerfData }) {
         const costValue = resultsValue ? totals.spend / resultsValue : 0;
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {isLocal && (
+              <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Conversas iniciadas" hint="Conversas de WhatsApp iniciadas — resultado principal" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+            )}
             <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
-            <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint={isLocal ? "Conversas de WhatsApp iniciadas" : "Compras, leads ou conversões que a campanha otimiza"} value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+            {!isLocal && (
+              <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint="Compras, leads ou conversões que a campanha otimiza" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+            )}
             <Kpi icon={<Zap className="h-4 w-4" />} label={costLabel} hint={costHint} value={fmtBRL(costValue)} accent="violet" />
             <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" hint="Cliques no anúncio" value={fmtInt(totals.clicks)} trend={trend.clicks} />
             <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" hint="Cliques ÷ impressões" value={fmtPct(derived.ctr)} />
