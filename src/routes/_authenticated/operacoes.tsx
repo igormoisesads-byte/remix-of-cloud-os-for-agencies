@@ -898,6 +898,43 @@ function SideField({ icon, label, children }: { icon: React.ReactNode; label: st
   );
 }
 
+function TagsEditor({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+  const [input, setInput] = useState("");
+  function add() {
+    const raw = input.trim().replace(/^#/, "");
+    if (!raw) return;
+    if (value.includes(raw)) { setInput(""); return; }
+    onChange([...value, raw]);
+    setInput("");
+  }
+  function remove(tag: string) {
+    onChange(value.filter((t) => t !== tag));
+  }
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1 min-h-[1.5rem]">
+        {value.length === 0 && <span className="text-xs text-muted-foreground">Sem tags</span>}
+        {value.map((tg) => (
+          <span key={tg} className="inline-flex items-center gap-1 text-[11px] rounded-full bg-primary/10 text-primary px-2 py-0.5">
+            #{tg}
+            <button type="button" onClick={() => remove(tg)} className="hover:text-destructive">
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <Input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(); } }}
+        onBlur={add}
+        placeholder="Nova tag + Enter"
+        className="h-8 text-xs"
+      />
+    </div>
+  );
+}
+
 function AttachmentPreview({ url, name, type }: { url: string; name?: string | null; type?: string | null }) {
   const isImage = type?.startsWith("image/");
   if (isImage) {
