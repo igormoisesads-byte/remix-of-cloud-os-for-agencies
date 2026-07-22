@@ -61,6 +61,8 @@ function OperacoesPage() {
   const qc = useQueryClient();
   const [filterClient, setFilterClient] = useState<string>("all");
   const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [filterKind, setFilterKind] = useState<string>("all");
+  const [filterTag, setFilterTag] = useState<string>("all");
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [openGroup, setOpenGroup] = useState<{ label: string; items: any[] } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -69,14 +71,26 @@ function OperacoesPage() {
   const week = useMemo(() => currentRoutineWeek(), []);
 
   const tasks = useQuery({
-    queryKey: ["tasks", filterClient, filterAssignee],
+    queryKey: ["tasks", filterClient, filterAssignee, filterKind, filterTag],
     queryFn: async () => {
       let q = supabase.from("tasks").select("*, clients(name)").order("position");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       if (filterAssignee !== "all") q = q.eq("assignee_id", filterAssignee);
+      if (filterKind !== "all") q = q.eq("kind", filterKind as any);
+      if (filterTag !== "all") q = q.contains("tags", [filterTag]);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const allTags = useQuery({
+    queryKey: ["task-tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("tasks").select("tags");
+      const s = new Set<string>();
+      (data ?? []).forEach((r: any) => (r.tags ?? []).forEach((t: string) => t && s.add(t)));
+      return Array.from(s).sort();
     },
   });
 
