@@ -430,9 +430,9 @@ export function PerformanceView({ data }: { data: PerfData }) {
           <Card>
             <CardHeader><CardTitle className="text-base">Top criativos por investimento</CardTitle></CardHeader>
             <CardContent>
-              {data.creatives.length === 0 ? <EmptyMsg /> : (
+              {filteredCreatives.length === 0 ? <EmptyMsg /> : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {data.creatives.slice(0, 12).map((c) => (
+                  {filteredCreatives.slice(0, 24).map((c) => (
                     <div key={c.id} className="rounded-md border overflow-hidden bg-card">
                       <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
                         {c.thumbnail_url ? (
@@ -443,6 +443,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
                       </div>
                       <div className="p-3 space-y-2">
                         <div className="text-sm font-medium truncate" title={c.name || ""}>{c.name || "Sem nome"}</div>
+                        {c.campaign_name && <div className="text-[10px] text-muted-foreground truncate" title={c.campaign_name}>📁 {c.campaign_name}</div>}
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           <MiniStat k="Gasto" v={fmtBRL(c.spend)} />
                           <MiniStat k="Cliques" v={fmtInt(c.clicks)} />
@@ -453,7 +454,12 @@ export function PerformanceView({ data }: { data: PerfData }) {
                             <ExternalLink className="h-3 w-3" /> {c.destination_url}
                           </a>
                         )}
-                        {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
+                          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 ml-auto" onClick={() => setCreativeId(String(c.id))}>
+                            Filtrar
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
