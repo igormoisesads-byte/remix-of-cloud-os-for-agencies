@@ -3,6 +3,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -13,6 +14,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import cloudosLogo from "@/assets/cloudos-logo.png.asset.json";
+
 
 
 const groups = [
@@ -64,10 +66,13 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const { profile, roles, signOut } = useAuth();
   const nav = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
   const isActive = (url: string) => pathname === url || pathname.startsWith(url + "/");
+  const closeIfMobile = () => { if (isMobile) setOpenMobile(false); };
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((g) => [g.label, true]))
   );
+
 
   return (
     <Sidebar collapsible="icon">
@@ -113,12 +118,13 @@ export function AppSidebar() {
                       {g.items.map((item) => (
                         <SidebarMenuItem key={item.url}>
                           <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                            <Link to={item.url}>
+                            <Link to={item.url} onClick={closeIfMobile}>
                               <item.icon className="h-4 w-4" />
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
+
                       ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
@@ -129,11 +135,12 @@ export function AppSidebar() {
                     {g.items.map((item) => (
                       <SidebarMenuItem key={item.url}>
                         <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                          <Link to={item.url}>
+                          <Link to={item.url} onClick={closeIfMobile}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
+
                       </SidebarMenuItem>
                     ))}
                   </SidebarMenu>

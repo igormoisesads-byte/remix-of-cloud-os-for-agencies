@@ -15,8 +15,9 @@ import { toast } from "sonner";
 import {
   Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase,
   Paperclip, X, Reply, Mic, Square, Bell, File as FileIcon, Image as ImageIcon,
-  Play, Pause,
+  Play, Pause, ArrowLeft,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { registerPWA, requestNotificationPermission, notify } from "@/lib/pwa";
 
@@ -108,7 +109,12 @@ function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] bg-background">
       {/* Channel sidebar */}
-      <aside className="w-64 shrink-0 border-r bg-card text-foreground flex flex-col">
+      <aside
+        className={cn(
+          "w-full md:w-64 shrink-0 border-r bg-card text-foreground flex-col md:flex",
+          active ? "hidden md:flex" : "flex"
+        )}
+      >
         <div className="p-3 border-b border-border flex items-center justify-between">
           <div className="font-semibold text-sm">Mensagens</div>
           <NewChannelDialog onCreated={(id) => { loadChannels(); setActiveId(id); }} />
@@ -133,9 +139,9 @@ function ChatPage() {
       </aside>
 
       {/* Main pane */}
-      <section className="flex-1 min-w-0 flex flex-col">
+      <section className={cn("flex-1 min-w-0 flex-col", active ? "flex" : "hidden md:flex")}>
         {active ? (
-          <ChannelView channel={active} profiles={profiles} isAgencyAdmin={hasRole("admin")} />
+          <ChannelView channel={active} profiles={profiles} isAgencyAdmin={hasRole("admin")} onBack={() => setActiveId(null)} />
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             Selecione um canal
@@ -145,6 +151,7 @@ function ChatPage() {
     </div>
   );
 }
+
 
 function ChannelGroup({
   label, icon: Icon, items, activeId, onSelect,
@@ -316,7 +323,7 @@ function NewDMDialog({ profiles, onCreated }: { profiles: Profile[]; onCreated: 
 
 /* -------- Channel view -------- */
 
-function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; profiles: Profile[]; isAgencyAdmin: boolean }) {
+function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Channel; profiles: Profile[]; isAgencyAdmin: boolean; onBack?: () => void }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -521,8 +528,14 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
 
   return (
     <>
-      <header className="h-14 border-b flex items-center gap-3 px-4 shrink-0">
+      <header className="h-14 border-b flex items-center gap-2 px-3 sm:px-4 shrink-0">
+        {onBack && (
+          <Button variant="ghost" size="icon" className="md:hidden -ml-1 h-8 w-8" onClick={onBack} aria-label="Voltar">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <Icon className="h-4 w-4 text-muted-foreground" />
+
         <div className="min-w-0">
           <div className="font-semibold text-sm truncate">{channel.name}</div>
           {channel.topic && <div className="text-xs text-muted-foreground truncate">{channel.topic}</div>}
