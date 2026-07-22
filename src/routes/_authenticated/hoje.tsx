@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, DollarSign, ClipboardList, AlertTriangle, TrendingUp, CalendarDays, CalendarClock, CircleAlert } from "lucide-react";
+import { Users, DollarSign, ClipboardList, AlertTriangle, TrendingUp, CalendarDays, CalendarClock, CircleAlert, Wallet } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { listLowBalanceAlerts } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/_authenticated/hoje")({
   component: HojePage,
@@ -61,6 +63,13 @@ function HojePage() {
         doneWeek: tasksDone7.count ?? 0,
       };
     },
+  });
+
+  const listLow = useServerFn(listLowBalanceAlerts);
+  const lowBalance = useQuery({
+    queryKey: ["low-balance-alerts"],
+    queryFn: () => listLow(),
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const nome = profile?.full_name?.split(" ")[0] || "";
