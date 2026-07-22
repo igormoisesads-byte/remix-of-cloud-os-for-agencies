@@ -2512,6 +2512,7 @@ export type Database = {
         Args: { _channel_id: string; _user_id: string }
         Returns: boolean
       }
+      is_staff: { Args: { _uid?: string }; Returns: boolean }
       list_employees_hr: {
         Args: never
         Returns: {
