@@ -631,30 +631,40 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
           <div className="relative flex-1">
             {mention && (() => {
               const q = mention.query.toLowerCase();
-              const opts = mention.type === "@"
+              type Opt = { id: string; label: string; handle: string; sub?: string };
+              const opts: Opt[] = mention.type === "@"
                 ? profiles.filter((p) => (p.full_name || p.email).toLowerCase().includes(q)).slice(0, 6)
                     .map((p) => ({ id: p.id, label: p.full_name || p.email, handle: handleFromName(p.full_name || p.email) }))
-                : clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
-                    .map((c) => ({ id: c.id, label: c.name, handle: clientHandle(c.name) }));
+                : mention.type === "#"
+                ? clients.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
+                    .map((c) => ({ id: c.id, label: c.name, handle: clientHandle(c.name) }))
+                : tasks.filter((t) => t.title.toLowerCase().includes(q)).slice(0, 8)
+                    .map((t) => ({ id: t.id, label: t.title, handle: t.title, sub: t.status }));
               if (opts.length === 0) return null;
-              const pick = (o: { handle: string }) => {
+              const pick = (o: Opt) => {
                 const before = text.slice(0, mention.start);
                 const after = text.slice(mention.start + 1 + mention.query.length);
-                const insert = `${mention.type}${o.handle} `;
-                const next = before + insert + after;
-                setText(next);
+                if (mention.type === "/") {
+                  setAttachTaskId(o.id);
+                  setText(before + after);
+                } else {
+                  const insert = `${mention.type}${o.handle} `;
+                  setText(before + insert + after);
+                  setTimeout(() => {
+                    const pos = (before + insert).length;
+                    textareaRef.current?.focus();
+                    textareaRef.current?.setSelectionRange(pos, pos);
+                  }, 0);
+                }
                 setMention(null);
                 setMentionIdx(0);
-                setTimeout(() => {
-                  const pos = (before + insert).length;
-                  textareaRef.current?.focus();
-                  textareaRef.current?.setSelectionRange(pos, pos);
-                }, 0);
               };
+              const heading = mention.type === "@" ? "Pessoas" : mention.type === "#" ? "Clientes" : "Tarefas";
+              const color = mention.type === "@" ? "text-primary" : mention.type === "#" ? "text-blue-600" : "text-amber-600";
               return (
-                <div className="absolute bottom-full left-0 mb-1 w-64 rounded-md border bg-popover shadow-lg z-50 overflow-hidden">
+                <div className="absolute bottom-full left-0 mb-1 w-72 rounded-md border bg-popover shadow-lg z-50 overflow-hidden">
                   <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
-                    {mention.type === "@" ? "Pessoas" : "Clientes"}
+                    {heading}
                   </div>
                   {opts.map((o, i) => (
                     <button
@@ -666,8 +676,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                         i === mentionIdx ? "bg-accent" : "hover:bg-accent/60"
                       )}
                     >
-                      <span className={mention.type === "@" ? "text-primary" : "text-blue-600"}>{mention.type}{o.handle}</span>
-                      <span className="text-xs text-muted-foreground truncate">{o.label}</span>
+                      {mention.type === "/" ? <Briefcase className={cn("h-3 w-3 shrink-0", color)} /> : <span className={color}>{mention.type}</span>}
+                      <span className="truncate flex-1">{o.label}</span>
+                      {o.sub && <Badge variant="secondary" className="text-[10px]">{o.sub}</Badge>}
                     </button>
                   ))}
                 </div>
