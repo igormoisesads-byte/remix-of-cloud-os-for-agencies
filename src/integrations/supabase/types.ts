@@ -337,6 +337,7 @@ export type Database = {
       ad_geo: {
         Row: {
           ad_account_id: string
+          city: string | null
           clicks: number
           country_code: string
           country_name: string | null
@@ -346,12 +347,15 @@ export type Database = {
           period_end: string
           period_start: string
           reach: number
+          region: string | null
+          region_name: string | null
           results: number
           spend: number
           updated_at: string
         }
         Insert: {
           ad_account_id: string
+          city?: string | null
           clicks?: number
           country_code: string
           country_name?: string | null
@@ -361,12 +365,15 @@ export type Database = {
           period_end: string
           period_start: string
           reach?: number
+          region?: string | null
+          region_name?: string | null
           results?: number
           spend?: number
           updated_at?: string
         }
         Update: {
           ad_account_id?: string
+          city?: string | null
           clicks?: number
           country_code?: string
           country_name?: string | null
@@ -376,6 +383,8 @@ export type Database = {
           period_end?: string
           period_start?: string
           reach?: number
+          region?: string | null
+          region_name?: string | null
           results?: number
           spend?: number
           updated_at?: string

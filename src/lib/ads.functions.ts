@@ -133,7 +133,15 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
       }
     }
 
-    // 3) Country breakdown (aggregated for the whole period)
+    // 3) Country + Region breakdown (aggregated for the whole period)
+    // Clear previous period rows for this account to avoid stale data
+    await supabaseAdmin
+      .from("ad_geo")
+      .delete()
+      .eq("ad_account_id", acc.id)
+      .eq("period_start", fmt(since))
+      .eq("period_end", fmt(until));
+
     const geoUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/insights`);
     geoUrl.searchParams.set("fields", "spend,impressions,clicks,reach,actions");
     geoUrl.searchParams.set("breakdowns", "country");
@@ -142,33 +150,57 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
     geoUrl.searchParams.set("access_token", token);
     try {
       const geo = await metaFetch(geoUrl);
-      // Clear previous period rows for this account to avoid stale data
-      await supabaseAdmin
-        .from("ad_geo")
-        .delete()
-        .eq("ad_account_id", acc.id)
-        .eq("period_start", fmt(since))
-        .eq("period_end", fmt(until));
       for (const r of geo.data ?? []) {
-        const { error: e } = await supabaseAdmin.from("ad_geo").upsert(
-          {
-            ad_account_id: acc.id,
-            period_start: fmt(since),
-            period_end: fmt(until),
-            country_code: r.country,
-            country_name: null,
-            spend: Number(r.spend ?? 0),
-            impressions: Number(r.impressions ?? 0),
-            clicks: Number(r.clicks ?? 0),
-            reach: Number(r.reach ?? 0),
-            results: pickResults(r.actions ?? []),
-          },
-          { onConflict: "ad_account_id,period_start,period_end,country_code" }
-        );
+        const { error: e } = await supabaseAdmin.from("ad_geo").insert({
+          ad_account_id: acc.id,
+          period_start: fmt(since),
+          period_end: fmt(until),
+          country_code: r.country,
+          country_name: null,
+          region: null,
+          region_name: null,
+          city: null,
+          spend: Number(r.spend ?? 0),
+          impressions: Number(r.impressions ?? 0),
+          clicks: Number(r.clicks ?? 0),
+          reach: Number(r.reach ?? 0),
+          results: pickResults(r.actions ?? []),
+        });
         if (!e) upsertedGeo++;
       }
     } catch {
       // ignore geo errors
+    }
+
+    // 3b) Region breakdown (per state) — Meta returns region names as strings
+    const regionUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/insights`);
+    regionUrl.searchParams.set("fields", "spend,impressions,clicks,reach,actions");
+    regionUrl.searchParams.set("breakdowns", "region");
+    regionUrl.searchParams.set("time_range", timeRange);
+    regionUrl.searchParams.set("limit", "500");
+    regionUrl.searchParams.set("access_token", token);
+    try {
+      const rg = await metaFetch(regionUrl);
+      for (const r of rg.data ?? []) {
+        if (!r.region) continue;
+        const { error: e } = await supabaseAdmin.from("ad_geo").insert({
+          ad_account_id: acc.id,
+          period_start: fmt(since),
+          period_end: fmt(until),
+          country_code: r.country || "BR",
+          region: r.region,
+          region_name: r.region,
+          city: null,
+          spend: Number(r.spend ?? 0),
+          impressions: Number(r.impressions ?? 0),
+          clicks: Number(r.clicks ?? 0),
+          reach: Number(r.reach ?? 0),
+          results: pickResults(r.actions ?? []),
+        });
+        if (!e) upsertedGeo++;
+      }
+    } catch {
+      // ignore region errors
     }
 
     // 4) Creatives (ads) with aggregated insights + campaign info
@@ -420,7 +452,7 @@ export const getPublicReport = createServerFn({ method: "GET" })
         ? supabaseAdmin.from("ad_creatives").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
-        ? supabaseAdmin.from("ad_geo").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
+        ? supabaseAdmin.from("ad_geo").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(300)
         : Promise.resolve({ data: [] as any[] }),
       accountIds.length
         ? supabaseAdmin.from("ad_funnel_whatsapp").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")

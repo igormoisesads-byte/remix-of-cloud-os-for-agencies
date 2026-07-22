@@ -64,43 +64,51 @@ function PublicReportPage() {
   const { client, agency, insights, creatives, geo, whatsapp, accounts, report, campaignInsights } = q.data as any;
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-card">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+    <div className="min-h-screen bg-gradient-to-b from-muted/40 via-background to-background">
+      <header className="sticky top-0 z-20 border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {client.logo_url ? (
-              <img src={client.logo_url} alt={client.name} className="h-10 w-10 rounded object-cover" />
+              <img src={client.logo_url} alt={client.name} className="h-9 w-9 sm:h-11 sm:w-11 rounded-lg object-cover ring-1 ring-border" />
             ) : (
-              <div className="h-10 w-10 rounded bg-primary/10 text-primary flex items-center justify-center font-semibold">
+              <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-semibold">
                 {client.name.slice(0, 1)}
               </div>
             )}
             <div className="min-w-0">
-              <div className="text-sm text-muted-foreground truncate">{report.title || "Relatório de performance"}</div>
-              <div className="font-semibold truncate">{client.name}</div>
+              <div className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground truncate">
+                {report.title || "Relatório de performance"}
+              </div>
+              <div className="font-semibold text-sm sm:text-base truncate">{client.name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-right">
-            <div className="text-xs text-muted-foreground">Entregue por</div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden sm:block text-[10px] uppercase tracking-wide text-muted-foreground">Entregue por</div>
             {agency.agency_logo_url ? (
-              <img src={agency.agency_logo_url} alt={agency.agency_name || "Agência"} className="h-8 max-w-[140px] object-contain" />
+              <img src={agency.agency_logo_url} alt={agency.agency_name || "Agência"} className="h-7 sm:h-9 max-w-[120px] sm:max-w-[160px] object-contain" />
             ) : (
-              <div className="font-semibold text-sm">{agency.agency_name || "CloudOS"}</div>
+              <div className="font-semibold text-xs sm:text-sm">{agency.agency_name || "CloudOS"}</div>
             )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-6 space-y-4">
-        <div className="text-xs text-muted-foreground">
-          Últimos 30 dias · Atualização automática a cada 4h.
+      <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs text-muted-foreground rounded-lg border bg-card px-3 py-2">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            Ao vivo · atualização automática a cada 4h
+          </span>
           {accounts?.length > 0 && accounts[0].last_sync_at && (
-            <span> · Última sincronização: {new Date(accounts[0].last_sync_at).toLocaleString("pt-BR")}</span>
+            <>
+              <span className="hidden sm:inline">·</span>
+              <span>Última sincronização: {new Date(accounts[0].last_sync_at).toLocaleString("pt-BR")}</span>
+            </>
           )}
         </div>
-        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights }} />
-        <div className="text-center text-xs text-muted-foreground pt-4">
-          Powered by {agency.agency_name || "CloudOS"}
+        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
+        <div className="text-center text-[11px] sm:text-xs text-muted-foreground pt-6 pb-4">
+          Powered by <span className="font-medium text-foreground/70">{agency.agency_name || "CloudOS"}</span>
         </div>
       </main>
     </div>

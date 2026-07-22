@@ -26,7 +26,8 @@ export type PerfData = {
   whatsapp: any[];
   accounts?: any[];
   campaignInsights?: any[];
-  sales?: { vendas: number; faturamento: number; custo_produto?: number }; // totais no período
+  sales?: { vendas: number; faturamento: number; custo_produto?: number };
+  clientType?: string | null;
 };
 
 
@@ -251,14 +252,58 @@ export function PerformanceView({ data }: { data: PerfData }) {
       }));
   }, [data.whatsapp, accountId, period]);
 
+  // Previous period delta for WhatsApp (same length as current period)
+  const waPrevTotals = useMemo(() => {
+    const t = { impressions: 0, link_clicks: 0, conversations_started: 0, first_replies: 0 };
+    if (period === "all" || period === "custom" || period === "current_week") return t;
+    const days = Number(period);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const prevStart = new Date(now); prevStart.setDate(now.getDate() - days * 2);
+    const prevEnd = new Date(now); prevEnd.setDate(now.getDate() - days);
+    for (const r of (data.whatsapp ?? []).filter((r) => inAccount(r))) {
+      const d = new Date(r.date + "T00:00");
+      if (d >= prevStart && d < prevEnd) {
+        t.impressions += Number(r.impressions);
+        t.link_clicks += Number(r.link_clicks);
+        t.conversations_started += Number(r.conversations_started);
+        t.first_replies += Number(r.first_replies);
+      }
+    }
+    return t;
+  }, [data.whatsapp, accountId, period]);
+
+  const resultsLabel = data.clientType === "local"
+    ? "Conversas iniciadas"
+    : (data.clientType === "perpetuo" || data.clientType === "lancamento" || data.clientType === "autoria")
+    ? "Compras / leads"
+    : "Resultados";
+
   const geoData = useMemo(() => {
-    const src = (data.geo ?? []).filter((r) => inAccount(r));
+    // Country-level only (no region)
+    const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
     const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
     return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
       .map((g) => ({
         code: g.country_code,
         name: regionName(g.country_code),
+        spend: Number(g.spend),
+        results: Number(g.results),
+        clicks: Number(g.clicks),
+        impressions: Number(g.impressions),
+        reach: Number(g.reach),
+        pct: (Number(g.spend) / total) * 100,
+      }));
+  }, [data.geo, accountId]);
+
+  const regionData = useMemo(() => {
+    const src = (data.geo ?? []).filter((r) => inAccount(r) && r.region);
+    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
+    return [...src]
+      .sort((a, b) => Number(b.spend) - Number(a.spend))
+      .map((g) => ({
+        region: g.region_name || g.region,
+        country: g.country_code,
         spend: Number(g.spend),
         results: Number(g.results),
         clicks: Number(g.clicks),
@@ -370,16 +415,16 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
-        <Kpi icon={<Target className="h-4 w-4" />} label="Resultados" value={fmtInt(totals.results)} trend={trend.results} accent="emerald" />
-        <Kpi icon={<Zap className="h-4 w-4" />} label="CPA" value={fmtBRL(derived.cpa)} accent="violet" />
-        <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" value={fmtInt(totals.clicks)} trend={trend.clicks} />
-        <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" value={fmtPct(derived.ctr)} />
-        <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" value={fmtInt(totals.impressions)} trend={trend.impressions} />
-        <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" value={fmtInt(totals.reach)} />
-        <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" value={fmtBRL(derived.cpm)} />
-        <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" value={fmtBRL(derived.cpc)} />
-        <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" value={derived.freq.toFixed(2)} />
+        <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
+        <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint={data.clientType === "local" ? "Conversas de WhatsApp iniciadas" : "Compras, leads ou conversões que a campanha otimiza"} value={fmtInt(totals.results)} trend={trend.results} accent="emerald" />
+        <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por resultado" hint="Investimento ÷ resultados" value={fmtBRL(derived.cpa)} accent="violet" />
+        <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" hint="Cliques no anúncio" value={fmtInt(totals.clicks)} trend={trend.clicks} />
+        <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" hint="Cliques ÷ impressões" value={fmtPct(derived.ctr)} />
+        <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" hint="Vezes que o anúncio foi exibido" value={fmtInt(totals.impressions)} trend={trend.impressions} />
+        <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" hint="Pessoas únicas alcançadas" value={fmtInt(totals.reach)} />
+        <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" hint="Custo por mil impressões" value={fmtBRL(derived.cpm)} />
+        <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" hint="Custo por clique" value={fmtBRL(derived.cpc)} />
+        <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" hint="Média de vezes por pessoa" value={derived.freq.toFixed(2)} />
       </div>
 
       {derived.hasSales && (
@@ -597,13 +642,24 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="geo">
+        <TabsContent value="geo" className="space-y-4">
           <WorldMapPanel geoData={geoData} geoByCode={geoByCode} maxSpend={maxSpend} />
+          <RegionRanking regions={regionData} />
         </TabsContent>
 
-        <TabsContent value="whatsapp">
+        <TabsContent value="whatsapp" className="space-y-4">
+          {/* WhatsApp KPI cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <WaKpi label="Conversas iniciadas" hint="Novas conversas de WhatsApp no período" value={waTotals.conversations_started} prev={waPrevTotals.conversations_started} accent="emerald" />
+            <WaKpi label="Primeiras respostas" hint="Clientes que responderam à sua mensagem" value={waTotals.first_replies} prev={waPrevTotals.first_replies} accent="primary" />
+            <WaKpi label="Cliques no anúncio" hint="Cliques que abriram o WhatsApp" value={waTotals.link_clicks} prev={waPrevTotals.link_clicks} />
+            <WaKpi label="Impressões" hint="Vezes que o anúncio foi exibido" value={waTotals.impressions} prev={waPrevTotals.impressions} />
+          </div>
           <Card>
-            <CardHeader><CardTitle className="text-base">Funil de conversas</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Funil de conversas</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Percurso da pessoa até iniciar a conversa no WhatsApp.</p>
+            </CardHeader>
             <CardContent>
               {waTotals.impressions === 0 && waTotals.conversations_started === 0 ? (
                 <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
@@ -656,8 +712,8 @@ export function PerformanceView({ data }: { data: PerfData }) {
 /* ---------- Sub components ---------- */
 
 function Kpi({
-  icon, label, value, trend, accent,
-}: { icon?: React.ReactNode; label: string; value: string; trend?: number; accent?: "primary" | "emerald" | "violet" }) {
+  icon, label, value, trend, accent, hint,
+}: { icon?: React.ReactNode; label: string; value: string; trend?: number; accent?: "primary" | "emerald" | "violet"; hint?: string }) {
   const accentBg =
     accent === "primary" ? "bg-primary/10 text-primary"
     : accent === "emerald" ? "bg-emerald-500/10 text-emerald-600"
@@ -666,12 +722,13 @@ function Kpi({
   const showTrend = typeof trend === "number" && Number.isFinite(trend) && trend !== 0;
   const trendUp = (trend ?? 0) >= 0;
   return (
-    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow">
+    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow" title={hint}>
       <div className="flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground truncate">{label}</div>
         {icon && <div className={`h-6 w-6 rounded flex items-center justify-center ${accentBg}`}>{icon}</div>}
       </div>
-      <div className="text-lg font-semibold mt-1 tabular-nums">{value}</div>
+      <div className="text-lg sm:text-xl font-semibold mt-1 tabular-nums">{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{hint}</div>}
       {showTrend && (
         <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 ${trendUp ? "text-emerald-600" : "text-rose-600"}`}>
           {trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -962,6 +1019,76 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
             <div key={v} className="h-3 w-3 rounded-sm" style={{ background: `color-mix(in oklch, hsl(var(--primary)) ${20 + v * 80}%, transparent)` }} />
           ))}
           <span>Mais</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* WhatsApp KPI card with comparison badge */
+function WaKpi({ label, value, prev, hint, accent }: { label: string; value: number; prev: number; hint?: string; accent?: "primary" | "emerald" }) {
+  const delta = prev ? ((value - prev) / prev) * 100 : 0;
+  const showDelta = prev > 0 && Number.isFinite(delta) && Math.abs(delta) > 0.5;
+  const up = delta >= 0;
+  const accentBg = accent === "emerald" ? "bg-emerald-500/10 text-emerald-600" : accent === "primary" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground";
+  return (
+    <div className="rounded-lg border p-3 bg-card">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground truncate">{label}</div>
+        <div className={`h-6 w-6 rounded flex items-center justify-center ${accentBg}`}>
+          <MessageCircle className="h-3.5 w-3.5" />
+        </div>
+      </div>
+      <div className="text-xl sm:text-2xl font-semibold mt-1 tabular-nums">{fmtInt(value)}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{hint}</div>}
+      {showDelta ? (
+        <div className={`text-[11px] mt-1 flex items-center gap-1 ${up ? "text-emerald-600" : "text-rose-600"}`}>
+          {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {up ? "+" : ""}{delta.toFixed(1)}% vs. período anterior ({fmtInt(prev)})
+        </div>
+      ) : prev > 0 ? (
+        <div className="text-[11px] mt-1 text-muted-foreground">Estável vs. período anterior</div>
+      ) : null}
+    </div>
+  );
+}
+
+/* Region (state) ranking */
+function RegionRanking({ regions }: { regions: { region: string; country: string; spend: number; results: number; clicks: number; impressions: number; reach: number; pct: number }[] }) {
+  if (!regions.length) return null;
+  const max = regions[0]?.spend || 1;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Ranking por estado / região</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">Distribuição do investimento pelas regiões onde seu anúncio foi entregue.</p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          {regions.slice(0, 30).map((g, i) => {
+            const cpa = g.results ? g.spend / g.results : 0;
+            return (
+              <div key={g.region + i} className="rounded-md border p-3 hover:bg-accent/40 transition">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-6 w-6 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">{i + 1}</div>
+                    <div className="text-sm font-medium truncate">{g.region}</div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{g.country}</span>
+                  </div>
+                  <div className="text-sm font-semibold tabular-nums shrink-0">{fmtBRL(g.spend)}</div>
+                </div>
+                <div className="h-1.5 bg-muted rounded overflow-hidden mb-2">
+                  <div className="h-full bg-primary" style={{ width: `${(g.spend / max) * 100}%` }} />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-muted-foreground">
+                  <div><span className="text-foreground font-medium">{fmtInt(g.results)}</span> result.</div>
+                  <div>CPR <span className="text-foreground font-medium">{g.results ? fmtBRL(cpa) : "—"}</span></div>
+                  <div><span className="text-foreground font-medium">{fmtInt(g.clicks)}</span> cliques</div>
+                  <div><span className="text-foreground font-medium">{g.pct.toFixed(1)}%</span> do total</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
