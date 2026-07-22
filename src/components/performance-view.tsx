@@ -243,6 +243,41 @@ export function PerformanceView({ data }: { data: PerfData }) {
     return t;
   }, [data.whatsapp, accountId, period]);
 
+  // Extra WhatsApp/IG metrics extracted from insights raw actions
+  const waExtras = useMemo(() => {
+    const pick = (actions: any[], keys: string[]) => {
+      let sum = 0;
+      for (const a of actions ?? []) {
+        if (keys.includes(a.action_type)) sum += Number(a.value ?? 0);
+      }
+      return sum;
+    };
+    const NEW_KEYS = [
+      "onsite_conversion.new_messaging_conversation",
+      "onsite_conversion.messaging_user_depth_2_message_send",
+      "new_messaging_conversation",
+    ];
+    const RET_KEYS = [
+      "onsite_conversion.returning_messaging_conversation",
+      "returning_messaging_conversation",
+      "onsite_conversion.messaging_user_depth_5_message_send",
+    ];
+    const IG_KEYS = [
+      "onsite_conversion.profile_visit",
+      "ig_profile_visit",
+      "profile_visit",
+      "onsite_conversion.view_content",
+    ];
+    let newContacts = 0, retContacts = 0, igVisits = 0;
+    for (const r of (data.insights ?? []).filter((r: any) => inAccount(r) && inPeriod(r.date))) {
+      const actions = r?.raw?.actions ?? [];
+      newContacts += pick(actions, NEW_KEYS);
+      retContacts += pick(actions, RET_KEYS);
+      igVisits += pick(actions, IG_KEYS);
+    }
+    return { newContacts, retContacts, igVisits };
+  }, [data.insights, accountId, period]);
+
   const waSeries = useMemo(() => {
     return (data.whatsapp ?? [])
       .filter((r) => inAccount(r) && inPeriod(r.date))
@@ -397,23 +432,42 @@ export function PerformanceView({ data }: { data: PerfData }) {
         const costLabel = isLocal ? "Custo por mensagem" : "Custo por resultado";
         const costHint = isLocal ? "Investimento ÷ conversas iniciadas" : "Investimento ÷ resultados";
         const costValue = resultsValue ? totals.spend / resultsValue : 0;
+        const cpNew = waExtras.newContacts ? totals.spend / waExtras.newContacts : 0;
+        const cpRet = waExtras.retContacts ? totals.spend / waExtras.retContacts : 0;
         return (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="space-y-3">
+            {/* Linha 1: Investimento, Conversas iniciadas, Custo por mensagem, Cliques, CTR */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
+              {isLocal ? (
+                <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Conversas iniciadas" hint="Conversas de WhatsApp iniciadas — resultado principal" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+              ) : (
+                <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint="Compras, leads ou conversões que a campanha otimiza" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+              )}
+              <Kpi icon={<Zap className="h-4 w-4" />} label={costLabel} hint={costHint} value={fmtBRL(costValue)} accent="violet" />
+              <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" hint="Cliques no anúncio" value={fmtInt(totals.clicks)} trend={trend.clicks} />
+              <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" hint="Cliques ÷ impressões" value={fmtPct(derived.ctr)} />
+            </div>
+
+            {/* Linha 2: Impressões, Alcance, CPM, CPC, Frequência */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" hint="Vezes que o anúncio foi exibido" value={fmtInt(totals.impressions)} trend={trend.impressions} />
+              <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" hint="Pessoas únicas alcançadas" value={fmtInt(totals.reach)} />
+              <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" hint="Custo por mil impressões" value={fmtBRL(derived.cpm)} />
+              <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" hint="Custo por clique" value={fmtBRL(derived.cpc)} />
+              <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" hint="Média de vezes por pessoa" value={derived.freq.toFixed(2)} />
+            </div>
+
+            {/* Linha 3 (local/WhatsApp): Novos contatos, custo, retornam, custo, IG */}
             {isLocal && (
-              <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Conversas iniciadas" hint="Conversas de WhatsApp iniciadas — resultado principal" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Novos contatos" hint="Novos contatos por mensagem" value={fmtInt(waExtras.newContacts)} accent="emerald" />
+                <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por novo contato" hint="Investimento ÷ novos contatos" value={fmtBRL(cpNew)} accent="violet" />
+                <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Contatos que retornam" hint="Contatos por mensagem recorrentes" value={fmtInt(waExtras.retContacts)} />
+                <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por contato que retorna" hint="Investimento ÷ contatos que retornam" value={fmtBRL(cpRet)} accent="violet" />
+                <Kpi icon={<Eye className="h-4 w-4" />} label="Visitas ao perfil Instagram" hint="Visitas ao perfil do Instagram vindas do anúncio" value={fmtInt(waExtras.igVisits)} />
+              </div>
             )}
-            <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" hint="Total gasto no período" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
-            {!isLocal && (
-              <Kpi icon={<Target className="h-4 w-4" />} label={resultsLabel} hint="Compras, leads ou conversões que a campanha otimiza" value={fmtInt(resultsValue)} trend={trendResults} accent="emerald" />
-            )}
-            <Kpi icon={<Zap className="h-4 w-4" />} label={costLabel} hint={costHint} value={fmtBRL(costValue)} accent="violet" />
-            <Kpi icon={<MousePointer className="h-4 w-4" />} label="Cliques" hint="Cliques no anúncio" value={fmtInt(totals.clicks)} trend={trend.clicks} />
-            <Kpi icon={<TrendingUp className="h-4 w-4" />} label="CTR" hint="Cliques ÷ impressões" value={fmtPct(derived.ctr)} />
-            <Kpi icon={<Eye className="h-4 w-4" />} label="Impressões" hint="Vezes que o anúncio foi exibido" value={fmtInt(totals.impressions)} trend={trend.impressions} />
-            <Kpi icon={<Users className="h-4 w-4" />} label="Alcance" hint="Pessoas únicas alcançadas" value={fmtInt(totals.reach)} />
-            <Kpi icon={<BarChart3 className="h-4 w-4" />} label="CPM" hint="Custo por mil impressões" value={fmtBRL(derived.cpm)} />
-            <Kpi icon={<MousePointerClick className="h-4 w-4" />} label="CPC" hint="Custo por clique" value={fmtBRL(derived.cpc)} />
-            <Kpi icon={<Users className="h-4 w-4" />} label="Frequência" hint="Média de vezes por pessoa" value={derived.freq.toFixed(2)} />
           </div>
         );
       })()}
