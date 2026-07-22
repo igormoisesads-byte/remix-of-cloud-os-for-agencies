@@ -5,8 +5,9 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Cloud, Home, MessageSquare, Users, ClipboardList, DollarSign, Settings, LogOut, UserCog,
-  HeartPulse, Smile, Target,
+  HeartPulse, Smile, Target, Film,
 } from "lucide-react";
+
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
