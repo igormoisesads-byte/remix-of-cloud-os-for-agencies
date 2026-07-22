@@ -66,14 +66,89 @@ function regionName(code: string) {
 }
 
 export function PerformanceView({ data }: { data: PerfData }) {
+  // ---------- Filters ----------
+  const accountsList = data.accounts ?? [];
+  const [accountId, setAccountId] = useState<string>("all");
+  const [campaignId, setCampaignId] = useState<string>("all");
+  const [creativeId, setCreativeId] = useState<string>("all");
+  const [period, setPeriod] = useState<string>("30"); // days from most recent data
+
+  // Options for campaigns come from campaignInsights + creatives (union)
+  const campaignOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of data.campaignInsights ?? []) {
+      if (c.campaign_id) m.set(String(c.campaign_id), c.campaign_name || String(c.campaign_id));
+    }
+    for (const c of data.creatives ?? []) {
+      if (c.campaign_id && !m.has(String(c.campaign_id))) m.set(String(c.campaign_id), c.campaign_name || String(c.campaign_id));
+    }
+    return [...m.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [data.campaignInsights, data.creatives]);
+
+  // Filter helpers
+  const inPeriod = (dateStr: string) => {
+    if (period === "all") return true;
+    const dayMs = 86400000;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const d = new Date(dateStr + "T00:00");
+    const diff = (now.getTime() - d.getTime()) / dayMs;
+    return diff <= Number(period);
+  };
+  const inAccount = (row: any) => accountId === "all" || row.ad_account_id === accountId;
+
+  // ---------- Filtered creatives ----------
+  const filteredCreatives = useMemo(() => {
+    return (data.creatives ?? []).filter((c) => {
+      if (!inAccount(c)) return false;
+      if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
+      if (creativeId !== "all" && String(c.id) !== creativeId) return false;
+      return true;
+    });
+  }, [data.creatives, accountId, campaignId, creativeId]);
+
+  // Creative options depend on account/campaign selection
+  const creativeOptions = useMemo(() => {
+    return (data.creatives ?? [])
+      .filter((c) => inAccount(c) && (campaignId === "all" || String(c.campaign_id ?? "") === campaignId))
+      .map((c) => ({ id: String(c.id), name: c.name || "(sem nome)" }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [data.creatives, accountId, campaignId]);
+
+  // ---------- Daily series (source depends on filters) ----------
+  // Use campaign-level daily insights when campaignId filter is active;
+  // when a specific creative is selected, we can't get daily (creatives are aggregated),
+  // so we synthesize a single-bucket series with the creative's totals.
+  const dailyRows = useMemo(() => {
+    if (creativeId !== "all") {
+      // Single aggregated row → fake into a series showing totals as a single point
+      const c = filteredCreatives[0];
+      if (!c) return [] as any[];
+      const today = new Date().toISOString().slice(0, 10);
+      return [{
+        date: today,
+        spend: Number(c.spend ?? 0),
+        impressions: Number(c.impressions ?? 0),
+        clicks: Number(c.clicks ?? 0),
+        reach: Number(c.reach ?? 0),
+        results: Number(c.results ?? 0),
+      }];
+    }
+    if (campaignId !== "all") {
+      return (data.campaignInsights ?? []).filter((r) => inAccount(r) && String(r.campaign_id) === campaignId && inPeriod(r.date));
+    }
+    // No campaign/creative filter → account-level daily insights (aggregate all campaigns for the account)
+    return (data.insights ?? []).filter((r) => inAccount(r) && inPeriod(r.date));
+  }, [data.insights, data.campaignInsights, accountId, campaignId, creativeId, period, filteredCreatives]);
+
   const totals = useMemo(() => {
     const t = { spend: 0, impressions: 0, clicks: 0, reach: 0, results: 0 };
-    for (const r of data.insights) {
+    for (const r of dailyRows) {
       t.spend += Number(r.spend); t.impressions += Number(r.impressions);
       t.clicks += Number(r.clicks); t.reach += Number(r.reach); t.results += Number(r.results);
     }
     return t;
-  }, [data.insights]);
+  }, [dailyRows]);
 
   const derived = useMemo(() => {
     const ctr = totals.impressions ? (totals.clicks / totals.impressions) * 100 : 0;
@@ -84,9 +159,8 @@ export function PerformanceView({ data }: { data: PerfData }) {
     return { ctr, cpc, cpm, cpa, freq };
   }, [totals]);
 
-  // Compare last 15 days vs previous 15 days
   const trend = useMemo(() => {
-    const sorted = [...data.insights].sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = [...dailyRows].sort((a, b) => a.date.localeCompare(b.date));
     const half = Math.floor(sorted.length / 2);
     const prev = sorted.slice(0, half);
     const curr = sorted.slice(half);
@@ -97,11 +171,11 @@ export function PerformanceView({ data }: { data: PerfData }) {
       return ((c - p) / p) * 100;
     };
     return { spend: calc("spend"), results: calc("results"), clicks: calc("clicks"), impressions: calc("impressions") };
-  }, [data.insights]);
+  }, [dailyRows]);
 
   const chartData = useMemo(() => {
     const byDate: Record<string, any> = {};
-    for (const r of data.insights) {
+    for (const r of dailyRows) {
       const d = r.date;
       if (!byDate[d]) byDate[d] = { date: d, spend: 0, results: 0, clicks: 0, impressions: 0 };
       byDate[d].spend += Number(r.spend);
@@ -117,30 +191,46 @@ export function PerformanceView({ data }: { data: PerfData }) {
         cpa: r.results ? r.spend / r.results : 0,
         ctr: r.impressions ? (r.clicks / r.impressions) * 100 : 0,
       }));
-  }, [data.insights]);
+  }, [dailyRows]);
+
+  // Top-campaign breakdown (aggregated for current filters, ignoring campaign filter itself so user can compare)
+  const campaignBreakdown = useMemo(() => {
+    const src = (data.campaignInsights ?? []).filter((r) => inAccount(r) && inPeriod(r.date));
+    const m = new Map<string, { id: string; name: string; spend: number; results: number; clicks: number; impressions: number }>();
+    for (const r of src) {
+      const id = String(r.campaign_id);
+      const cur = m.get(id) ?? { id, name: r.campaign_name || id, spend: 0, results: 0, clicks: 0, impressions: 0 };
+      cur.spend += Number(r.spend); cur.results += Number(r.results); cur.clicks += Number(r.clicks); cur.impressions += Number(r.impressions);
+      m.set(id, cur);
+    }
+    return [...m.values()].sort((a, b) => b.spend - a.spend).slice(0, 10);
+  }, [data.campaignInsights, accountId, period]);
 
   const waTotals = useMemo(() => {
     const t = { impressions: 0, link_clicks: 0, conversations_started: 0, first_replies: 0 };
-    for (const r of data.whatsapp) {
+    for (const r of (data.whatsapp ?? []).filter((r) => inAccount(r) && inPeriod(r.date))) {
       t.impressions += Number(r.impressions);
       t.link_clicks += Number(r.link_clicks);
       t.conversations_started += Number(r.conversations_started);
       t.first_replies += Number(r.first_replies);
     }
     return t;
-  }, [data.whatsapp]);
+  }, [data.whatsapp, accountId, period]);
 
   const waSeries = useMemo(() => {
-    return data.whatsapp.map((r) => ({
-      label: new Date(r.date + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      conversas: Number(r.conversations_started),
-      cliques: Number(r.link_clicks),
-    }));
-  }, [data.whatsapp]);
+    return (data.whatsapp ?? [])
+      .filter((r) => inAccount(r) && inPeriod(r.date))
+      .map((r) => ({
+        label: new Date(r.date + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        conversas: Number(r.conversations_started),
+        cliques: Number(r.link_clicks),
+      }));
+  }, [data.whatsapp, accountId, period]);
 
   const geoData = useMemo(() => {
-    const total = data.geo.reduce((s, g) => s + Number(g.spend), 0) || 1;
-    return [...data.geo]
+    const src = (data.geo ?? []).filter((r) => inAccount(r));
+    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
+    return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
       .map((g) => ({
         code: g.country_code,
@@ -152,7 +242,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
         reach: Number(g.reach),
         pct: (Number(g.spend) / total) * 100,
       }));
-  }, [data.geo]);
+  }, [data.geo, accountId]);
 
   const geoByCode = useMemo(() => {
     const m: Record<string, typeof geoData[number]> = {};
@@ -164,7 +254,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
   const links = useMemo(() => {
     const map = new Map<string, { url: string; clicks: number; spend: number; results: number; count: number }>();
-    for (const c of data.creatives) {
+    for (const c of filteredCreatives) {
       if (!c.destination_url) continue;
       const cur = map.get(c.destination_url) ?? { url: c.destination_url, clicks: 0, spend: 0, results: 0, count: 0 };
       cur.clicks += Number(c.clicks);
