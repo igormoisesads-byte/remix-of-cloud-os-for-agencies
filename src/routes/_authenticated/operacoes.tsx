@@ -164,49 +164,54 @@ function OperacoesPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Operações</h1>
-          <p className="text-muted-foreground mt-1">
-            {view === "kanban"
-              ? "Kanban de demandas, kickoffs e rotinas. Arraste os cards entre colunas."
-              : "Calendário de tarefas por data de entrega."}
-            {" "}Rotinas: <b>{new Date(week.start + "T00:00").toLocaleDateString("pt-BR")} – {new Date(week.end + "T00:00").toLocaleDateString("pt-BR")}</b>.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-md border bg-background p-0.5">
-            <Button size="sm" variant={view === "kanban" ? "default" : "ghost"} className="h-8 gap-1.5" onClick={() => setView("kanban")}>
-              <LayoutGrid className="h-3.5 w-3.5" /> Kanban
-            </Button>
-            <Button size="sm" variant={view === "calendar" ? "default" : "ghost"} className="h-8 gap-1.5" onClick={() => setView("calendar")}>
-              <CalendarDays className="h-3.5 w-3.5" /> Calendário
-            </Button>
+      <div className="flex flex-col gap-2 sm:gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight truncate">Operações</h1>
+            <p className="hidden sm:block text-muted-foreground mt-1 text-sm">
+              {view === "kanban"
+                ? "Kanban de demandas, kickoffs e rotinas. Arraste os cards entre colunas."
+                : "Calendário de tarefas por data de entrega."}
+              {" "}Rotinas: <b>{new Date(week.start + "T00:00").toLocaleDateString("pt-BR")} – {new Date(week.end + "T00:00").toLocaleDateString("pt-BR")}</b>.
+            </p>
           </div>
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="inline-flex rounded-md border bg-background p-0.5">
+              <Button size="sm" variant={view === "kanban" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("kanban")} aria-label="Kanban">
+                <LayoutGrid className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Kanban</span>
+              </Button>
+              <Button size="sm" variant={view === "calendar" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("calendar")} aria-label="Calendário">
+                <CalendarDays className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Calendário</span>
+              </Button>
+            </div>
+            <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
           <Select value={filterClient} onValueChange={setFilterClient}>
-            <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Cliente" /></SelectTrigger>
+            <SelectTrigger className="w-[140px] sm:w-[160px] h-9 shrink-0"><SelectValue placeholder="Cliente" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os clientes</SelectItem>
               {(clients.data ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterAssignee} onValueChange={setFilterAssignee}>
-            <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Responsável" /></SelectTrigger>
+            <SelectTrigger className="w-[130px] sm:w-[160px] h-9 shrink-0"><SelectValue placeholder="Responsável" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toda equipe</SelectItem>
               {(team.data ?? []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterKind} onValueChange={setFilterKind}>
-            <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectTrigger className="w-[120px] sm:w-[140px] h-9 shrink-0"><SelectValue placeholder="Tipo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os tipos</SelectItem>
               {Object.entries(KIND_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterTag} onValueChange={setFilterTag}>
-            <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Tag" /></SelectTrigger>
+            <SelectTrigger className="w-[120px] sm:w-[140px] h-9 shrink-0"><SelectValue placeholder="Tag" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as tags</SelectItem>
               {(allTags.data ?? []).length === 0 && (
@@ -215,7 +220,6 @@ function OperacoesPage() {
               {(allTags.data ?? []).map((t: string) => <SelectItem key={t} value={t}>#{t}</SelectItem>)}
             </SelectContent>
           </Select>
-          <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
         </div>
       </div>
 
