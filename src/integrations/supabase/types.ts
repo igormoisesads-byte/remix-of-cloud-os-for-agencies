@@ -146,23 +146,45 @@ export type Database = {
           campaign_id: string | null
           campaign_name: string | null
           clicks: number
+          cost_per_initiate_checkout: number | null
+          cost_per_landing_page_view: number | null
+          cost_per_purchase: number | null
           cpc: number | null
+          cpm: number | null
+          cpp: number | null
           created_at: string
           ctr: number | null
           destination_url: string | null
           external_id: string
+          frequency: number | null
           id: string
           impressions: number
+          initiate_checkout: number
+          initiate_checkout_value: number
+          landing_page_views: number
           last_sync_at: string | null
+          messaging_conversations_started: number
           name: string | null
           preview_url: string | null
+          purchase_value: number
+          purchases: number
           raw: Json | null
           reach: number
           results: number
+          roas: number | null
           spend: number
           status: string | null
           thumbnail_url: string | null
+          unique_link_clicks: number
+          unique_link_cpc: number | null
+          unique_link_ctr: number | null
+          unique_outbound_clicks: number
+          unique_outbound_cpc: number | null
+          unique_outbound_ctr: number | null
           updated_at: string
+          video_p3s: number
+          video_p75: number
+          video_plays: number
         }
         Insert: {
           ad_account_id: string
@@ -171,23 +193,45 @@ export type Database = {
           campaign_id?: string | null
           campaign_name?: string | null
           clicks?: number
+          cost_per_initiate_checkout?: number | null
+          cost_per_landing_page_view?: number | null
+          cost_per_purchase?: number | null
           cpc?: number | null
+          cpm?: number | null
+          cpp?: number | null
           created_at?: string
           ctr?: number | null
           destination_url?: string | null
           external_id: string
+          frequency?: number | null
           id?: string
           impressions?: number
+          initiate_checkout?: number
+          initiate_checkout_value?: number
+          landing_page_views?: number
           last_sync_at?: string | null
+          messaging_conversations_started?: number
           name?: string | null
           preview_url?: string | null
+          purchase_value?: number
+          purchases?: number
           raw?: Json | null
           reach?: number
           results?: number
+          roas?: number | null
           spend?: number
           status?: string | null
           thumbnail_url?: string | null
+          unique_link_clicks?: number
+          unique_link_cpc?: number | null
+          unique_link_ctr?: number | null
+          unique_outbound_clicks?: number
+          unique_outbound_cpc?: number | null
+          unique_outbound_ctr?: number | null
           updated_at?: string
+          video_p3s?: number
+          video_p75?: number
+          video_plays?: number
         }
         Update: {
           ad_account_id?: string
@@ -196,23 +240,45 @@ export type Database = {
           campaign_id?: string | null
           campaign_name?: string | null
           clicks?: number
+          cost_per_initiate_checkout?: number | null
+          cost_per_landing_page_view?: number | null
+          cost_per_purchase?: number | null
           cpc?: number | null
+          cpm?: number | null
+          cpp?: number | null
           created_at?: string
           ctr?: number | null
           destination_url?: string | null
           external_id?: string
+          frequency?: number | null
           id?: string
           impressions?: number
+          initiate_checkout?: number
+          initiate_checkout_value?: number
+          landing_page_views?: number
           last_sync_at?: string | null
+          messaging_conversations_started?: number
           name?: string | null
           preview_url?: string | null
+          purchase_value?: number
+          purchases?: number
           raw?: Json | null
           reach?: number
           results?: number
+          roas?: number | null
           spend?: number
           status?: string | null
           thumbnail_url?: string | null
+          unique_link_clicks?: number
+          unique_link_cpc?: number | null
+          unique_link_ctr?: number | null
+          unique_outbound_clicks?: number
+          unique_outbound_cpc?: number | null
+          unique_outbound_ctr?: number | null
           updated_at?: string
+          video_p3s?: number
+          video_p75?: number
+          video_plays?: number
         }
         Relationships: [
           {
