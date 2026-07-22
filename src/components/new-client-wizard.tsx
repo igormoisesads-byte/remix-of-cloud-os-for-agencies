@@ -219,21 +219,25 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       const freqMap: Record<string, { full: number; light: number; label: string }> = {
         "2s": { full: 1, light: 4, label: "2S (Seg/Qui)" },   // Segunda Full · Quinta Light
         "3s": { full: 2, light: 5, label: "3S (Ter/Sex)" },   // Terça Full · Sexta Light
-        "4s": { full: 3, light: 6, label: "4S (Qua/Sáb)" },   // Quarta Full · Sábado Light
+        "4s": { full: 3, light: 5, label: "4S (Qua/Sex)" },   // Quarta Full · Sexta (pulou sábado/domingo)
       };
       const cfg = freqMap[form.optimization_frequency];
       if (cfg) {
         const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+        // Limita a geração para no máximo 12 semanas para não estourar em contratos longos.
+        // O restante é gerado sob demanda (cron) — ver docs de rotinas.
+        const maxEnd = new Date(start.getTime() + 12 * 7 * 86400000);
         const end = form.contract_end
-          ? new Date(form.contract_end + "T00:00:00")
-          : new Date(start.getTime() + 90 * 86400000); // padrão: 90 dias
+          ? new Date(Math.min(new Date(form.contract_end + "T00:00:00").getTime(), maxEnd.getTime()))
+          : maxEnd;
         const assignee = form.performance_user_id || user.id;
         const optTasks: any[] = [];
         const cur = new Date(start);
         let pos = 0;
         while (cur <= end) {
           const dow = cur.getDay();
-          if (dow === cfg.full || dow === cfg.light) {
+          // Nunca gerar aos domingos (0)
+          if (dow !== 0 && (dow === cfg.full || dow === cfg.light)) {
             const isFull = dow === cfg.full;
             const dateStr = cur.toISOString().slice(0, 10);
             optTasks.push({
@@ -253,7 +257,6 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
           }
           cur.setDate(cur.getDate() + 1);
         }
-        // Insere em lotes de 200 para não estourar o payload
         for (let i = 0; i < optTasks.length; i += 200) {
           await supabase.from("tasks").insert(optTasks.slice(i, i + 200));
         }
