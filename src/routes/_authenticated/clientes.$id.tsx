@@ -373,6 +373,8 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
                 creatives: creatives.data ?? [],
                 geo: geo.data ?? [],
                 whatsapp: wa.data ?? [],
+                campaignInsights: campaignInsights.data ?? [],
+                accounts: accounts.data ?? [],
               }} />
               <div className="mt-4 space-y-2">
                 {(accounts.data ?? []).map((a: any) => (
