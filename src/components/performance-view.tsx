@@ -609,39 +609,6 @@ export function PerformanceView({ data }: { data: PerfData }) {
             </CardContent>
           </Card>
 
-          {campaignBreakdown.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle className="text-base">Campanhas — top 10 por investimento</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {campaignBreakdown.map((c) => {
-                    const cpa = c.results ? c.spend / c.results : 0;
-                    const ctr = c.impressions ? (c.clicks / c.impressions) * 100 : 0;
-                    const maxSp = campaignBreakdown[0].spend || 1;
-                    const isActive = campaignId === c.id;
-                    return (
-                      <button key={c.id} onClick={() => setCampaignId(isActive ? "all" : c.id)}
-                        className={`w-full text-left rounded-md border p-3 hover:bg-accent transition ${isActive ? "border-primary bg-primary/5" : ""}`}>
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <div className="text-sm font-medium truncate">{c.name}</div>
-                          <div className="text-sm font-semibold tabular-nums">{fmtBRL(c.spend)}</div>
-                        </div>
-                        <div className="h-1.5 bg-muted rounded overflow-hidden mb-2">
-                          <div className="h-full bg-primary" style={{ width: `${(c.spend / maxSp) * 100}%` }} />
-                        </div>
-                        <div className="grid grid-cols-4 gap-2 text-[11px] text-muted-foreground">
-                          <div><span className="text-foreground font-medium">{fmtInt(c.results)}</span> result.</div>
-                          <div>CPA <span className="text-foreground font-medium">{fmtBRL(cpa)}</span></div>
-                          <div>CTR <span className="text-foreground font-medium">{fmtPct(ctr)}</span></div>
-                          <div><span className="text-foreground font-medium">{fmtInt(c.clicks)}</span> cliques</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="criativos">
@@ -1050,15 +1017,16 @@ function HourDayHeatmap({ hourly }: { hourly: any[] }) {
                 <div className="w-8 text-[10px] text-muted-foreground shrink-0">{lbl}</div>
                 {Array.from({ length: 24 }, (_, h) => {
                   const v = grid[d][h];
-                  const intensity = v / max;
+                  // escala logarítmica para destacar melhor valores baixos
+                  const intensity = v > 0 && max > 0 ? Math.log(v + 1) / Math.log(max + 1) : 0;
                   const bg = v === 0
-                    ? "hsl(220 14% 93%)"
-                    : `rgba(37, 99, 235, ${0.15 + intensity * 0.85})`;
+                    ? "#eef2f7"
+                    : `rgb(${Math.round(219 - intensity * 182)}, ${Math.round(234 - intensity * 135)}, ${Math.round(254 - intensity * 19)})`;
                   return (
                     <div
                       key={h}
                       className="flex-1 aspect-square rounded-[3px] border border-border/40"
-                      style={{ background: bg, minWidth: 8 }}
+                      style={{ backgroundColor: bg, minWidth: 8 }}
                       title={`${lbl} · ${String(h).padStart(2, "0")}h — ${v} leads`}
                     />
                   );
@@ -1069,8 +1037,16 @@ function HourDayHeatmap({ hourly }: { hourly: any[] }) {
         </div>
         <div className="flex items-center gap-2 mt-3 text-[10px] text-muted-foreground">
           <span>Menos</span>
-          {[0.1, 0.3, 0.6, 1].map((v) => (
-            <div key={v} className="h-3 w-3 rounded-sm border border-border/40" style={{ background: `rgba(37, 99, 235, ${0.15 + v * 0.85})` }} />
+          {[0, 0.25, 0.5, 0.75, 1].map((v) => (
+            <div
+              key={v}
+              className="h-3 w-3 rounded-sm border border-border/40"
+              style={{
+                backgroundColor: v === 0
+                  ? "#eef2f7"
+                  : `rgb(${Math.round(219 - v * 182)}, ${Math.round(234 - v * 135)}, ${Math.round(254 - v * 19)})`,
+              }}
+            />
           ))}
           <span>Mais</span>
         </div>
