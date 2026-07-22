@@ -414,15 +414,32 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
     url: string; type: string; name: string; size: number; kind: string;
   } | null> {
     if (!user) return null;
-    const ext = filename.includes(".") ? filename.split(".").pop() : "bin";
-    const path = `${user.id}/${channel.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("chat-attachments").upload(path, blob, {
-      contentType: blob.type || "application/octet-stream", upsert: false,
-    });
-    if (error) { toast.error(error.message); return null; }
-    const { data: signed } = await supabase.storage.from("chat-attachments").createSignedUrl(path, 60 * 60 * 24 * 365);
-    return { url: signed?.signedUrl || "", type: blob.type, name: filename, size: blob.size, kind };
+    const contentType = blob.type || "application/octet-stream";
+    try {
+      const { uploadUrl, publicUrl } = await createR2UploadUrl({
+        data: {
+          folder: `chat/${channel.id}`,
+          filename,
+          contentType,
+        },
+      });
+      const put = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: blob,
+      });
+      if (!put.ok) {
+        const txt = await put.text().catch(() => "");
+        toast.error(`Falha no upload (${put.status}) ${txt.slice(0, 120)}`);
+        return null;
+      }
+      return { url: publicUrl, type: contentType, name: filename, size: blob.size, kind };
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar arquivo");
+      return null;
+    }
   }
+
 
   async function send() {
     if (!user) return;
