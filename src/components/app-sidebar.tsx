@@ -66,10 +66,13 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const { profile, roles, signOut } = useAuth();
   const nav = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
   const isActive = (url: string) => pathname === url || pathname.startsWith(url + "/");
+  const closeIfMobile = () => { if (isMobile) setOpenMobile(false); };
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((g) => [g.label, true]))
   );
+
 
   return (
     <Sidebar collapsible="icon">
