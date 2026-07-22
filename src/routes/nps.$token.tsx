@@ -118,14 +118,7 @@ function PublicNpsPage() {
               </div>
             ))}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Comentário (opcional)</label>
-              <Textarea value={comment} onChange={(e) => setComment(e.target.value)} />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input placeholder="Seu nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} />
-              <Input placeholder="E-mail (opcional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
+
 
             <Button onClick={submit} disabled={sending} className="w-full" size="lg">
               {sending ? "Enviando..." : "Enviar resposta"}
