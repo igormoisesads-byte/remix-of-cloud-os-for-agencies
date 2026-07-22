@@ -329,6 +329,7 @@ function VisaoGeral({ c }: { c: any }) {
       <StatCard title="PDAs" icon={AlertTriangle} value={`${pdasQ.data ?? 0} pendentes`} />
       <StatCard title="NPS" icon={Star} value={npsQ.data ? String(npsQ.data.score) : "Sem registros"} sub={npsQ.data ? fmtDate(npsQ.data.created_at) : ""} />
       <StatCard title="Onboarding" icon={ListChecks} value={totalCount ? `${doneCount}/${totalCount}` : "Não iniciado"} sub={totalCount ? `${Math.round((doneCount / totalCount) * 100)}% concluído` : ""} />
+      </div>
     </div>
   );
 }
