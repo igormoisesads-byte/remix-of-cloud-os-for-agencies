@@ -273,6 +273,56 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
   return (
     <div className="space-y-4">
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
+          <Filter className="h-3.5 w-3.5" /> Filtros
+        </div>
+        <Select value={period} onValueChange={setPeriod}>
+          <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">Últimos 7 dias</SelectItem>
+            <SelectItem value="14">Últimos 14 dias</SelectItem>
+            <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="all">Todo o período</SelectItem>
+          </SelectContent>
+        </Select>
+        {accountsList.length > 1 && (
+          <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
+            <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as contas</SelectItem>
+              {accountsList.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.account_name || a.account_id}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <Select value={campaignId} onValueChange={(v) => { setCampaignId(v); setCreativeId("all"); }}>
+          <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as campanhas</SelectItem>
+            {campaignOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={creativeId} onValueChange={setCreativeId}>
+          <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os anúncios</SelectItem>
+            {creativeOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearFilters}>
+            <X className="h-3.5 w-3.5 mr-1" /> Limpar
+          </Button>
+        )}
+      </div>
+
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
         <Kpi icon={<DollarSign className="h-4 w-4" />} label="Investimento" value={fmtBRL(totals.spend)} trend={trend.spend} accent="primary" />
