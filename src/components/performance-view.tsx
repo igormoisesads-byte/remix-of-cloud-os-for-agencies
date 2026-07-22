@@ -243,6 +243,41 @@ export function PerformanceView({ data }: { data: PerfData }) {
     return t;
   }, [data.whatsapp, accountId, period]);
 
+  // Extra WhatsApp/IG metrics extracted from insights raw actions
+  const waExtras = useMemo(() => {
+    const pick = (actions: any[], keys: string[]) => {
+      let sum = 0;
+      for (const a of actions ?? []) {
+        if (keys.includes(a.action_type)) sum += Number(a.value ?? 0);
+      }
+      return sum;
+    };
+    const NEW_KEYS = [
+      "onsite_conversion.new_messaging_conversation",
+      "onsite_conversion.messaging_user_depth_2_message_send",
+      "new_messaging_conversation",
+    ];
+    const RET_KEYS = [
+      "onsite_conversion.returning_messaging_conversation",
+      "returning_messaging_conversation",
+      "onsite_conversion.messaging_user_depth_5_message_send",
+    ];
+    const IG_KEYS = [
+      "onsite_conversion.profile_visit",
+      "ig_profile_visit",
+      "profile_visit",
+      "onsite_conversion.view_content",
+    ];
+    let newContacts = 0, retContacts = 0, igVisits = 0;
+    for (const r of (data.insights ?? []).filter((r: any) => inAccount(r) && inPeriod(r.date))) {
+      const actions = r?.raw?.actions ?? [];
+      newContacts += pick(actions, NEW_KEYS);
+      retContacts += pick(actions, RET_KEYS);
+      igVisits += pick(actions, IG_KEYS);
+    }
+    return { newContacts, retContacts, igVisits };
+  }, [data.insights, accountId, period]);
+
   const waSeries = useMemo(() => {
     return (data.whatsapp ?? [])
       .filter((r) => inAccount(r) && inPeriod(r.date))
