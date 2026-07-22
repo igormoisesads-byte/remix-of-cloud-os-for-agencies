@@ -240,7 +240,7 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
               {topCreatives.map((c, i) => (
                 <div key={c.id || i} className="rounded-lg border overflow-hidden bg-card">
                   {c.thumbnail_url ? (
-                    <img src={c.thumbnail_url} alt={c.name || "Criativo"} className="w-full aspect-video object-cover" loading="lazy" />
+                    <img src={c.thumbnail_url} alt={c.name || "Criativo"} className="w-full aspect-video object-cover" loading="eager" decoding="async" fetchPriority="low" />
                   ) : (
                     <div className="w-full aspect-video bg-muted flex items-center justify-center text-xs text-muted-foreground">Sem preview</div>
                   )}

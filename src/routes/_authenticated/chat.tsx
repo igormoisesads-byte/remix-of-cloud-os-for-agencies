@@ -594,12 +594,20 @@ function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Ch
                       onClick={() => setLightbox({ url: m.attachment_url!, name: m.attachment_name || "imagem" })}
                       className="block mt-1"
                     >
-                      <img src={m.attachment_url} alt={m.attachment_name || "imagem"} className="max-h-64 rounded-md border cursor-zoom-in hover:opacity-90 transition" />
+                      <img
+                        src={m.attachment_url}
+                        alt={m.attachment_name || "imagem"}
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="low"
+                        className="max-h-64 rounded-md border cursor-zoom-in hover:opacity-90 transition"
+                      />
                     </button>
                   )}
                   {m.attachment_url && m.attachment_kind === "audio" && (
                     <AudioPlayer src={m.attachment_url} />
                   )}
+
 
                   {m.attachment_url && m.attachment_kind === "file" && (
                     <a href={m.attachment_url} target="_blank" rel="noreferrer"
@@ -954,7 +962,8 @@ function AudioPlayer({ src }: { src: string }) {
       <audio
         ref={audioRef}
         src={src}
-        preload="metadata"
+        preload="auto"
+
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); setCurrent(0); }}
