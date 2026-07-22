@@ -252,6 +252,32 @@ export function PerformanceView({ data }: { data: PerfData }) {
       }));
   }, [data.whatsapp, accountId, period]);
 
+  // Previous period delta for WhatsApp (same length as current period)
+  const waPrevTotals = useMemo(() => {
+    const t = { impressions: 0, link_clicks: 0, conversations_started: 0, first_replies: 0 };
+    if (period === "all" || period === "custom" || period === "current_week") return t;
+    const days = Number(period);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const prevStart = new Date(now); prevStart.setDate(now.getDate() - days * 2);
+    const prevEnd = new Date(now); prevEnd.setDate(now.getDate() - days);
+    for (const r of (data.whatsapp ?? []).filter((r) => inAccount(r))) {
+      const d = new Date(r.date + "T00:00");
+      if (d >= prevStart && d < prevEnd) {
+        t.impressions += Number(r.impressions);
+        t.link_clicks += Number(r.link_clicks);
+        t.conversations_started += Number(r.conversations_started);
+        t.first_replies += Number(r.first_replies);
+      }
+    }
+    return t;
+  }, [data.whatsapp, accountId, period]);
+
+  const resultsLabel = data.clientType === "local"
+    ? "Conversas iniciadas"
+    : (data.clientType === "perpetuo" || data.clientType === "lancamento" || data.clientType === "autoria")
+    ? "Compras / leads"
+    : "Resultados";
+
   const geoData = useMemo(() => {
     // Country-level only (no region)
     const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
