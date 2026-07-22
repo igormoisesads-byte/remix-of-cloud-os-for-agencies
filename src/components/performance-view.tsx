@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -199,7 +199,16 @@ export function PerformanceView({ data }: { data: PerfData }) {
     return { spend: calc("spend"), results: calc("results"), clicks: calc("clicks"), impressions: calc("impressions") };
   }, [dailyRows]);
 
+  // Viewport width to decide chart bucket size (daily/weekly/monthly)
+  const [vw, setVw] = useState<number>(typeof window !== "undefined" ? window.innerWidth : 1024);
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const chartData = useMemo(() => {
+    // First aggregate daily
     const byDate: Record<string, any> = {};
     for (const r of dailyRows) {
       const d = r.date;
@@ -209,15 +218,63 @@ export function PerformanceView({ data }: { data: PerfData }) {
       byDate[d].clicks += Number(r.clicks);
       byDate[d].impressions += Number(r.impressions);
     }
-    return Object.values(byDate)
-      .sort((a: any, b: any) => a.date.localeCompare(b.date))
+    const daily = Object.values(byDate).sort((a: any, b: any) => a.date.localeCompare(b.date)) as any[];
+    const n = daily.length;
+
+    // Choose bucket by (viewport, number of points)
+    const isMobile = vw < 640;
+    const isTablet = vw >= 640 && vw < 1024;
+    const maxPoints = isMobile ? 14 : isTablet ? 30 : 45;
+    const monthlyThreshold = isMobile ? 90 : 180;
+    let bucket: "day" | "week" | "month" = "day";
+    if (n > monthlyThreshold) bucket = "month";
+    else if (n > maxPoints) bucket = "week";
+
+    const bucketKey = (dStr: string) => {
+      const d = new Date(dStr + "T00:00");
+      if (bucket === "month") {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      }
+      if (bucket === "week") {
+        // ISO week start (monday)
+        const day = d.getDay(); // 0=sun
+        const diff = day === 0 ? -6 : 1 - day;
+        const start = new Date(d); start.setDate(d.getDate() + diff);
+        return start.toISOString().slice(0, 10);
+      }
+      return dStr;
+    };
+    const bucketLabel = (key: string) => {
+      if (bucket === "month") {
+        const [y, m] = key.split("-");
+        return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+      }
+      if (bucket === "week") {
+        const start = new Date(key + "T00:00");
+        return `${start.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`;
+      }
+      return new Date(key + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    };
+
+    const buckets: Record<string, any> = {};
+    for (const r of daily) {
+      const k = bucketKey(r.date);
+      if (!buckets[k]) buckets[k] = { key: k, spend: 0, results: 0, clicks: 0, impressions: 0 };
+      buckets[k].spend += r.spend;
+      buckets[k].results += r.results;
+      buckets[k].clicks += r.clicks;
+      buckets[k].impressions += r.impressions;
+    }
+    return Object.values(buckets)
+      .sort((a: any, b: any) => a.key.localeCompare(b.key))
       .map((r: any) => ({
         ...r,
-        label: new Date(r.date + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        label: bucketLabel(r.key),
         cpa: r.results ? r.spend / r.results : 0,
         ctr: r.impressions ? (r.clicks / r.impressions) * 100 : 0,
       }));
-  }, [dailyRows]);
+  }, [dailyRows, vw]);
+
 
   // Top-campaign breakdown (aggregated for current filters, ignoring campaign filter itself so user can compare)
   const campaignBreakdown = useMemo(() => {
@@ -380,13 +437,14 @@ export function PerformanceView({ data }: { data: PerfData }) {
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 rounded-lg border bg-card p-2">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
+      <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 rounded-lg border bg-card p-2">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground pl-1 shrink-0">
           <Filter className="h-3.5 w-3.5" /> Filtros
         </div>
+        <Filter className="h-4 w-4 text-muted-foreground sm:hidden shrink-0 ml-1" />
         {accountsList.length > 1 && (
           <Select value={accountId} onValueChange={(v) => { setAccountId(v); setCampaignId("all"); setCreativeId("all"); }}>
-            <SelectTrigger className="h-8 w-full sm:w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
+            <SelectTrigger className="h-8 flex-1 min-w-0 sm:flex-none sm:w-[180px]"><SelectValue placeholder="Conta" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as contas</SelectItem>
               {accountsList.map((a: any) => (
@@ -396,7 +454,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </Select>
         )}
         <Select value={campaignId} onValueChange={(v) => { setCampaignId(v); setCreativeId("all"); }}>
-          <SelectTrigger className="h-8 w-full sm:w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
+          <SelectTrigger className="h-8 flex-1 min-w-0 sm:flex-none sm:w-[220px]"><SelectValue placeholder="Campanha" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as campanhas</SelectItem>
             {campaignOptions.map((c) => (
@@ -405,7 +463,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </SelectContent>
         </Select>
         <Select value={creativeId} onValueChange={setCreativeId}>
-          <SelectTrigger className="h-8 w-full sm:w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
+          <SelectTrigger className="h-8 flex-1 min-w-0 sm:flex-none sm:w-[220px]"><SelectValue placeholder="Anúncio" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os anúncios</SelectItem>
             {creativeOptions.map((c) => (
@@ -414,14 +472,15 @@ export function PerformanceView({ data }: { data: PerfData }) {
           </SelectContent>
         </Select>
         {hasFilters && (
-          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearFilters}>
-            <X className="h-3.5 w-3.5 mr-1" /> Limpar
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={clearFilters} title="Limpar filtros">
+            <X className="h-3.5 w-3.5" />
           </Button>
         )}
-        <div className="w-full sm:w-auto sm:ml-auto">
+        <div className="ml-auto shrink-0">
           <PeriodPicker period={period} setPeriod={setPeriod} customRange={customRange} setCustomRange={setCustomRange} />
         </div>
       </div>
+
 
       {/* KPI Grid — for local (WhatsApp) clients use conversations from waTotals to avoid mixing action types */}
       {(() => {
@@ -734,22 +793,23 @@ function Kpi({
   const showTrend = typeof trend === "number" && Number.isFinite(trend) && trend !== 0;
   const trendUp = (trend ?? 0) >= 0;
   return (
-    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow" title={hint}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs text-muted-foreground truncate">{label}</div>
-        {icon && <div className={`h-6 w-6 rounded flex items-center justify-center ${accentBg}`}>{icon}</div>}
+    <div className="rounded-lg border p-3 bg-card hover:shadow-sm transition-shadow min-w-0" title={hint}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-xs text-muted-foreground truncate min-w-0 flex-1">{label}</div>
+        {icon && <div className={`h-6 w-6 shrink-0 rounded flex items-center justify-center ${accentBg}`}>{icon}</div>}
       </div>
-      <div className="text-lg sm:text-xl font-semibold mt-1 tabular-nums">{value}</div>
-      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{hint}</div>}
+      <div className="text-base sm:text-lg font-semibold mt-1 tabular-nums truncate">{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{hint}</div>}
       {showTrend && (
-        <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 ${trendUp ? "text-emerald-600" : "text-rose-600"}`}>
-          {trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          {Math.abs(trend!).toFixed(1)}% vs. período anterior
+        <div className={`text-[11px] mt-0.5 flex items-center gap-0.5 truncate ${trendUp ? "text-emerald-600" : "text-rose-600"}`}>
+          {trendUp ? <TrendingUp className="h-3 w-3 shrink-0" /> : <TrendingDown className="h-3 w-3 shrink-0" />}
+          <span className="truncate">{Math.abs(trend!).toFixed(1)}% vs. período anterior</span>
         </div>
       )}
     </div>
   );
 }
+
 
 function MiniStat({ k, v }: { k: string; v: string }) {
   return (
