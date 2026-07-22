@@ -263,7 +263,12 @@ function VisaoGeral({ c }: { c: any }) {
   const pctOfExpected = expected ? Math.min(100, (actual / expected) * 100) : 0;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Visão geral do cliente</div>
+        <EditClientDialog client={c} />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Dados Cadastrais</CardTitle></CardHeader>
         <CardContent className="text-sm grid grid-cols-2 gap-x-6 gap-y-2">
