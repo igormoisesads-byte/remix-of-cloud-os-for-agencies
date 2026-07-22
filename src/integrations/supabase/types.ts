@@ -1366,38 +1366,51 @@ export type Database = {
       nps_surveys: {
         Row: {
           active: boolean
+          client_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
           id: string
           public_token: string
           questions: Json
+          ref_month: string | null
           title: string
           updated_at: string
         }
         Insert: {
           active?: boolean
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           public_token?: string
           questions?: Json
+          ref_month?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           active?: boolean
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           id?: string
           public_token?: string
           questions?: Json
+          ref_month?: string | null
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nps_surveys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "nps_surveys_created_by_fkey"
             columns: ["created_by"]

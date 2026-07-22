@@ -20,9 +20,6 @@ function PublicNpsPage() {
   const { token } = Route.useParams();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [score, setScore] = useState<number | null>(null);
-  const [comment, setComment] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -47,14 +44,12 @@ function PublicNpsPage() {
       survey_id: survey!.id,
       score: finalScore != null && !Number.isNaN(finalScore) ? finalScore : null,
       answers,
-      comment: comment || null,
-      respondent_name: name || null,
-      respondent_email: email || null,
     });
     setSending(false);
     if (error) { toast.error(error.message); return; }
     setSent(true);
   }
+
 
   if (sent) {
     return (
@@ -123,14 +118,7 @@ function PublicNpsPage() {
               </div>
             ))}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Comentário (opcional)</label>
-              <Textarea value={comment} onChange={(e) => setComment(e.target.value)} />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input placeholder="Seu nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} />
-              <Input placeholder="E-mail (opcional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
+
 
             <Button onClick={submit} disabled={sending} className="w-full" size="lg">
               {sending ? "Enviando..." : "Enviar resposta"}

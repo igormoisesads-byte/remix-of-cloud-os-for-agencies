@@ -31,10 +31,12 @@ function NpsPage() {
   const { data: surveys } = useQuery({
     queryKey: ["nps-surveys"],
     queryFn: async () => {
-      const { data } = await supabase.from("nps_surveys").select("*").order("created_at", { ascending: false });
-      return data ?? [];
+      const { data } = await supabase.from("nps_surveys").select("*, clients(name)").order("created_at", { ascending: false });
+      return (data ?? []).map((s: any) => ({ ...s, client_name: s.clients?.name }));
     },
   });
+
+
 
   const selected = surveys?.find((s) => s.id === selectedId) ?? surveys?.[0];
 
@@ -72,20 +74,22 @@ function NpsPage() {
         <Card>
           <CardHeader><CardTitle className="text-sm">Formulários</CardTitle></CardHeader>
           <CardContent className="space-y-1 p-2">
-            {(surveys ?? []).map((s) => (
+            {(surveys ?? []).map((s: any) => (
               <button
                 key={s.id}
                 onClick={() => setSelectedId(s.id)}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-accent ${selected?.id === s.id ? "bg-accent" : ""}`}
               >
                 <div className="font-medium truncate">{s.title}</div>
-                <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                   {s.active ? <Badge variant="default" className="h-4 px-1 text-[10px]">ativo</Badge> : <Badge variant="secondary" className="h-4 px-1 text-[10px]">inativo</Badge>}
-                  {(s.questions as any[])?.length ?? 0} perguntas
+                  {s.ref_month && <span>{new Date(s.ref_month).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}</span>}
                 </div>
+                {s.client_name && <div className="text-[11px] text-muted-foreground truncate mt-0.5">{s.client_name}</div>}
               </button>
             ))}
             {!surveys?.length && <p className="text-xs text-muted-foreground p-2">Crie o primeiro formulário.</p>}
+
           </CardContent>
         </Card>
 
@@ -140,9 +144,24 @@ function NewSurveyButton({ onCreated, userId }: { onCreated: (id: string) => voi
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("Pesquisa de satisfação");
   const [description, setDescription] = useState("");
+  const [clientId, setClientId] = useState<string>("");
+
+  const { data: clients } = useQuery({
+    queryKey: ["nps-clients-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clients").select("id,name").order("name");
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
   async function create() {
+    if (!clientId) { toast.error("Selecione um cliente"); return; }
+    const now = new Date();
+    const refMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     const { data, error } = await supabase.from("nps_surveys").insert({
       title, description: description || null, created_by: userId || null,
+      client_id: clientId, ref_month: refMonth,
       questions: [{ id: uid(), label: "Em uma escala de 0 a 10, o quanto você recomendaria nossa agência?", type: "nps", required: true }],
     }).select().single();
     if (error) { toast.error(error.message); return; }
@@ -156,6 +175,18 @@ function NewSurveyButton({ onCreated, userId }: { onCreated: (id: string) => voi
       <DialogContent>
         <DialogHeader><DialogTitle>Novo formulário NPS</DialogTitle></DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium">Cliente</label>
+            <Select value={clientId} onValueChange={setClientId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+              <SelectContent>
+                {(clients ?? []).map((c: any) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Mês de referência: <span className="font-medium text-foreground">{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span>
+          </div>
           <Input placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Textarea placeholder="Descrição (opcional)" value={description} onChange={(e) => setDescription(e.target.value)} />
           <Button onClick={create} className="w-full">Criar</Button>
@@ -164,6 +195,7 @@ function NewSurveyButton({ onCreated, userId }: { onCreated: (id: string) => voi
     </Dialog>
   );
 }
+
 
 function SurveyEditor({ survey, onChange }: { survey: any; onChange: () => void }) {
   const [title, setTitle] = useState(survey.title);
