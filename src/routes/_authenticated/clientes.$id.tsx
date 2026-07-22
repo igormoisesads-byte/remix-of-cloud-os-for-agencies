@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import {
   ChevronLeft, Plus, Check, LayoutGrid, BarChart3, LineChart, Search, Repeat, HeartPulse,
   AlertTriangle, Star, FileText, Calendar, Video, ImageIcon, Key, ListChecks, ClipboardList,
-  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy,
+  Eye, EyeOff, ExternalLink, RefreshCw, Trash2, Facebook, Sparkles, Loader2, Share2, Copy, DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
