@@ -32,8 +32,10 @@ const groups = [
     label: "Operações",
     items: [
       { title: "Tarefas", url: "/operacoes", icon: ClipboardList },
+      { title: "Criativos", url: "/criativos", icon: Film },
     ],
   },
+
   {
     label: "Financeiro",
     items: [
