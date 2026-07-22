@@ -1002,14 +1002,14 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-3 overflow-x-auto">
-          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground" style={{ paddingTop: 16 }}>
-            {DOW_LBL.map((d) => <div key={d} className="h-4 flex items-center">{d}</div>)}
+        <div className="flex gap-2 w-full">
+          <div className="flex flex-col gap-1 text-[10px] text-muted-foreground shrink-0" style={{ paddingTop: 16 }}>
+            {DOW_LBL.map((d) => <div key={d} className="h-5 flex items-center">{d}</div>)}
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-1 min-w-0">
             {weeks.map((w, wi) => (
-              <div key={wi} className="flex flex-col gap-1">
-                <div className="text-[9px] text-muted-foreground text-center" style={{ width: 16, height: 12, lineHeight: "12px" }}>
+              <div key={wi} className="flex flex-col gap-1 flex-1 min-w-0">
+                <div className="text-[9px] text-muted-foreground text-center h-3 leading-3 truncate">
                   {wi % 2 === 0 ? w.label.split(" ")[0] : ""}
                 </div>
                 {w.cells.map((c) => {
@@ -1018,7 +1018,7 @@ function LeadsHeatmap({ insights }: { insights: any[] }) {
                     ? "hsl(220 14% 93%)"
                     : `rgba(37, 99, 235, ${0.2 + intensity * 0.8})`;
                   return (
-                    <div key={c.date} className="h-4 w-4 rounded-sm border border-border/50"
+                    <div key={c.date} className="h-5 w-full rounded-sm border border-border/50"
                       style={{ background: bg }}
                       title={`${new Date(c.date + "T00:00").toLocaleDateString("pt-BR")} · ${c.val} leads`} />
                   );
