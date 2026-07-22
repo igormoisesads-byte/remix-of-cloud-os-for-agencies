@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase,
   Paperclip, X, Reply, Mic, Square, Bell, File as FileIcon, Image as ImageIcon,
+  Play, Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { registerPWA, requestNotificationPermission, notify } from "@/lib/pwa";
@@ -538,16 +539,16 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
       </header>
 
       <div className="flex-1 min-h-0 flex">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {messages.length === 0 && (
             <div className="text-sm text-muted-foreground text-center py-16">Sem mensagens. Diga oi 👋</div>
           )}
           {messages.map((m, i) => {
             const prev = messages[i - 1];
             const grouped = prev && prev.author_id === m.author_id && !m.parent_id
-              && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60_000);
+              && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 15 * 60_000);
             return (
-              <div key={m.id} className={cn("group flex gap-3", grouped && "pl-11")}>
+              <div key={m.id} className={cn("group flex gap-3", grouped ? "pl-11 mt-0.5" : "mt-4")}>
                 {!grouped && (
                   <div className="h-8 w-8 rounded-md bg-primary/20 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
                     {initials(m.author?.full_name || m.author?.email)}
@@ -579,8 +580,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
                     </button>
                   )}
                   {m.attachment_url && m.attachment_kind === "audio" && (
-                    <audio controls src={m.attachment_url} className="mt-1 h-8" />
+                    <AudioPlayer src={m.attachment_url} />
                   )}
+
                   {m.attachment_url && m.attachment_kind === "file" && (
                     <a href={m.attachment_url} target="_blank" rel="noreferrer"
                        className="mt-1 inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-xs hover:bg-muted">
@@ -865,5 +867,82 @@ function MembersDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function fmtTime(s: number) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function AudioPlayer({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const barsRef = useRef<number[]>(
+    Array.from({ length: 32 }, () => 0.35 + Math.random() * 0.65)
+  );
+
+  function toggle() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) a.pause();
+    else a.play();
+  }
+  function seek(e: React.MouseEvent<HTMLDivElement>) {
+    const a = audioRef.current;
+    if (!a || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    a.currentTime = pct * duration;
+  }
+  const progress = duration ? current / duration : 0;
+
+  return (
+    <div className="mt-1 inline-flex items-center gap-2 rounded-full border bg-muted/40 pl-1 pr-3 py-1 max-w-xs">
+      <button
+        type="button"
+        onClick={toggle}
+        className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:opacity-90"
+        aria-label={playing ? "Pausar" : "Reproduzir"}
+      >
+        {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
+      </button>
+      <div
+        className="flex items-center gap-[2px] h-6 flex-1 min-w-[120px] cursor-pointer"
+        onClick={seek}
+      >
+        {barsRef.current.map((h, i) => {
+          const active = i / barsRef.current.length <= progress;
+          return (
+            <span
+              key={i}
+              className={cn("w-[2px] rounded-full transition-colors", active ? "bg-primary" : "bg-muted-foreground/40")}
+              style={{ height: `${Math.round(h * 100)}%` }}
+            />
+          );
+        })}
+      </div>
+      <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
+        {fmtTime(playing || current ? current : duration)}
+      </span>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setCurrent(0); }}
+        onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => {
+          const d = e.currentTarget.duration;
+          setDuration(isFinite(d) ? d : 0);
+        }}
+        className="hidden"
+      />
+    </div>
   );
 }
