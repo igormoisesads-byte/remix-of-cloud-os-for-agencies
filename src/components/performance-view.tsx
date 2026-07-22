@@ -486,7 +486,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
 
 
       <Tabs defaultValue="visao">
-        <TabsList>
+        <TabsList className="mx-auto flex w-fit">
           <TabsTrigger value="visao"><BarChart3 className="h-3.5 w-3.5" />Visão</TabsTrigger>
           <TabsTrigger value="criativos"><ImageIcon className="h-3.5 w-3.5" />Criativos</TabsTrigger>
           <TabsTrigger value="geo"><Globe2 className="h-3.5 w-3.5" />Geografia</TabsTrigger>
