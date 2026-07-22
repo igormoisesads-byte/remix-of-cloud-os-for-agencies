@@ -528,8 +528,14 @@ function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Ch
 
   return (
     <>
-      <header className="h-14 border-b flex items-center gap-3 px-4 shrink-0">
+      <header className="h-14 border-b flex items-center gap-2 px-3 sm:px-4 shrink-0">
+        {onBack && (
+          <Button variant="ghost" size="icon" className="md:hidden -ml-1 h-8 w-8" onClick={onBack} aria-label="Voltar">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <Icon className="h-4 w-4 text-muted-foreground" />
+
         <div className="min-w-0">
           <div className="font-semibold text-sm truncate">{channel.name}</div>
           {channel.topic && <div className="text-xs text-muted-foreground truncate">{channel.topic}</div>}
