@@ -169,6 +169,9 @@ function ClienteDetail() {
 
       <div className="flex-1 md:overflow-y-auto min-w-0">
         <div className="border-b px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2 bg-card/40">
+          {c.logo_url && (
+            <img src={c.logo_url} alt={c.name} className="h-9 w-9 rounded-lg object-cover ring-1 ring-border" />
+          )}
           <h1 className="text-lg sm:text-xl font-bold tracking-tight break-words min-w-0">{c.name}</h1>
           <Badge variant="outline">{TYPE_LABEL[c.type]}</Badge>
           <Badge>{c.status}</Badge>
