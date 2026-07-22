@@ -218,6 +218,41 @@ function VisaoGeral({ c }: { c: any }) {
   const doneCount = (onbQ.data ?? []).filter((t: any) => t.done).length;
   const totalCount = (onbQ.data ?? []).length;
 
+  // Investimento do mês atual (soma de spend em ad_insights via ad_accounts do cliente)
+  const spendQ = useQuery({
+    queryKey: ["mtd-spend", c.id],
+    queryFn: async () => {
+      const { data: accs } = await supabase.from("ad_accounts").select("id").eq("client_id", c.id);
+      const ids = (accs ?? []).map((a: any) => a.id);
+      if (!ids.length) return 0;
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      const { data: rows } = await supabase.from("ad_insights").select("spend").in("ad_account_id", ids).gte("date", first);
+      return (rows ?? []).reduce((s: number, r: any) => s + Number(r.spend ?? 0), 0);
+    },
+  });
+
+  const expected = Number(c.investimento_mensal ?? 0);
+  const actual = Number(spendQ.data ?? 0);
+  const now = new Date();
+  const day = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const expectedPace = expected * (day / daysInMonth);
+  const paceDiff = expectedPace ? ((actual - expectedPace) / expectedPace) * 100 : 0;
+  let paceLabel = "Sem meta definida";
+  let paceTone: "muted" | "emerald" | "amber" | "rose" = "muted";
+  if (expected > 0) {
+    if (Math.abs(paceDiff) <= 10) { paceLabel = "Dentro do esperado"; paceTone = "emerald"; }
+    else if (paceDiff > 10) { paceLabel = `Acima do esperado (+${paceDiff.toFixed(0)}%)`; paceTone = "amber"; }
+    else { paceLabel = `Abaixo do esperado (${paceDiff.toFixed(0)}%)`; paceTone = "rose"; }
+  }
+  const paceClass =
+    paceTone === "emerald" ? "text-emerald-600 bg-emerald-500/10 border-emerald-500/20"
+    : paceTone === "amber" ? "text-amber-600 bg-amber-500/10 border-amber-500/20"
+    : paceTone === "rose" ? "text-rose-600 bg-rose-500/10 border-rose-500/20"
+    : "text-muted-foreground bg-muted border-border";
+  const pctOfExpected = expected ? Math.min(100, (actual / expected) * 100) : 0;
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
@@ -240,8 +275,42 @@ function VisaoGeral({ c }: { c: any }) {
           <Field k="Endereço" v={c.address || "—"} />
           <Field k="CS" v={c.cs?.full_name || "—"} />
           <Field k="Mensalidade" v={c.monthly_fee_amount ? `${fmtBRL(Number(c.monthly_fee_amount))} / dia ${c.monthly_fee_day ?? "—"}` : "—"} />
+          <Field k="Investimento mensal" v={expected > 0 ? fmtBRL(expected) : "—"} />
         </CardContent>
       </Card>
+
+      <Card className="lg:col-span-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <DollarSign className="h-4 w-4" /> Investimento do mês
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Gasto até hoje</div>
+              <div className="text-2xl font-semibold tabular-nums">{fmtBRL(actual)}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Esperado: <b className="text-foreground">{expected > 0 ? fmtBRL(expected) : "—"}</b>
+                {expected > 0 && <> · Ritmo esperado (dia {day}/{daysInMonth}): <b className="text-foreground">{fmtBRL(expectedPace)}</b></>}
+              </div>
+            </div>
+            <span className={`text-xs font-medium rounded-full border px-2.5 py-1 ${paceClass}`}>{paceLabel}</span>
+          </div>
+          {expected > 0 && (
+            <div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className={`h-full ${paceTone === "rose" ? "bg-rose-500" : paceTone === "amber" ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${pctOfExpected}%` }} />
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground flex justify-between">
+                <span>{((actual / expected) * 100).toFixed(0)}% da meta</span>
+                <span>Restante: {fmtBRL(Math.max(0, expected - actual))}</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <StatCard title="Health Score" icon={HeartPulse} value={healthQ.data ? `${healthQ.data.score}%` : "Sem registros"} sub={healthQ.data ? `atualizado ${fmtDate(healthQ.data.recorded_at)}` : ""} />
       <StatCard title="PDAs" icon={AlertTriangle} value={`${pdasQ.data ?? 0} pendentes`} />
       <StatCard title="NPS" icon={Star} value={npsQ.data ? String(npsQ.data.score) : "Sem registros"} sub={npsQ.data ? fmtDate(npsQ.data.created_at) : ""} />
@@ -249,6 +318,7 @@ function VisaoGeral({ c }: { c: any }) {
     </div>
   );
 }
+
 
 function Field({ k, v }: { k: string; v: string }) {
   return (
