@@ -26,6 +26,7 @@ export type PerfData = {
   whatsapp: any[];
   accounts?: any[];
   campaignInsights?: any[];
+  hourly?: any[];
   sales?: { vendas: number; faturamento: number; custo_produto?: number };
   clientType?: string | null;
 };
