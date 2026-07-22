@@ -701,35 +701,43 @@ function EmptyMsg({ text = "Sem dados no período. Sincronize a conta para ver m
   return <div className="text-sm text-muted-foreground text-center py-8">{text}</div>;
 }
 
-/* Vertical funnel */
+/* Vertical funnel — visual moderno com barras degradê e setas de conversão */
 function VerticalFunnel({ steps }: { steps: { label: string; value: number; color: string }[] }) {
   const max = Math.max(...steps.map((s) => s.value), 1);
   return (
-    <div className="space-y-2 py-2">
+    <div className="space-y-1 py-2">
       {steps.map((s, i) => {
         const pct = (s.value / max) * 100;
         const conv = i === 0 ? 100 : steps[0].value ? (s.value / steps[0].value) * 100 : 0;
         const stepConv = i === 0 ? null : steps[i - 1].value ? (s.value / steps[i - 1].value) * 100 : 0;
+        const dropoff = stepConv !== null ? 100 - stepConv : null;
         return (
-          <div key={s.label} className="flex flex-col items-center">
-            <div
-              className="relative flex items-center justify-center text-white font-semibold text-sm shadow-sm transition-all"
-              style={{
-                width: `${Math.max(30, pct)}%`,
-                minWidth: 160,
-                background: s.color,
-                clipPath: "polygon(6% 0, 94% 0, 88% 100%, 12% 100%)",
-                padding: "18px 24px",
-              }}
-            >
-              <div className="text-center leading-tight">
-                <div className="text-[11px] opacity-90 font-normal">{s.label}</div>
-                <div className="text-xl tabular-nums">{fmtInt(s.value)}</div>
-                <div className="text-[10px] opacity-90 font-normal">{conv.toFixed(1)}% do topo</div>
+          <div key={s.label}>
+            <div className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="h-8 w-8 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: s.color }}>
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{s.label}</div>
+                    <div className="text-[11px] text-muted-foreground">{conv.toFixed(1)}% do topo</div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xl font-bold tabular-nums">{fmtInt(s.value)}</div>
+                </div>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full transition-all"
+                  style={{ width: `${Math.max(2, pct)}%`, background: `linear-gradient(90deg, ${s.color}dd, ${s.color})` }} />
               </div>
             </div>
             {stepConv !== null && (
-              <div className="text-[10px] text-muted-foreground py-1">↓ {stepConv.toFixed(1)}% de conversão</div>
+              <div className="flex items-center justify-center gap-2 py-1.5 text-[10px]">
+                <div className="text-emerald-600 font-medium">→ {stepConv.toFixed(1)}% seguiu</div>
+                {dropoff! > 0 && <div className="text-rose-500">↓ {dropoff!.toFixed(1)}% caiu</div>}
+              </div>
             )}
           </div>
         );
