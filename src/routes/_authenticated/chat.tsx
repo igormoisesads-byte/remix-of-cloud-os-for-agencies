@@ -417,24 +417,26 @@ function ChannelView({ channel, profiles, isAgencyAdmin }: { channel: Channel; p
     if (!user) return null;
     const contentType = blob.type || "application/octet-stream";
     try {
-      const { uploadUrl, publicUrl } = await createR2UploadUrl({
-        data: {
-          folder: `chat/${channel.id}`,
-          filename,
-          contentType,
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) { toast.error("Sessão expirada"); return null; }
+      const resp = await fetch("/api/r2-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": contentType,
+          "Authorization": `Bearer ${token}`,
+          "x-folder": `chat/${channel.id}`,
+          "x-filename": filename,
         },
-      });
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": contentType },
         body: blob,
       });
-      if (!put.ok) {
-        const txt = await put.text().catch(() => "");
-        toast.error(`Falha no upload (${put.status}) ${txt.slice(0, 120)}`);
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        toast.error(`Falha no upload (${resp.status}) ${txt.slice(0, 160)}`);
         return null;
       }
-      return { url: publicUrl, type: contentType, name: filename, size: blob.size, kind };
+      const { url } = await resp.json();
+      return { url, type: contentType, name: filename, size: blob.size, kind };
     } catch (e: any) {
       toast.error(e?.message || "Falha ao enviar arquivo");
       return null;
