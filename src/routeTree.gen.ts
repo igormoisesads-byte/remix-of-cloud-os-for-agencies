@@ -21,6 +21,7 @@ import { Route as AuthenticatedHojeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedHealthScoreRouteImport } from './routes/_authenticated/health-score'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
+import { Route as AuthenticatedCriativosRouteImport } from './routes/_authenticated/criativos'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
@@ -96,6 +97,11 @@ const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
 const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCriativosRoute = AuthenticatedCriativosRouteImport.update({
+  id: '/criativos',
+  path: '/criativos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
   '/clientes': typeof AuthenticatedClientesRouteWithChildren
+  '/criativos': typeof AuthenticatedCriativosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/health-score': typeof AuthenticatedHealthScoreRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof AuthenticatedChatRoute
+  '/criativos': typeof AuthenticatedCriativosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/health-score': typeof AuthenticatedHealthScoreRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/_authenticated/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRouteWithChildren
+  '/_authenticated/criativos': typeof AuthenticatedCriativosRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/health-score': typeof AuthenticatedHealthScoreRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/ajustes'
     | '/chat'
     | '/clientes'
+    | '/criativos'
     | '/equipe'
     | '/financeiro'
     | '/health-score'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/chat'
+    | '/criativos'
     | '/equipe'
     | '/financeiro'
     | '/health-score'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ajustes'
     | '/_authenticated/chat'
     | '/_authenticated/clientes'
+    | '/_authenticated/criativos'
     | '/_authenticated/equipe'
     | '/_authenticated/financeiro'
     | '/_authenticated/health-score'
@@ -459,6 +471,13 @@ declare module '@tanstack/react-router' {
       path: '/equipe'
       fullPath: '/equipe'
       preLoaderRoute: typeof AuthenticatedEquipeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/criativos': {
+      id: '/_authenticated/criativos'
+      path: '/criativos'
+      fullPath: '/criativos'
+      preLoaderRoute: typeof AuthenticatedCriativosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clientes': {
@@ -622,6 +641,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAjustesRoute: typeof AuthenticatedAjustesRouteWithChildren
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRouteWithChildren
+  AuthenticatedCriativosRoute: typeof AuthenticatedCriativosRoute
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedHealthScoreRoute: typeof AuthenticatedHealthScoreRoute
@@ -635,6 +655,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAjustesRoute: AuthenticatedAjustesRouteWithChildren,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRouteWithChildren,
+  AuthenticatedCriativosRoute: AuthenticatedCriativosRoute,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedHealthScoreRoute: AuthenticatedHealthScoreRoute,
