@@ -126,11 +126,7 @@ function PublicReportPage() {
             </>
           )}
         </div>
-        {client.type === "local" ? (
-          <PublicReportLocal insights={insights} creatives={creatives} geo={geo} whatsapp={whatsapp} client={client} />
-        ) : (
-          <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
-        )}
+        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
         <div className="text-center text-[11px] sm:text-xs text-muted-foreground pt-6 pb-4">
           Powered by <span className="font-medium text-foreground/70">{agency.agency_name || "CloudOS"}</span>
         </div>
