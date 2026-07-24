@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Hash, Lock, MessageCircle, Plus, Users, UserPlus, UserMinus, Send, Briefcase,
+  Hash, Lock, MessageCircle, Plus, Users, UsersRound, UserPlus, UserMinus, Send, Briefcase,
   Paperclip, X, Reply, Mic, Square, Bell, File as FileIcon, Image as ImageIcon,
   Play, Pause, ArrowLeft,
 } from "lucide-react";
@@ -523,7 +523,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Ch
     else toast.error("Permissão negada. Ative nas configurações do navegador.");
   }
 
-  const Icon = channel.type === "client" ? Briefcase : channel.type === "dm" ? MessageCircle
+  const Icon = channel.type === "client" ? Briefcase
+    : channel.type === "squad" ? UsersRound
+    : channel.type === "dm" ? MessageCircle
     : channel.type === "private" ? Lock : Hash;
 
   return (
