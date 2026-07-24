@@ -1214,6 +1214,7 @@ function RegionRanking({ regions }: { regions: { region: string; country: string
 /* Period picker: presets + range calendar in one popover */
 const PERIOD_PRESETS: { value: string; label: string }[] = [
   { value: "current_week", label: "Hoje" },
+  { value: "current_month", label: "Mês atual" },
   { value: "7", label: "Últimos 7 dias" },
   { value: "15", label: "Últimos 15 dias" },
   { value: "30", label: "Últimos 30 dias" },
