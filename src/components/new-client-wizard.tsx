@@ -31,6 +31,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
   const [niches, setNiches] = useState<Niche[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [squads, setSquads] = useState<{ id: string; name: string; color: string | null }[]>([]);
 
   const [form, setForm] = useState({
     name: "", type: "local",
