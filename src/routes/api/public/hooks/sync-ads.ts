@@ -1,5 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+type SyncMode = "today" | "yesterday" | "last_7" | "last_30" | "backfill";
+
+function parseMode(v: unknown): SyncMode {
+  const s = String(v ?? "").toLowerCase();
+  if (s === "yesterday" || s === "last_7" || s === "last_30" || s === "backfill") return s;
+  return "today";
+}
+
+function rangeFor(mode: SyncMode): { since: Date; until: Date } {
+  const until = new Date();
+  const since = new Date();
+  switch (mode) {
+    case "today":
+      // since = today
+      break;
+    case "yesterday":
+      since.setDate(since.getDate() - 1);
+      until.setDate(until.getDate() - 1);
+      break;
+    case "last_7":
+      since.setDate(since.getDate() - 7);
+      break;
+    case "last_30":
+      since.setDate(since.getDate() - 30);
+      break;
+    case "backfill":
+      // Meta allows up to ~37 months; pull 24 months to be safe
+      since.setMonth(since.getMonth() - 24);
+      break;
+  }
+  return { since, until };
+}
+
 export const Route = createFileRoute("/api/public/hooks/sync-ads")({
   server: {
     handlers: {
@@ -11,25 +44,38 @@ export const Route = createFileRoute("/api/public/hooks/sync-ads")({
             return new Response("Unauthorized", { status: 401 });
           }
 
+          let mode: SyncMode = "today";
+          let onlyAccountId: string | null = null;
+          try {
+            const body = (await request.json().catch(() => ({}))) as any;
+            mode = parseMode(body?.mode);
+            if (body?.account_id) onlyAccountId = String(body.account_id);
+          } catch {}
+          // allow ?mode= override
+          const u = new URL(request.url);
+          if (u.searchParams.get("mode")) mode = parseMode(u.searchParams.get("mode"));
+          if (u.searchParams.get("account_id")) onlyAccountId = u.searchParams.get("account_id");
+
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: accs, error } = await supabaseAdmin
+          let q = supabaseAdmin
             .from("ad_accounts")
             .select("id, provider")
             .eq("active", true)
             .eq("provider", "meta");
+          if (onlyAccountId) q = q.eq("id", onlyAccountId);
+          const { data: accs, error } = await q;
           if (error) throw error;
 
-          // Inline sync per account (dup of ads.functions logic to avoid client-graph imports)
           const results: any[] = [];
           for (const a of accs ?? []) {
             try {
-              const r = await syncOne(a.id);
+              const r = await syncOne(a.id, mode);
               results.push({ id: a.id, ...r });
             } catch (e: any) {
               results.push({ id: a.id, error: e?.message ?? String(e) });
             }
           }
-          return Response.json({ ok: true, ran: results.length, results });
+          return Response.json({ ok: true, mode, ran: results.length, results });
         } catch (e: any) {
           return new Response(JSON.stringify({ ok: false, error: e?.message ?? String(e) }), {
             status: 500,
@@ -37,12 +83,12 @@ export const Route = createFileRoute("/api/public/hooks/sync-ads")({
           });
         }
       },
-      GET: async () => Response.json({ ok: true, hint: "POST to trigger sync" }),
+      GET: async () => Response.json({ ok: true, hint: "POST { mode: today|yesterday|last_7|last_30|backfill }" }),
     },
   },
 });
 
-async function syncOne(adAccountRowId: string) {
+async function syncOne(adAccountRowId: string, mode: SyncMode) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: acc, error } = await supabaseAdmin
     .from("ad_accounts").select("*").eq("id", adAccountRowId).maybeSingle();
@@ -51,8 +97,7 @@ async function syncOne(adAccountRowId: string) {
 
   const raw = String(acc.account_id).trim();
   const accountId = raw.startsWith("act_") ? raw : `act_${raw}`;
-  const until = new Date();
-  const since = new Date(); since.setDate(since.getDate() - 30);
+  const { since, until } = rangeFor(mode);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
   const url = new URL(`https://graph.facebook.com/v20.0/${accountId}/insights`);
@@ -71,25 +116,14 @@ async function syncOne(adAccountRowId: string) {
     throw new Error(msg);
   }
 
+  // Wipe the exact window we're about to rewrite so re-runs never accumulate.
   await Promise.all([
-    supabaseAdmin
-      .from("ad_insights")
-      .delete()
-      .eq("ad_account_id", acc.id)
-      .gte("date", fmt(since))
-      .lte("date", fmt(until)),
-    supabaseAdmin
-      .from("ad_funnel_whatsapp")
-      .delete()
-      .eq("ad_account_id", acc.id)
-      .gte("date", fmt(since))
-      .lte("date", fmt(until)),
-    supabaseAdmin
-      .from("ad_campaign_insights")
-      .delete()
-      .eq("ad_account_id", acc.id)
-      .gte("date", fmt(since))
-      .lte("date", fmt(until)),
+    supabaseAdmin.from("ad_insights").delete()
+      .eq("ad_account_id", acc.id).gte("date", fmt(since)).lte("date", fmt(until)),
+    supabaseAdmin.from("ad_funnel_whatsapp").delete()
+      .eq("ad_account_id", acc.id).gte("date", fmt(since)).lte("date", fmt(until)),
+    supabaseAdmin.from("ad_campaign_insights").delete()
+      .eq("ad_account_id", acc.id).gte("date", fmt(since)).lte("date", fmt(until)),
   ]);
 
   let upserted = 0;
@@ -166,5 +200,5 @@ async function syncOne(adAccountRowId: string) {
   await supabaseAdmin.from("ad_accounts")
     .update({ last_sync_at: new Date().toISOString(), last_sync_error: null }).eq("id", acc.id);
 
-  return { upserted, whatsapp: upsertedWhatsapp, campaigns: upsertedCampaigns };
+  return { mode, since: fmt(since), until: fmt(until), upserted, whatsapp: upsertedWhatsapp, campaigns: upsertedCampaigns };
 }
