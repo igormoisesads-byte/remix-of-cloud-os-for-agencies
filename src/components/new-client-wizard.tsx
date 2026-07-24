@@ -128,6 +128,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       investimento_mensal: form.investimento_mensal ? Number(form.investimento_mensal) : null,
       performance_user_id: form.performance_user_id || null,
       cs_user_id: form.cs_user_id || null,
+      squad_id: form.squad_id || null,
       plan_id: form.plan_id || null,
       contract_start: form.contract_start || null,
       contract_end: form.contract_end || null,
@@ -414,6 +415,23 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                     {profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || "—"}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label>Squad (célula responsável)</Label>
+                <Select value={form.squad_id} onValueChange={(v) => setForm({ ...form, squad_id: v })}>
+                  <SelectTrigger><SelectValue placeholder={squads.length ? "Selecione um squad" : "Nenhum squad cadastrado"} /></SelectTrigger>
+                  <SelectContent>
+                    {squads.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color || "#3b82f6" }} />
+                          {s.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Todos os membros do squad terão acesso a este cliente.</p>
               </div>
             </div>
           )}
