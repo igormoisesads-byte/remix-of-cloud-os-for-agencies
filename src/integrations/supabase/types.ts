@@ -1051,6 +1051,7 @@ export type Database = {
           responsavel_nome: string | null
           responsavel_telefone: string | null
           site: string | null
+          squad_id: string | null
           status: Database["public"]["Enums"]["client_status"]
           tempo_contrato_meses: number | null
           type: Database["public"]["Enums"]["client_type"]
@@ -1087,6 +1088,7 @@ export type Database = {
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           site?: string | null
+          squad_id?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           tempo_contrato_meses?: number | null
           type: Database["public"]["Enums"]["client_type"]
@@ -1123,6 +1125,7 @@ export type Database = {
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           site?: string | null
+          squad_id?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           tempo_contrato_meses?: number | null
           type?: Database["public"]["Enums"]["client_type"]
@@ -1162,6 +1165,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
             referencedColumns: ["id"]
           },
         ]
@@ -2307,6 +2317,71 @@ export type Database = {
         }
         Relationships: []
       }
+      squad_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          squad_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          squad_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          squad_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_members_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squads: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          head_user_id: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          head_user_id?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          head_user_id?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_checklist_items: {
         Row: {
           created_at: string
@@ -2537,6 +2612,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      user_can_see_client: {
+        Args: { _client_id: string; _user_id?: string }
+        Returns: boolean
       }
     }
     Enums: {
