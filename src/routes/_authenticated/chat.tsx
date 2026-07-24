@@ -523,10 +523,11 @@ function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Ch
     else toast.error("Permissão negada. Ative nas configurações do navegador.");
   }
 
-  const Icon = channel.type === "client" ? Briefcase
-    : channel.type === "squad" ? UsersRound
-    : channel.type === "dm" ? MessageCircle
-    : channel.type === "private" ? Lock : Hash;
+  const ctype = channel.type as string;
+  const Icon = ctype === "client" ? Briefcase
+    : ctype === "squad" ? UsersRound
+    : ctype === "dm" ? MessageCircle
+    : ctype === "private" ? Lock : Hash;
 
   return (
     <>
