@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -162,8 +163,9 @@ export function AppSidebar() {
           </div>
           <div className="min-w-0 flex-1 leading-tight">
             <div className="text-xs font-semibold text-sidebar-foreground truncate">{profile?.full_name || profile?.email || "…"}</div>
-            <div className="text-[10px] font-medium text-sidebar-foreground/70 truncate uppercase tracking-wider">
+            <div className="text-[10px] font-medium text-sidebar-foreground/70 truncate uppercase tracking-wider flex items-center gap-1">
               {roles.length > 0 ? roles.join(" · ") : "sem papel"}
+              <SquadBadge />
             </div>
           </div>
           <Button
@@ -178,5 +180,36 @@ export function AppSidebar() {
 
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function SquadBadge() {
+  const { user } = useAuth();
+  const [squad, setSquad] = useState<{ name: string; color: string | null } | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    let cancel = false;
+    (async () => {
+      const { data: mem } = await supabase
+        .from("squad_members").select("squad_id").eq("user_id", user.id).limit(1).maybeSingle();
+      let squadId = mem?.squad_id as string | undefined;
+      if (!squadId) {
+        const { data: head } = await supabase
+          .from("squads").select("id,name,color").eq("head_user_id", user.id).limit(1).maybeSingle();
+        if (!cancel && head) setSquad({ name: head.name, color: head.color });
+        return;
+      }
+      const { data: sq } = await supabase
+        .from("squads").select("name,color").eq("id", squadId).maybeSingle();
+      if (!cancel && sq) setSquad({ name: sq.name, color: sq.color });
+    })();
+    return () => { cancel = true; };
+  }, [user]);
+  if (!squad) return null;
+  return (
+    <span className="inline-flex items-center gap-1 normal-case tracking-normal rounded px-1.5 py-0.5 bg-white/10 text-sidebar-foreground/90">
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: squad.color || "#3b82f6" }} />
+      {squad.name}
+    </span>
   );
 }
