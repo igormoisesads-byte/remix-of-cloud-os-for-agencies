@@ -353,7 +353,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
   // Previous period delta for WhatsApp (same length as current period)
   const waPrevTotals = useMemo(() => {
     const t = { impressions: 0, link_clicks: 0, conversations_started: 0, first_replies: 0 };
-    if (period === "all" || period === "custom" || period === "current_week") return t;
+    if (period === "all" || period === "custom" || period === "current_week" || period === "current_month") return t;
     const days = Number(period);
     const now = new Date(); now.setHours(0, 0, 0, 0);
     const prevStart = new Date(now); prevStart.setDate(now.getDate() - days * 2);
