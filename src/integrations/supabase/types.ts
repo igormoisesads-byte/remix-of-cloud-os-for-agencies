@@ -1216,6 +1216,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          parent_id: string | null
+          recurrence: Database["public"]["Enums"]["expense_recurrence"]
+          recurrence_day: number | null
+          status: Database["public"]["Enums"]["expense_status"]
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          parent_id?: string | null
+          recurrence?: Database["public"]["Enums"]["expense_recurrence"]
+          recurrence_day?: number | null
+          status?: Database["public"]["Enums"]["expense_status"]
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          parent_id?: string | null
+          recurrence?: Database["public"]["Enums"]["expense_recurrence"]
+          recurrence_day?: number | null
+          status?: Database["public"]["Enums"]["expense_status"]
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_scores: {
         Row: {
           client_id: string
@@ -2644,6 +2709,8 @@ export type Database = {
       channel_type: "public" | "private" | "dm" | "client" | "squad"
       client_status: "ativo" | "pausado" | "churn" | "onboarding"
       client_type: "local" | "perpetuo" | "autoria" | "lancamento"
+      expense_recurrence: "none" | "monthly" | "annual"
+      expense_status: "pendente" | "pago" | "atrasado" | "cancelado"
       fee_status: "pendente" | "pago" | "atrasado" | "cancelado"
       task_kind: "kickoff" | "rotina" | "demanda" | "auditoria"
       task_priority: "baixa" | "media" | "alta" | "urgente"
@@ -2791,6 +2858,8 @@ export const Constants = {
       channel_type: ["public", "private", "dm", "client", "squad"],
       client_status: ["ativo", "pausado", "churn", "onboarding"],
       client_type: ["local", "perpetuo", "autoria", "lancamento"],
+      expense_recurrence: ["none", "monthly", "annual"],
+      expense_status: ["pendente", "pago", "atrasado", "cancelado"],
       fee_status: ["pendente", "pago", "atrasado", "cancelado"],
       task_kind: ["kickoff", "rotina", "demanda", "auditoria"],
       task_priority: ["baixa", "media", "alta", "urgente"],
