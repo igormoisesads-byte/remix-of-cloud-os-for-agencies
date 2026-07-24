@@ -99,32 +99,74 @@ function HojePage() {
             </CardTitle>
             <Badge variant="destructive">{lowBalance.data?.length}</Badge>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {(lowBalance.data ?? []).map((a: any) => {
               const d = Number(a.last_low_balance_days ?? 0);
               const tone = d <= 1 ? "destructive" : d <= 3 ? "warning" : "primary";
               const cur = a.currency || "BRL";
-              const bal = a.balance_cents != null ? (Number(a.balance_cents) / 100) : null;
-              const balFmt = bal != null ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: cur }).format(bal) : "—";
+              const nf = new Intl.NumberFormat("pt-BR", { style: "currency", currency: cur });
+              const bal = a.balance_cents != null ? Number(a.balance_cents) / 100 : null;
+              const taxRate = Number(a.tax_rate ?? 0.1215);
+              const taxEst = bal != null ? bal * taxRate : null;
+              const dailyWithTax = bal != null && d > 0 ? bal / d : null;
+              const dailyGross = dailyWithTax != null ? dailyWithTax / (1 + taxRate) : null;
+              const runOut = d > 0 ? new Date(Date.now() + d * 86400000) : null;
+              const runOutFmt = runOut
+                ? runOut.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+                : "—";
               return (
                 <Link
                   key={a.id}
-                  to="/clientes/$id" params={{ id: a.clients?.id ?? "" }}
-                  className="flex items-center justify-between gap-2 text-sm border-b border-border/60 pb-2 last:border-0 hover:bg-muted/40 -mx-2 px-2 rounded"
+                  to="/clientes/$id"
+                  params={{ id: a.clients?.id ?? "" }}
+                  className="block rounded-lg border border-border/60 bg-background/60 p-3 hover:bg-muted/40 transition-colors"
                 >
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{a.clients?.name ?? a.account_name ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground truncate">Saldo {balFmt} · imposto já considerado</div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{a.clients?.name ?? a.account_name ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground truncate">{a.account_name}</div>
+                    </div>
+                    <Badge
+                      variant={tone === "destructive" ? "destructive" : "outline"}
+                      className={
+                        tone === "warning"
+                          ? "border-warning text-warning"
+                          : tone === "primary"
+                          ? "border-primary text-primary"
+                          : ""
+                      }
+                    >
+                      ~{d.toFixed(1)} dia(s)
+                    </Badge>
                   </div>
-                  <Badge variant={tone === "destructive" ? "destructive" : "outline"} className={tone === "warning" ? "border-warning text-warning" : tone === "primary" ? "border-primary text-primary" : ""}>
-                    ~{d.toFixed(1)} dia(s)
-                  </Badge>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                      <div className="text-muted-foreground">Saldo atual</div>
+                      <div className="font-semibold text-sm">{bal != null ? nf.format(bal) : "—"}</div>
+                    </div>
+                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                      <div className="text-muted-foreground">Imposto ({(taxRate * 100).toFixed(2)}%)</div>
+                      <div className="font-semibold text-sm">{taxEst != null ? `+ ${nf.format(taxEst)}` : "—"}</div>
+                    </div>
+                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                      <div className="text-muted-foreground">Gasto/dia c/ imposto</div>
+                      <div className="font-semibold text-sm">{dailyWithTax != null ? nf.format(dailyWithTax) : "—"}</div>
+                      {dailyGross != null && (
+                        <div className="text-[10px] text-muted-foreground">bruto {nf.format(dailyGross)}</div>
+                      )}
+                    </div>
+                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                      <div className="text-muted-foreground">Esgota em</div>
+                      <div className="font-semibold text-sm">{runOutFmt}</div>
+                    </div>
+                  </div>
                 </Link>
               );
             })}
           </CardContent>
         </Card>
       )}
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <TaskGroup title="Atrasadas" icon={CircleAlert} tone="destructive" tasks={stats.data?.overdue ?? []} empty="Nenhuma tarefa atrasada." />
