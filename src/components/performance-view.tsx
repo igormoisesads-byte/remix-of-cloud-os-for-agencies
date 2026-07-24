@@ -110,6 +110,11 @@ export function PerformanceView({ data }: { data: PerfData }) {
       const start = new Date(now); start.setDate(now.getDate() - now.getDay()); // sunday
       return d >= start && d <= now;
     }
+    if (period === "current_month") {
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      return d >= start && d <= now;
+    }
     const now = new Date(); now.setHours(0, 0, 0, 0);
     const diff = (now.getTime() - d.getTime()) / 86400000;
     return diff <= Number(period);
