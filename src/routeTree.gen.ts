@@ -31,6 +31,7 @@ import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
 import { Route as PRelatorioTokenRouteImport } from './routes/p.relatorio.$token'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
+import { Route as AuthenticatedAjustesSquadsRouteImport } from './routes/_authenticated/ajustes.squads'
 import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
 import { Route as AuthenticatedAjustesPerfilRouteImport } from './routes/_authenticated/ajustes.perfil'
 import { Route as AuthenticatedAjustesOnboardingRouteImport } from './routes/_authenticated/ajustes.onboarding'
@@ -154,6 +155,12 @@ const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedClientesRoute,
 } as any)
+const AuthenticatedAjustesSquadsRoute =
+  AuthenticatedAjustesSquadsRouteImport.update({
+    id: '/squads',
+    path: '/squads',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
 const AuthenticatedAjustesPlanosRoute =
   AuthenticatedAjustesPlanosRouteImport.update({
     id: '/planos',
@@ -240,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
+  '/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes/': typeof AuthenticatedAjustesIndexRoute
@@ -271,6 +279,7 @@ export interface FileRoutesByTo {
   '/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
+  '/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes': typeof AuthenticatedAjustesIndexRoute
@@ -306,6 +315,7 @@ export interface FileRoutesById {
   '/_authenticated/ajustes/onboarding': typeof AuthenticatedAjustesOnboardingRoute
   '/_authenticated/ajustes/perfil': typeof AuthenticatedAjustesPerfilRoute
   '/_authenticated/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
+  '/_authenticated/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/ajustes/onboarding'
     | '/ajustes/perfil'
     | '/ajustes/planos'
+    | '/ajustes/squads'
     | '/clientes/$id'
     | '/p/relatorio/$token'
     | '/ajustes/'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/ajustes/onboarding'
     | '/ajustes/perfil'
     | '/ajustes/planos'
+    | '/ajustes/squads'
     | '/clientes/$id'
     | '/p/relatorio/$token'
     | '/ajustes'
@@ -406,6 +418,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ajustes/onboarding'
     | '/_authenticated/ajustes/perfil'
     | '/_authenticated/ajustes/planos'
+    | '/_authenticated/ajustes/squads'
     | '/_authenticated/clientes/$id'
     | '/p/relatorio/$token'
     | '/_authenticated/ajustes/'
@@ -583,6 +596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesIdRouteImport
       parentRoute: typeof AuthenticatedClientesRoute
     }
+    '/_authenticated/ajustes/squads': {
+      id: '/_authenticated/ajustes/squads'
+      path: '/squads'
+      fullPath: '/ajustes/squads'
+      preLoaderRoute: typeof AuthenticatedAjustesSquadsRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
     '/_authenticated/ajustes/planos': {
       id: '/_authenticated/ajustes/planos'
       path: '/planos'
@@ -665,6 +685,7 @@ interface AuthenticatedAjustesRouteChildren {
   AuthenticatedAjustesOnboardingRoute: typeof AuthenticatedAjustesOnboardingRoute
   AuthenticatedAjustesPerfilRoute: typeof AuthenticatedAjustesPerfilRoute
   AuthenticatedAjustesPlanosRoute: typeof AuthenticatedAjustesPlanosRoute
+  AuthenticatedAjustesSquadsRoute: typeof AuthenticatedAjustesSquadsRoute
   AuthenticatedAjustesIndexRoute: typeof AuthenticatedAjustesIndexRoute
 }
 
@@ -677,6 +698,7 @@ const AuthenticatedAjustesRouteChildren: AuthenticatedAjustesRouteChildren = {
   AuthenticatedAjustesOnboardingRoute: AuthenticatedAjustesOnboardingRoute,
   AuthenticatedAjustesPerfilRoute: AuthenticatedAjustesPerfilRoute,
   AuthenticatedAjustesPlanosRoute: AuthenticatedAjustesPlanosRoute,
+  AuthenticatedAjustesSquadsRoute: AuthenticatedAjustesSquadsRoute,
   AuthenticatedAjustesIndexRoute: AuthenticatedAjustesIndexRoute,
 }
 
