@@ -80,7 +80,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
   const [accountId, setAccountId] = useState<string>("all");
   const [campaignId, setCampaignId] = useState<string>("all");
   const [creativeId, setCreativeId] = useState<string>("all");
-  const [period, setPeriod] = useState<string>("30"); // presets: 7|15|30|90|365|current_week|all|custom
+  const [period, setPeriod] = useState<string>("current_month"); // presets: current_month|7|15|30|90|365|current_week|all|custom
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [campaignSort, setCampaignSort] = useState<"spend" | "cpl" | "results" | "ctr">("cpl");
 
@@ -108,6 +108,11 @@ export function PerformanceView({ data }: { data: PerfData }) {
     if (period === "current_week") {
       const now = new Date(); now.setHours(0, 0, 0, 0);
       const start = new Date(now); start.setDate(now.getDate() - now.getDay()); // sunday
+      return d >= start && d <= now;
+    }
+    if (period === "current_month") {
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
       return d >= start && d <= now;
     }
     const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -348,7 +353,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
   // Previous period delta for WhatsApp (same length as current period)
   const waPrevTotals = useMemo(() => {
     const t = { impressions: 0, link_clicks: 0, conversations_started: 0, first_replies: 0 };
-    if (period === "all" || period === "custom" || period === "current_week") return t;
+    if (period === "all" || period === "custom" || period === "current_week" || period === "current_month") return t;
     const days = Number(period);
     const now = new Date(); now.setHours(0, 0, 0, 0);
     const prevStart = new Date(now); prevStart.setDate(now.getDate() - days * 2);
@@ -1209,6 +1214,7 @@ function RegionRanking({ regions }: { regions: { region: string; country: string
 /* Period picker: presets + range calendar in one popover */
 const PERIOD_PRESETS: { value: string; label: string }[] = [
   { value: "current_week", label: "Hoje" },
+  { value: "current_month", label: "Mês atual" },
   { value: "7", label: "Últimos 7 dias" },
   { value: "15", label: "Últimos 15 dias" },
   { value: "30", label: "Últimos 30 dias" },
@@ -1228,6 +1234,10 @@ function presetToRange(period: string): { from?: Date; to?: Date } {
   if (period === "all") return {};
   const to = new Date(); to.setHours(0, 0, 0, 0);
   if (period === "current_week") return { from: to, to };
+  if (period === "current_month") {
+    const from = new Date(to.getFullYear(), to.getMonth(), 1);
+    return { from, to };
+  }
   const n = Number(period);
   if (!Number.isFinite(n)) return {};
   const from = new Date(to); from.setDate(from.getDate() - (n - 1));
