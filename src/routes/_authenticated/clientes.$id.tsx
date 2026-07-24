@@ -1592,7 +1592,22 @@ function Acessos({ clientId }: { clientId: string }) {
 function Auditoria({ clientId }: { clientId: string }) {
   const q = useQuery({
     queryKey: ["activities", clientId],
-    queryFn: async () => (await supabase.from("client_activities").select("*, profiles(full_name)").eq("client_id", clientId).order("created_at", { ascending: false }).limit(200)).data ?? [],
+    queryFn: async () => {
+      const { data: acts } = await supabase
+        .from("client_activities")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const rows = acts ?? [];
+      const ids = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean))) as string[];
+      let names: Record<string, string> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+        names = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name]));
+      }
+      return rows.map((r: any) => ({ ...r, _author: names[r.user_id] || "—" }));
+    },
   });
   return (
     <Card>
@@ -1605,7 +1620,7 @@ function Auditoria({ clientId }: { clientId: string }) {
               <span className="font-medium">{a.action}</span>
               {a.entity_type && <Badge variant="outline" className="text-[10px]">{a.entity_type}</Badge>}
             </div>
-            <div className="text-xs text-muted-foreground">{a.profiles?.full_name || "—"} · {new Date(a.created_at).toLocaleString("pt-BR")}</div>
+            <div className="text-xs text-muted-foreground">{a._author} · {new Date(a.created_at).toLocaleString("pt-BR")}</div>
             {a.description && <div className="text-xs mt-0.5">{a.description}</div>}
           </div>
         ))}
