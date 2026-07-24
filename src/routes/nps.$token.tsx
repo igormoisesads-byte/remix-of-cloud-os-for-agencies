@@ -20,13 +20,16 @@ function PublicNpsPage() {
   const { token } = Route.useParams();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [score, setScore] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
   const { data: survey, isLoading } = useQuery({
     queryKey: ["public-survey", token],
     queryFn: async () => {
-      const { data } = await supabase.from("nps_surveys").select("id,title,description,questions,active").eq("public_token", token).maybeSingle();
+      const { data } = await supabase.from("nps_surveys").select("id,title,description,questions,active,client_id").eq("public_token", token).maybeSingle();
       return data;
     },
   });
@@ -42,8 +45,12 @@ function PublicNpsPage() {
     setSending(true);
     const { error } = await supabase.from("nps_survey_responses").insert({
       survey_id: survey!.id,
+      client_id: (survey as any).client_id ?? null,
       score: finalScore != null && !Number.isNaN(finalScore) ? finalScore : null,
       answers,
+      comment: comment || null,
+      respondent_name: name || null,
+      respondent_email: email || null,
     });
     setSending(false);
     if (error) { toast.error(error.message); return; }
@@ -119,6 +126,21 @@ function PublicNpsPage() {
             ))}
 
 
+
+            <div className="space-y-2 pt-2 border-t">
+              <label className="text-sm font-medium">Deixe um comentário (opcional)</label>
+              <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Conte um pouco mais sobre sua experiência…" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">E-mail (opcional)</label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
+              </div>
+            </div>
 
             <Button onClick={submit} disabled={sending} className="w-full" size="lg">
               {sending ? "Enviando..." : "Enviar resposta"}
