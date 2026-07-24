@@ -1234,6 +1234,10 @@ function presetToRange(period: string): { from?: Date; to?: Date } {
   if (period === "all") return {};
   const to = new Date(); to.setHours(0, 0, 0, 0);
   if (period === "current_week") return { from: to, to };
+  if (period === "current_month") {
+    const from = new Date(to.getFullYear(), to.getMonth(), 1);
+    return { from, to };
+  }
   const n = Number(period);
   if (!Number.isFinite(n)) return {};
   const from = new Date(to); from.setDate(from.getDate() - (n - 1));
