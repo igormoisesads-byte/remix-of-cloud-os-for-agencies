@@ -127,6 +127,21 @@ function PublicNpsPage() {
 
 
 
+            <div className="space-y-2 pt-2 border-t">
+              <label className="text-sm font-medium">Deixe um comentário (opcional)</label>
+              <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Conte um pouco mais sobre sua experiência…" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Nome (opcional)</label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">E-mail (opcional)</label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
+              </div>
+            </div>
+
             <Button onClick={submit} disabled={sending} className="w-full" size="lg">
               {sending ? "Enviando..." : "Enviar resposta"}
             </Button>
