@@ -31,6 +31,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
   const [niches, setNiches] = useState<Niche[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [squads, setSquads] = useState<{ id: string; name: string; color: string | null }[]>([]);
 
   const [form, setForm] = useState({
     name: "", type: "local",
@@ -38,7 +39,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     platform: "", site: "", city_uf: "", address: "", brand_anniversary: "",
     instagram: "",
     responsavel_nome: "", responsavel_telefone: "", responsavel_email: "",
-    performance_user_id: "", cs_user_id: "",
+    performance_user_id: "", cs_user_id: "", squad_id: "",
     plan_id: "",
     contract_start: "", contract_end: "",
     monthly_fee_amount: "", monthly_fee_day: "5",
@@ -51,18 +52,20 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const [p, t, n, tmpl, pr] = await Promise.all([
+      const [p, t, n, tmpl, pr, sq] = await Promise.all([
         supabase.from("plans").select("id,name,kind,amount,active").eq("active", true).order("name"),
         supabase.from("commission_tiers").select("id,min_revenue,max_revenue,pct,label").order("min_revenue"),
         supabase.from("niches").select("id,name").order("name"),
         supabase.from("onboarding_templates").select("id,niche_id,name").order("name"),
         supabase.from("profiles").select("id,full_name").order("full_name"),
+        supabase.from("squads").select("id,name,color").order("name"),
       ]);
       setPlans((p.data ?? []) as Plan[]);
       setTiers((t.data ?? []) as Tier[]);
       setNiches((n.data ?? []) as Niche[]);
       setTemplates((tmpl.data ?? []) as Template[]);
       setProfiles((pr.data ?? []) as Profile[]);
+      setSquads((sq.data ?? []) as { id: string; name: string; color: string | null }[]);
     })();
   }, [open]);
 
@@ -72,7 +75,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       name: "", type: "local", niche_id: "", onboarding_template_id: "", platform: "", site: "", city_uf: "",
       address: "", brand_anniversary: "", instagram: "",
       responsavel_nome: "", responsavel_telefone: "", responsavel_email: "",
-      performance_user_id: "", cs_user_id: "", plan_id: "",
+      performance_user_id: "", cs_user_id: "", squad_id: "", plan_id: "",
       contract_start: "", contract_end: "", monthly_fee_amount: "", monthly_fee_day: "5",
       primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
       launch_commission_pct: "", optimization_frequency: "2s", notes: "",
@@ -125,6 +128,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       investimento_mensal: form.investimento_mensal ? Number(form.investimento_mensal) : null,
       performance_user_id: form.performance_user_id || null,
       cs_user_id: form.cs_user_id || null,
+      squad_id: form.squad_id || null,
       plan_id: form.plan_id || null,
       contract_start: form.contract_start || null,
       contract_end: form.contract_end || null,
@@ -411,6 +415,23 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                     {profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || "—"}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label>Squad (célula responsável)</Label>
+                <Select value={form.squad_id} onValueChange={(v) => setForm({ ...form, squad_id: v })}>
+                  <SelectTrigger><SelectValue placeholder={squads.length ? "Selecione um squad" : "Nenhum squad cadastrado"} /></SelectTrigger>
+                  <SelectContent>
+                    {squads.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color || "#3b82f6" }} />
+                          {s.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Todos os membros do squad terão acesso a este cliente.</p>
               </div>
             </div>
           )}
