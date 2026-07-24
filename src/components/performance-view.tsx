@@ -80,7 +80,7 @@ export function PerformanceView({ data }: { data: PerfData }) {
   const [accountId, setAccountId] = useState<string>("all");
   const [campaignId, setCampaignId] = useState<string>("all");
   const [creativeId, setCreativeId] = useState<string>("all");
-  const [period, setPeriod] = useState<string>("30"); // presets: 7|15|30|90|365|current_week|all|custom
+  const [period, setPeriod] = useState<string>("current_month"); // presets: current_month|7|15|30|90|365|current_week|all|custom
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [campaignSort, setCampaignSort] = useState<"spend" | "cpl" | "results" | "ctr">("cpl");
 
