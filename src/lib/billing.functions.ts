@@ -188,7 +188,7 @@ export const listLowBalanceAlerts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("ad_accounts")
-      .select("id, account_name, currency, balance_cents, last_low_balance_days, low_balance_days_threshold, balance_synced_at, clients(id, name)")
+      .select("id, account_name, currency, balance_cents, amount_spent_cents, spend_cap_cents, tax_rate, last_low_balance_days, low_balance_days_threshold, balance_synced_at, clients(id, name, logo_url)")
       .eq("active", true)
       .eq("provider", "meta")
       .not("last_low_balance_days", "is", null);
