@@ -672,6 +672,7 @@ export type Database = {
           created_by: string | null
           id: string
           name: string
+          squad_id: string | null
           topic: string | null
           type: Database["public"]["Enums"]["channel_type"]
           updated_at: string
@@ -682,6 +683,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           name: string
+          squad_id?: string | null
           topic?: string | null
           type?: Database["public"]["Enums"]["channel_type"]
           updated_at?: string
@@ -692,6 +694,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           name?: string
+          squad_id?: string | null
           topic?: string | null
           type?: Database["public"]["Enums"]["channel_type"]
           updated_at?: string
@@ -702,6 +705,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channels_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
             referencedColumns: ["id"]
           },
         ]
@@ -2631,7 +2641,7 @@ export type Database = {
         | "especialista_performance"
         | "sucesso_cliente"
       channel_member_role: "admin" | "member"
-      channel_type: "public" | "private" | "dm" | "client"
+      channel_type: "public" | "private" | "dm" | "client" | "squad"
       client_status: "ativo" | "pausado" | "churn" | "onboarding"
       client_type: "local" | "perpetuo" | "autoria" | "lancamento"
       fee_status: "pendente" | "pago" | "atrasado" | "cancelado"
@@ -2778,7 +2788,7 @@ export const Constants = {
         "sucesso_cliente",
       ],
       channel_member_role: ["admin", "member"],
-      channel_type: ["public", "private", "dm", "client"],
+      channel_type: ["public", "private", "dm", "client", "squad"],
       client_status: ["ativo", "pausado", "churn", "onboarding"],
       client_type: ["local", "perpetuo", "autoria", "lancamento"],
       fee_status: ["pendente", "pago", "atrasado", "cancelado"],
