@@ -38,7 +38,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     platform: "", site: "", city_uf: "", address: "", brand_anniversary: "",
     instagram: "",
     responsavel_nome: "", responsavel_telefone: "", responsavel_email: "",
-    performance_user_id: "", cs_user_id: "",
+    performance_user_id: "", cs_user_id: "", squad_id: "",
     plan_id: "",
     contract_start: "", contract_end: "",
     monthly_fee_amount: "", monthly_fee_day: "5",
@@ -51,18 +51,20 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const [p, t, n, tmpl, pr] = await Promise.all([
+      const [p, t, n, tmpl, pr, sq] = await Promise.all([
         supabase.from("plans").select("id,name,kind,amount,active").eq("active", true).order("name"),
         supabase.from("commission_tiers").select("id,min_revenue,max_revenue,pct,label").order("min_revenue"),
         supabase.from("niches").select("id,name").order("name"),
         supabase.from("onboarding_templates").select("id,niche_id,name").order("name"),
         supabase.from("profiles").select("id,full_name").order("full_name"),
+        supabase.from("squads").select("id,name,color").order("name"),
       ]);
       setPlans((p.data ?? []) as Plan[]);
       setTiers((t.data ?? []) as Tier[]);
       setNiches((n.data ?? []) as Niche[]);
       setTemplates((tmpl.data ?? []) as Template[]);
       setProfiles((pr.data ?? []) as Profile[]);
+      setSquads((sq.data ?? []) as { id: string; name: string; color: string | null }[]);
     })();
   }, [open]);
 
