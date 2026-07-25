@@ -9,14 +9,14 @@ type Input = {
   period_end?: string | null;
 };
 
-const MODEL = "openai/gpt-5.4";
+const MODEL = "gpt-4o";
 
 export const chatWithClientData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Input) => input)
   .handler(async ({ data, context }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("OPENAI_API_KEY não configurada");
     const { supabase } = context;
 
     const end = data.period_end || new Date().toISOString().slice(0, 10);
@@ -92,7 +92,7 @@ Se não houver dado suficiente, diga isso claramente e sugira o que sincronizar/
 DADOS DO CLIENTE:
 ${context_str}`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
