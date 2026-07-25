@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,11 +25,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncAdAccount } from "@/lib/ads.functions";
 import { generateAiReport } from "@/lib/reports.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import ReactMarkdown from "react-markdown";
-import { PerformanceView } from "@/components/performance-view";
-import { ClientSales } from "@/components/client-sales";
-import { AiDataChat } from "@/components/ai-data-chat";
-import { CreativesView } from "@/components/creatives-view";
+const ReactMarkdown = lazy(() => import("react-markdown"));
+const PerformanceView = lazy(() => import("@/components/performance-view").then((m) => ({ default: m.PerformanceView })));
+const ClientSales = lazy(() => import("@/components/client-sales").then((m) => ({ default: m.ClientSales })));
+const AiDataChat = lazy(() => import("@/components/ai-data-chat").then((m) => ({ default: m.AiDataChat })));
+const CreativesView = lazy(() => import("@/components/creatives-view").then((m) => ({ default: m.CreativesView })));
+
 import { uploadToR2 } from "@/lib/upload-r2";
 import { Pencil, Upload } from "lucide-react";
 
@@ -182,10 +183,13 @@ function ClienteDetail() {
         </div>
 
         <div className="p-4 sm:p-6">
+          <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>}>
           {section === "visao" && <VisaoGeral c={c} />}
           {section === "performance" && <Performance clientId={id} clientType={c.type} />}
           {section === "criativos" && <CreativesView clientId={id} clientType={c.type} />}
           {section === "vendas" && <ClientSales clientId={id} />}
+          </Suspense>
+
 
           {section === "projecoes" && <Projecoes c={c} />}
           {section === "seo" && <Placeholder title="SEO" text="Em breve: rastreio de posições e páginas do cliente." />}
@@ -1306,7 +1310,10 @@ function Relatorios({ clientId }: { clientId: string }) {
               <p className="text-xs text-muted-foreground">Gerado por {viewing.ai_model} · {fmtDate(viewing.ai_generated_at)}</p>
             </DialogHeader>
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{viewing.ai_content}</ReactMarkdown>
+              <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
+                <ReactMarkdown>{viewing.ai_content}</ReactMarkdown>
+              </Suspense>
+
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { navigator.clipboard.writeText(viewing.ai_content); toast.success("Copiado"); }}>Copiar markdown</Button>
