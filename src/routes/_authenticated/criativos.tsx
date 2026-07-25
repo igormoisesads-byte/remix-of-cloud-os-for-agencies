@@ -49,7 +49,10 @@ function CriativosPage() {
       </div>
 
       {current ? (
-        <CreativesView clientId={current.id} clientType={current.type} />
+        <Suspense fallback={<Card className="p-10 text-center text-sm text-muted-foreground">Carregando criativos…</Card>}>
+          <CreativesView clientId={current.id} clientType={current.type} />
+        </Suspense>
+
       ) : (
         <Card className="p-10 text-center text-sm text-muted-foreground">
           Selecione um cliente acima para ver os criativos.
