@@ -810,15 +810,19 @@ export function PerformanceView({ data }: { data: PerfData }) {
                 <EmptyMsg text="Nenhuma conversa de WhatsApp registrada. Se sua campanha é de mensagens, aguarde a próxima sincronização." />
               ) : (
                 <VerticalFunnel
+                  spend={totals.spend}
                   steps={[
-                    { label: "Impressões", value: waTotals.impressions, color: "#3b82f6" },
-                    { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1" },
-                    { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366" },
-                    { label: "Novos contatos", value: waExtras.newContacts, color: "#059669" },
+                    { label: "Impressões", value: waTotals.impressions, color: "#3b82f6", costLabel: "CPM", costValue: waTotals.impressions ? (totals.spend / waTotals.impressions) * 1000 : 0 },
+                    { label: "Cliques no anúncio", value: waTotals.link_clicks, color: "#6366f1", costLabel: "CPC", costValue: waTotals.link_clicks ? totals.spend / waTotals.link_clicks : 0 },
+                    { label: "Conversas iniciadas", value: waTotals.conversations_started, color: "#25D366", costLabel: "Custo/Conversa", costValue: waTotals.conversations_started ? totals.spend / waTotals.conversations_started : 0 },
+                    { label: "Novos contatos", value: waExtras.newContacts, color: "#059669", costLabel: "Custo/Novo", costValue: waExtras.newContacts ? totals.spend / waExtras.newContacts : 0 },
+                    ...((data.sales?.agendamentos ?? 0) > 0 ? [{ label: "Agendamentos", value: data.sales!.agendamentos!, color: "#8b5cf6", costLabel: "Custo/Agend.", costValue: totals.spend / data.sales!.agendamentos! }] : []),
+                    ...((data.sales?.vendas ?? 0) > 0 ? [{ label: "Vendas", value: data.sales!.vendas, color: "#f59e0b", costLabel: "CPA", costValue: totals.spend / data.sales!.vendas }] : []),
                   ]}
                 />
               )}
             </CardContent>
+
           </Card>
         </TabsContent>
 
