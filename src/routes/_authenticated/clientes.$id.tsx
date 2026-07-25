@@ -183,10 +183,13 @@ function ClienteDetail() {
         </div>
 
         <div className="p-4 sm:p-6">
+          <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>}>
           {section === "visao" && <VisaoGeral c={c} />}
           {section === "performance" && <Performance clientId={id} clientType={c.type} />}
           {section === "criativos" && <CreativesView clientId={id} clientType={c.type} />}
           {section === "vendas" && <ClientSales clientId={id} />}
+          </Suspense>
+
 
           {section === "projecoes" && <Projecoes c={c} />}
           {section === "seo" && <Placeholder title="SEO" text="Em breve: rastreio de posições e páginas do cliente." />}
