@@ -9,7 +9,7 @@ type Input = {
   extra?: string | null;
 };
 
-const MODEL = "gpt-4o-mini";
+const MODEL = "gpt-5.4-mini";
 
 export const generateAiReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

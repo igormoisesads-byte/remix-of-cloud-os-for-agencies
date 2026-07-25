@@ -7,7 +7,7 @@ type Input = {
   contextoExtra?: string | null;
 };
 
-const MODEL = "gpt-4o";
+const MODEL = "gpt-5.4-nano";
 
 export const generatePdaPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

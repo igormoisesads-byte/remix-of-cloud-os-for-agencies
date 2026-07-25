@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import cloudosLogo from "@/assets/cloudos-logo.png.asset.json";
+const AGENCY_LOGO_URL = "https://cdn.clouddigital.com.br/agency/logo/2026/07/1164be74-089b-47a9-8a16-1d5a26b82830-Ativo_4_4x.png";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -31,9 +31,7 @@ function AuthPage() {
       <div className="relative w-full max-w-md">
         <div className="rounded-2xl border bg-card p-8 shadow-2xl">
           <div className="flex flex-col items-center gap-3 mb-6">
-            <div className="h-16 w-16 rounded-2xl bg-black flex items-center justify-center shadow-md">
-              <img src={cloudosLogo.url} alt="CloudOS" className="h-10 w-10 object-contain" />
-            </div>
+            <img src={AGENCY_LOGO_URL} alt="CloudOS" className="h-16 object-contain" />
             <div className="text-center">
               <div className="text-2xl font-bold tracking-tight">CloudOS</div>
               <div className="text-xs text-muted-foreground mt-0.5">Sistema operacional da agência</div>
