@@ -1310,7 +1310,10 @@ function Relatorios({ clientId }: { clientId: string }) {
               <p className="text-xs text-muted-foreground">Gerado por {viewing.ai_model} · {fmtDate(viewing.ai_generated_at)}</p>
             </DialogHeader>
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{viewing.ai_content}</ReactMarkdown>
+              <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
+                <ReactMarkdown>{viewing.ai_content}</ReactMarkdown>
+              </Suspense>
+
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { navigator.clipboard.writeText(viewing.ai_content); toast.success("Copiado"); }}>Copiar markdown</Button>
