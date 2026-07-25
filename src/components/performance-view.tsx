@@ -56,7 +56,7 @@ export type PerfData = {
   accounts?: any[];
   campaignInsights?: any[];
   hourly?: any[];
-  sales?: { vendas: number; faturamento: number; custo_produto?: number };
+  sales?: { vendas: number; faturamento: number; custo_produto?: number; leads?: number; agendamentos?: number };
   clientType?: string | null;
 };
 
