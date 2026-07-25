@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CreativesView } from "@/components/creatives-view";
+const CreativesView = lazy(() => import("@/components/creatives-view").then((m) => ({ default: m.CreativesView })));
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 
