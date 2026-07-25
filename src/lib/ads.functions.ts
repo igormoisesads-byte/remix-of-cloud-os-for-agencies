@@ -201,9 +201,15 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         });
         if (!e) upsertedGeo++;
       }
-    } catch {
-      // ignore region errors
+    } catch (err: any) {
+      // Surface region errors so we can debug when nothing shows up per state.
+      console.error("[ads] region breakdown failed:", err?.message || err);
+      await supabaseAdmin
+        .from("ad_accounts")
+        .update({ last_sync_error: `region: ${String(err?.message || err).slice(0, 300)}` })
+        .eq("id", acc.id);
     }
+
 
     // 4) Creatives (ads) with aggregated insights + campaign info
     try {
