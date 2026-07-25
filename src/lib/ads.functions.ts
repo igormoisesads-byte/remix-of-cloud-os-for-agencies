@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 /* ---------- Meta Ads sync ---------- */
 
-const META_V = "v20.0";
+const META_V = "v25.0";
 
 function pickAction(actions: any[], type: string) {
   return Number((actions ?? []).find((a) => a.action_type === type)?.value ?? 0);
@@ -177,7 +177,9 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
     // 3b) Region breakdown (per state) — Meta returns region names as strings
     const regionUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/insights`);
     regionUrl.searchParams.set("fields", "spend,impressions,clicks,reach,actions");
-    regionUrl.searchParams.set("breakdowns", "region");
+    // Meta v25: combine country+region so we get the country code alongside each state.
+    regionUrl.searchParams.set("breakdowns", "country,region");
+    regionUrl.searchParams.set("level", "account");
     regionUrl.searchParams.set("time_range", timeRange);
     regionUrl.searchParams.set("limit", "500");
     regionUrl.searchParams.set("access_token", token);
