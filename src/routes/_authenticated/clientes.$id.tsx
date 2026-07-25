@@ -25,11 +25,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncAdAccount } from "@/lib/ads.functions";
 import { generateAiReport } from "@/lib/reports.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import ReactMarkdown from "react-markdown";
-import { PerformanceView } from "@/components/performance-view";
-import { ClientSales } from "@/components/client-sales";
-import { AiDataChat } from "@/components/ai-data-chat";
-import { CreativesView } from "@/components/creatives-view";
+const ReactMarkdown = lazy(() => import("react-markdown"));
+const PerformanceView = lazy(() => import("@/components/performance-view").then((m) => ({ default: m.PerformanceView })));
+const ClientSales = lazy(() => import("@/components/client-sales").then((m) => ({ default: m.ClientSales })));
+const AiDataChat = lazy(() => import("@/components/ai-data-chat").then((m) => ({ default: m.AiDataChat })));
+const CreativesView = lazy(() => import("@/components/creatives-view").then((m) => ({ default: m.CreativesView })));
+
 import { uploadToR2 } from "@/lib/upload-r2";
 import { Pencil, Upload } from "lucide-react";
 
