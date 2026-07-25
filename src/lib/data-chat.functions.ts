@@ -9,7 +9,7 @@ type Input = {
   period_end?: string | null;
 };
 
-const MODEL = "gpt-4o";
+const MODEL = "gpt-5.4-nano";
 
 export const chatWithClientData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
