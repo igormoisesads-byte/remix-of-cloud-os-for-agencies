@@ -1,12 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, MessageSquare, Users, ClipboardList, Settings } from "lucide-react";
+import { Home, MessageSquare, Sparkles, ClipboardList, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { title: "Hoje", url: "/hoje", icon: Home },
   { title: "Chat", url: "/chat", icon: MessageSquare },
-  { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Tarefas", url: "/operacoes", icon: ClipboardList },
+  { title: "Criativos", url: "/criativos", icon: Sparkles },
   { title: "Ajustes", url: "/ajustes", icon: Settings },
 ];
 
@@ -17,8 +17,9 @@ export function MobileBottomNav() {
   return (
     <div
       className="md:hidden fixed left-0 right-0 z-40 pointer-events-none flex justify-center px-3"
-      style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+      style={{ bottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
     >
+
       <nav
         aria-label="Navegação principal"
         className="pointer-events-auto w-full max-w-md rounded-2xl border border-white/40 bg-white/60 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 dark:bg-black/40 dark:border-white/10"
