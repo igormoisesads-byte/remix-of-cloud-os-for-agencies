@@ -39,7 +39,7 @@ function HBCBar({ m }: { m: ScoredMetric }) {
     <div className="space-y-1">
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted-foreground truncate">{m.label}</span>
-        <span className={`font-semibold ${statusTextClass(m.status)}`}>{fmtPct(m.value)}</span>
+        <span className={`font-semibold ${statusTextClass(m.status)}`}>{pctOrDash(m.value)}</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div className={`h-full ${statusBgClass(m.status)}`} style={{ width: `${width}%` }} />
