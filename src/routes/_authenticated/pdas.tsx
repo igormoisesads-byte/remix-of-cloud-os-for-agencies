@@ -237,7 +237,10 @@ function PdaDetail({ pda, onChange }: { pda: any; onChange: () => void }) {
         {pda.description && (
           <CardContent>
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{pda.description}</ReactMarkdown>
+              <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando…</div>}>
+                <ReactMarkdown>{pda.description}</ReactMarkdown>
+              </Suspense>
+
             </div>
           </CardContent>
         )}
