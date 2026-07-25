@@ -617,23 +617,19 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-4">
-                <div className="min-w-0">
-                  <PerformanceView data={{
-                    insights: insights.data ?? [],
-                    creatives: creatives.data ?? [],
-                    geo: geo.data ?? [],
-                    whatsapp: wa.data ?? [],
-                    campaignInsights: campaignInsights.data ?? [],
-                    accounts: accounts.data ?? [],
-                    sales: salesAgg.data,
-                    hourly: hourly.data ?? [],
-                    clientType,
-                  }} />
-                </div>
-                <div className="hidden xl:block">
-                  <AiDataChat clientId={clientId} period={{}} />
-                </div>
+              <div>
+                <PerformanceView data={{
+                  insights: insights.data ?? [],
+                  creatives: creatives.data ?? [],
+                  geo: geo.data ?? [],
+                  whatsapp: wa.data ?? [],
+                  campaignInsights: campaignInsights.data ?? [],
+                  accounts: accounts.data ?? [],
+                  sales: salesAgg.data,
+                  hourly: hourly.data ?? [],
+                  clientType,
+                }} />
+                <AiDataChat clientId={clientId} period={{}} />
               </div>
               <div className="mt-4 space-y-2">
                 {(accounts.data ?? []).map((a: any) => (
