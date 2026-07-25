@@ -183,20 +183,77 @@ export const listClientBilling = createServerFn({ method: "GET" })
     return { accounts: accounts ?? [], transactions: tx ?? [] };
   });
 
+export const PREPAID_WARN_DAYS = 7;
+export const PREPAID_CRITICAL_DAYS = 1.5;
+
+export function classifyFunding(fundingType?: string | null): "prepaid" | "postpaid" {
+  const t = String(fundingType ?? "").toUpperCase();
+  if (!t) return "postpaid";
+  if (t.includes("PREPAID") || t.includes("FUNDS") || t.includes("BOLETO") || t.includes("PIX")) return "prepaid";
+  return "postpaid";
+}
+
 export const listLowBalanceAlerts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { data: accounts } = await context.supabase
       .from("ad_accounts")
-      .select("id, account_name, currency, balance_cents, amount_spent_cents, spend_cap_cents, tax_rate, last_low_balance_days, low_balance_days_threshold, balance_synced_at, clients(id, name, logo_url)")
+      .select("id, account_name, currency, funding_type, balance_cents, amount_spent_cents, spend_cap_cents, tax_rate, last_low_balance_days, low_balance_days_threshold, balance_synced_at, clients(id, name, logo_url)")
       .eq("active", true)
-      .eq("provider", "meta")
-      .not("last_low_balance_days", "is", null);
-    const rows = (data ?? []).filter((r: any) => {
-      const t = Number(r.low_balance_days_threshold ?? 3);
-      return r.last_low_balance_days != null && Number(r.last_low_balance_days) <= Math.max(t * 2, 7);
-    });
-    rows.sort((a: any, b: any) => Number(a.last_low_balance_days) - Number(b.last_low_balance_days));
+      .eq("provider", "meta");
+
+    const ids = (accounts ?? []).map((a: any) => a.id);
+    const { data: tx } = ids.length
+      ? await context.supabase
+          .from("ad_billing_transactions")
+          .select("ad_account_id, status, billing_end_time, amount_cents, currency, payment_option")
+          .in("ad_account_id", ids)
+          .order("billing_end_time", { ascending: false })
+          .limit(500)
+      : { data: [] as any[] };
+
+    const txByAcc = new Map<string, any[]>();
+    for (const t of tx ?? []) {
+      const arr = txByAcc.get(t.ad_account_id) ?? [];
+      arr.push(t);
+      txByAcc.set(t.ad_account_id, arr);
+    }
+
+    const now = Date.now();
+    const rows = (accounts ?? []).map((a: any) => {
+      const kind = classifyFunding(a.funding_type);
+      const list = txByAcc.get(a.id) ?? [];
+      if (kind === "prepaid") {
+        const d = a.last_low_balance_days != null ? Number(a.last_low_balance_days) : null;
+        if (d == null) return null;
+        let severity: "critical" | "warning" | null = null;
+        if (d <= PREPAID_CRITICAL_DAYS) severity = "critical";
+        else if (d <= PREPAID_WARN_DAYS) severity = "warning";
+        if (!severity) return null;
+        return { ...a, kind, severity, days_remaining: d };
+      }
+      const failed = list.find((t: any) => /fail|error|declin/i.test(String(t.status ?? "")));
+      const upcoming = list
+        .map((t: any) => (t.billing_end_time ? new Date(t.billing_end_time).getTime() : 0))
+        .filter((n: number) => n >= now)
+        .sort((x: number, y: number) => x - y)[0];
+      const hoursToNext = upcoming ? (upcoming - now) / 3_600_000 : null;
+      let severity: "critical" | "warning" | null = null;
+      let reason: string | null = null;
+      if (failed) { severity = "critical"; reason = "payment_failed"; }
+      else if (hoursToNext != null && hoursToNext <= 36) { severity = "warning"; reason = "charge_tomorrow"; }
+      if (!severity) return null;
+      return {
+        ...a,
+        kind,
+        severity,
+        reason,
+        next_charge_at: upcoming ? new Date(upcoming).toISOString() : null,
+        last_failed_tx: failed ?? null,
+      };
+    }).filter(Boolean) as any[];
+
+    rows.sort((a, b) => (a.severity === "critical" ? 0 : 1) - (b.severity === "critical" ? 0 : 1));
     return rows;
   });
 
