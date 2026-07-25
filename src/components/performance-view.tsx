@@ -18,6 +18,35 @@ import {
 } from "lucide-react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
+import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
+
+function statusBgClass(s: ScoredMetric["status"]) {
+  if (s === "good") return "bg-emerald-500";
+  if (s === "ok") return "bg-amber-500";
+  if (s === "bad") return "bg-rose-500";
+  return "bg-muted";
+}
+function statusTextClass(s: ScoredMetric["status"]) {
+  if (s === "good") return "text-emerald-700";
+  if (s === "ok") return "text-amber-700";
+  if (s === "bad") return "text-rose-700";
+  return "text-muted-foreground";
+}
+function pctOrDash(n: number | null) { return n == null ? "—" : `${n.toFixed(1)}%`; }
+function HBCBar({ m }: { m: ScoredMetric }) {
+  const width = Math.max(2, Math.min(100, m.value ?? 0));
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-muted-foreground truncate">{m.label}</span>
+        <span className={`font-semibold ${statusTextClass(m.status)}`}>{pctOrDash(m.value)}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className={`h-full ${statusBgClass(m.status)}`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
 
 export type PerfData = {
   insights: any[];
@@ -676,47 +705,87 @@ export function PerformanceView({ data }: { data: PerfData }) {
         </TabsContent>
 
         <TabsContent value="criativos">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Top criativos por investimento</CardTitle></CardHeader>
-            <CardContent>
-              {filteredCreatives.length === 0 ? <EmptyMsg /> : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {filteredCreatives.slice(0, 24).map((c) => (
-                    <div key={c.id} className="rounded-md border overflow-hidden bg-card">
-                      <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                        {c.thumbnail_url ? (
-                          <img src={c.thumbnail_url} alt={c.name || ""} className="w-full h-full object-cover" loading="lazy" />
-                        ) : (
-                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="p-3 space-y-2">
-                        <div className="text-sm font-medium truncate" title={c.name || ""}>{c.name || "Sem nome"}</div>
-                        {c.campaign_name && <div className="text-[10px] text-muted-foreground truncate" title={c.campaign_name}>📁 {c.campaign_name}</div>}
-                        <div className="grid grid-cols-3 gap-2 text-xs">
-                          <MiniStat k="Gasto" v={fmtBRL(c.spend)} />
-                          <MiniStat k="Cliques" v={fmtInt(c.clicks)} />
-                          <MiniStat k="Result." v={fmtInt(c.results)} />
+          {(() => {
+            const focus = focusFromClientType(data.clientType);
+            const agg = aggregateScores(filteredCreatives, focus);
+            return (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center justify-between gap-2">
+                      <span>Hook · Body · CTA (agregado — {filteredCreatives.length} criativos)</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        Foco: {focus === "local" ? "Local (WhatsApp)" : "Perpétuo/Lançamento (Site)"}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3 md:grid-cols-5">
+                      {agg.map((m) => (
+                        <div key={m.key} className="space-y-1.5">
+                          <div className="text-[11px] text-muted-foreground">{m.label}</div>
+                          <div className={`text-2xl font-bold ${statusTextClass(m.status)}`}>{pctOrDash(m.value)}</div>
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className={`h-full ${statusBgClass(m.status)}`} style={{ width: `${Math.min(100, m.value ?? 0)}%` }} />
+                          </div>
+                          <div className="text-[10px] text-muted-foreground leading-tight">{m.hint}</div>
                         </div>
-                        {c.destination_url && (
-                          <a href={c.destination_url} target="_blank" rel="noreferrer" className="text-xs text-primary flex items-center gap-1 truncate">
-                            <ExternalLink className="h-3 w-3" /> {c.destination_url}
-                          </a>
-                        )}
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
-                          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 ml-auto" onClick={() => setCreativeId(String(c.id))}>
-                            Filtrar
-                          </Button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Top criativos por investimento</CardTitle></CardHeader>
+                  <CardContent>
+                    {filteredCreatives.length === 0 ? <EmptyMsg /> : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {filteredCreatives.slice(0, 24).map((c) => {
+                          const scored = scoreCreative(c, focus);
+                          return (
+                            <div key={c.id} className="rounded-md border overflow-hidden bg-card">
+                              <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                                {c.thumbnail_url ? (
+                                  <img src={c.thumbnail_url} alt={c.name || ""} className="w-full h-full object-cover" loading="lazy" />
+                                ) : (
+                                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className="p-3 space-y-2">
+                                <div className="text-sm font-medium truncate" title={c.name || ""}>{c.name || "Sem nome"}</div>
+                                {c.campaign_name && <div className="text-[10px] text-muted-foreground truncate" title={c.campaign_name}>📁 {c.campaign_name}</div>}
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  <MiniStat k="Gasto" v={fmtBRL(c.spend)} />
+                                  <MiniStat k="Cliques" v={fmtInt(c.clicks)} />
+                                  <MiniStat k="Result." v={fmtInt(c.results)} />
+                                </div>
+                                <div className="space-y-1.5 pt-2 border-t">
+                                  {scored.map((m) => <HBCBar key={m.key} m={m} />)}
+                                </div>
+                                {c.destination_url && (
+                                  <a href={c.destination_url} target="_blank" rel="noreferrer" className="text-xs text-primary flex items-center gap-1 truncate">
+                                    <ExternalLink className="h-3 w-3" /> {c.destination_url}
+                                  </a>
+                                )}
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
+                                  <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 ml-auto" onClick={() => setCreativeId(String(c.id))}>
+                                    Filtrar
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
         </TabsContent>
+
 
         <TabsContent value="geo" className="space-y-4">
           <WorldMapPanel geoData={geoData} geoByCode={geoByCode} maxSpend={maxSpend} />
