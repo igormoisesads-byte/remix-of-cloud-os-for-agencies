@@ -32,7 +32,7 @@ function statusTextClass(s: ScoredMetric["status"]) {
   if (s === "bad") return "text-rose-700";
   return "text-muted-foreground";
 }
-function fmtPct(n: number | null) { return n == null ? "—" : `${n.toFixed(1)}%`; }
+function pctOrDash(n: number | null) { return n == null ? "—" : `${n.toFixed(1)}%`; }
 function HBCBar({ m }: { m: ScoredMetric }) {
   const width = Math.max(2, Math.min(100, m.value ?? 0));
   return (
