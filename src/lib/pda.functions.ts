@@ -7,14 +7,14 @@ type Input = {
   contextoExtra?: string | null;
 };
 
-const MODEL = "openai/gpt-5.4";
+const MODEL = "gpt-4o";
 
 export const generatePdaPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Input) => input)
   .handler(async ({ data, context }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("OPENAI_API_KEY não configurada");
     const { supabase } = context;
 
     const { data: pda, error } = await supabase
@@ -72,7 +72,7 @@ Regras:
 - Use pt-BR.
 - Nada além do JSON.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({

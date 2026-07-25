@@ -9,14 +9,14 @@ type Input = {
   extra?: string | null;
 };
 
-const MODEL = "openai/gpt-5.4-nano";
+const MODEL = "gpt-4o-mini";
 
 export const generateAiReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: Input) => input)
   .handler(async ({ data, context }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("OPENAI_API_KEY não configurada");
 
     const { supabase } = context;
 
@@ -102,7 +102,7 @@ Compromissos claros da agência com o cliente.
 
 Regras: use pt-BR, valores em R$ com separador de milhar, nunca invente números fora dos fornecidos, se não houver dados de anúncios diga claramente "sem dados de anúncios sincronizados no período" e recomende conectar/sincronizar a conta.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
