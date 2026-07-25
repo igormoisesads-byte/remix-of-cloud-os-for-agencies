@@ -903,69 +903,84 @@ function EmptyMsg({ text = "Sem dados no período. Sincronize a conta para ver m
 }
 
 /* Vertical funnel — largura decresce gradualmente (100% → 50%) independente do valor */
-function VerticalFunnel({ steps }: { steps: { label: string; value: number; color: string }[] }) {
+function VerticalFunnel({ steps, spend }: { steps: { label: string; value: number; color: string; costLabel?: string; costValue?: number }[]; spend?: number }) {
   const n = steps.length;
   const startW = 100;
   const endW = 50;
   const widthAt = (i: number) => (n <= 1 ? startW : startW - ((startW - endW) * i) / (n - 1));
   return (
-    <div className="flex gap-4 py-2">
-      {/* Funil (trapézios) */}
-      <div className="flex-1 flex flex-col items-center gap-0">
-        {steps.map((s, i) => {
-          const top = widthAt(i);
-          const bottom = widthAt(i + 1 < n ? i + 1 : i);
-          const isLast = i === n - 1;
-          return (
-            <div key={s.label} className="w-full flex flex-col items-center">
-              <div
-                className="relative w-full flex items-center justify-center text-white font-medium shadow-sm"
-                style={{
-                  height: 72,
-                  clipPath: isLast
-                    ? `polygon(${(100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 100%, ${(100 - top) / 2}% 100%)`
-                    : `polygon(${(100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 0%, ${100 - (100 - bottom) / 2}% 100%, ${(100 - bottom) / 2}% 100%)`,
-                  background: `linear-gradient(180deg, ${s.color}, ${s.color}cc)`,
-                }}
-              >
-                <div className="text-center px-2">
-                  <div className="text-xs opacity-90 leading-tight">{s.label}</div>
-                  <div className="text-lg font-bold tabular-nums leading-tight">{fmtInt(s.value)}</div>
+    <div className="space-y-2">
+      {typeof spend === "number" && spend > 0 && (
+        <div className="text-[11px] text-muted-foreground text-right">Investimento no período: <span className="font-semibold text-foreground">{fmtBRL(spend)}</span></div>
+      )}
+      <div className="flex gap-3 py-2">
+        {/* Funil (trapézios) */}
+        <div className="flex-1 flex flex-col items-center gap-0">
+          {steps.map((s, i) => {
+            const top = widthAt(i);
+            const bottom = widthAt(i + 1 < n ? i + 1 : i);
+            const isLast = i === n - 1;
+            return (
+              <div key={s.label} className="w-full flex flex-col items-center">
+                <div
+                  className="relative w-full flex items-center justify-center text-white font-medium shadow-sm"
+                  style={{
+                    height: 76,
+                    clipPath: isLast
+                      ? `polygon(${(100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 100%, ${(100 - top) / 2}% 100%)`
+                      : `polygon(${(100 - top) / 2}% 0%, ${100 - (100 - top) / 2}% 0%, ${100 - (100 - bottom) / 2}% 100%, ${(100 - bottom) / 2}% 100%)`,
+                    background: `linear-gradient(180deg, ${s.color}, ${s.color}cc)`,
+                  }}
+                >
+                  <div className="text-center px-2">
+                    <div className="text-xs opacity-90 leading-tight">{s.label}</div>
+                    <div className="text-lg font-bold tabular-nums leading-tight">{fmtInt(s.value)}</div>
+                    {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
+                      <div className="text-[10px] opacity-90 mt-0.5">{s.costLabel}: <span className="font-semibold">{fmtBRL(s.costValue)}</span></div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Coluna de conversão etapa a etapa */}
-      <div className="w-40 flex flex-col justify-around py-2">
-        {steps.map((s, i) => {
-          if (i === 0) {
+        {/* Coluna de conversão etapa a etapa */}
+        <div className="w-44 flex flex-col justify-around py-2">
+          {steps.map((s, i) => {
+            if (i === 0) {
+              return (
+                <div key={s.label} className="text-right">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Topo</div>
+                  <div className="text-sm font-semibold text-muted-foreground">100%</div>
+                  {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">{s.costLabel} <span className="font-semibold text-foreground">{fmtBRL(s.costValue)}</span></div>
+                  )}
+                </div>
+              );
+            }
+            const prev = steps[i - 1].value;
+            const conv = prev ? (s.value / prev) * 100 : 0;
+            const dropoff = 100 - conv;
             return (
-              <div key={s.label} className="text-right">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Topo</div>
-                <div className="text-sm font-semibold text-muted-foreground">100%</div>
+              <div key={s.label} className="text-right border-l-2 border-emerald-500/40 pl-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                  {steps[i - 1].label.split(" ")[0]} → {s.label.split(" ")[0]}
+                </div>
+                <div className="text-base font-bold text-emerald-600 tabular-nums leading-tight">{conv.toFixed(1)}%</div>
+                <div className="text-[10px] text-rose-500">↓ {dropoff.toFixed(1)}% caiu</div>
+                {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{s.costLabel} <span className="font-semibold text-foreground">{fmtBRL(s.costValue)}</span></div>
+                )}
               </div>
             );
-          }
-          const prev = steps[i - 1].value;
-          const conv = prev ? (s.value / prev) * 100 : 0;
-          const dropoff = 100 - conv;
-          return (
-            <div key={s.label} className="text-right border-l-2 border-emerald-500/40 pl-3">
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                {steps[i - 1].label.split(" ")[0]} → {s.label.split(" ")[0]}
-              </div>
-              <div className="text-lg font-bold text-emerald-600 tabular-nums">{conv.toFixed(1)}%</div>
-              <div className="text-[10px] text-rose-500">↓ {dropoff.toFixed(1)}% caiu</div>
-            </div>
-          );
-        })}
+          })}
+        </div>
       </div>
     </div>
   );
 }
+
 
 
 /* World map panel */
