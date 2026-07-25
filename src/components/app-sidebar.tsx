@@ -14,7 +14,7 @@ import {
 
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import cloudosLogo from "@/assets/cloudos-logo.png.asset.json";
+const AGENCY_LOGO_URL = "https://cdn.clouddigital.com.br/agency/logo/2026/07/1164be74-089b-47a9-8a16-1d5a26b82830-Ativo_4_4x.png";
 
 
 
