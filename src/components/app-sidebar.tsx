@@ -80,7 +80,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
           <div className="h-9 w-9 rounded-lg bg-black flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10">
-            <img src={cloudosLogo.url} alt="CloudOS" className="h-7 w-7 object-contain" />
+            <img src={AGENCY_LOGO_URL} alt="CloudOS" className="h-7 w-7 object-contain" />
           </div>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden leading-tight">
             <div className="text-sm font-semibold tracking-tight truncate">CloudOS</div>
