@@ -538,10 +538,16 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
     queryKey: ["client_sales_agg", clientId, daysNum],
     queryFn: async () => {
       const since = new Date(); since.setDate(since.getDate() - daysNum);
-      const { data } = await supabase.from("client_sales").select("vendas, faturamento")
+      const { data } = await supabase.from("client_sales").select("leads, agendamentos, vendas, faturamento")
         .eq("client_id", clientId).gte("ref_date", since.toISOString().slice(0, 10));
-      const t = (data ?? []).reduce((a: any, r: any) => ({ vendas: a.vendas + Number(r.vendas || 0), faturamento: a.faturamento + Number(r.faturamento || 0) }), { vendas: 0, faturamento: 0 });
+      const t = (data ?? []).reduce((a: any, r: any) => ({
+        leads: a.leads + Number(r.leads || 0),
+        agendamentos: a.agendamentos + Number(r.agendamentos || 0),
+        vendas: a.vendas + Number(r.vendas || 0),
+        faturamento: a.faturamento + Number(r.faturamento || 0),
+      }), { leads: 0, agendamentos: 0, vendas: 0, faturamento: 0 });
       return t;
+
     },
   });
 
