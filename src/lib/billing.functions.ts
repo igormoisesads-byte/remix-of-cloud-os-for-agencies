@@ -48,7 +48,7 @@ export async function syncMetaBillingInternal(adAccountRowId: string) {
     const u = new URL(`https://graph.facebook.com/${META_V}/${accountId}`);
     u.searchParams.set(
       "fields",
-      "balance,amount_spent,spend_cap,currency,funding_source_details,account_status",
+      "name,balance,amount_spent,spend_cap,currency,funding_source_details,account_status",
     );
     u.searchParams.set("access_token", token);
     const info = await metaGet(u);
@@ -59,6 +59,10 @@ export async function syncMetaBillingInternal(adAccountRowId: string) {
     spendCapCents = info.spend_cap != null ? Number(info.spend_cap) : null;
     currency = info.currency ?? null;
     fundingType = info.funding_source_details?.type ?? null;
+    if (info.name && !acc.account_name) {
+      await supabaseAdmin.from("ad_accounts").update({ account_name: info.name }).eq("id", acc.id);
+    }
+
   } catch (e: any) {
     await supabaseAdmin
       .from("ad_accounts")

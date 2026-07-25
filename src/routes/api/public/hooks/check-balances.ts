@@ -22,15 +22,31 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
 
         const { data: accounts } = await supabaseAdmin
           .from("ad_accounts")
-          .select("id, client_id, account_name, funding_type, low_balance_notified_at, currency")
+          .select("id, client_id, account_name, account_id, funding_type, low_balance_notified_at, currency")
           .eq("active", true)
           .eq("provider", "meta");
+
+        const handleFromName = (name?: string | null) => {
+          if (!name) return "gestor";
+          return name.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "") || "gestor";
+        };
 
         const results: any[] = [];
         for (const acc of accounts ?? []) {
           try {
             const r = await syncMetaBillingInternal(acc.id);
             const kind = classifyFunding((r as any)?.funding_type ?? acc.funding_type);
+
+            const { data: client } = await supabaseAdmin
+              .from("clients")
+              .select("id, name, performance_user_id, cs_user_id")
+              .eq("id", acc.client_id)
+              .maybeSingle();
+
+            const accountLabel =
+              acc.account_name?.trim() ||
+              client?.name ||
+              (acc.account_id ? `act_${String(acc.account_id).replace(/^act_/, "")}` : "conta");
 
             let severity: "critical" | "warning" | null = null;
             let title = "";
@@ -42,15 +58,14 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
               const d = Number(days);
               if (d <= PREPAID_CRITICAL_DAYS) {
                 severity = "critical";
-                title = `🚨 Saldo crítico — ${acc.account_name ?? "conta"}`;
+                title = `🚨 Saldo crítico — ${accountLabel}`;
                 body = `Pré-pago cobre só ~${d.toFixed(1)} dia(s). Recarregue agora.`;
               } else if (d <= PREPAID_WARN_DAYS) {
                 severity = "warning";
-                title = `⚠️ Saldo baixo — ${acc.account_name ?? "conta"}`;
+                title = `⚠️ Saldo baixo — ${accountLabel}`;
                 body = `Pré-pago cobre ~${d.toFixed(1)} dia(s). Programe a recarga.`;
               }
             } else {
-              // Postpaid: check failed charge or upcoming billing
               const { data: recentTx } = await supabaseAdmin
                 .from("ad_billing_transactions")
                 .select("status, billing_end_time")
@@ -69,11 +84,11 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
 
               if (failed) {
                 severity = "critical";
-                title = `🚨 Cobrança falhou — ${acc.account_name ?? "conta"}`;
+                title = `🚨 Cobrança falhou — ${accountLabel}`;
                 body = `Meta reportou falha na última cobrança pós-paga. Verifique o cartão/faturamento.`;
               } else if (hoursToNext != null && hoursToNext <= 36) {
                 severity = "warning";
-                title = `⚠️ Cobrança amanhã — ${acc.account_name ?? "conta"}`;
+                title = `⚠️ Cobrança amanhã — ${accountLabel}`;
                 body = `A Meta cobra esta conta em ~${Math.max(1, Math.round(hoursToNext))}h. Garanta saldo no cartão.`;
               }
             }
@@ -87,12 +102,21 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
               continue;
             }
 
-            const [{ data: staff }, { data: client }] = await Promise.all([
-              supabaseAdmin.from("user_roles").select("user_id").in("role", ["admin", "gestor"]),
-              supabaseAdmin.from("clients").select("id, name").eq("id", acc.client_id).maybeSingle(),
-            ]);
-            const users = Array.from(new Set((staff ?? []).map((s: any) => s.user_id)));
+            const { data: staff } = await supabaseAdmin
+              .from("user_roles")
+              .select("user_id")
+              .in("role", ["admin", "gestor"]);
+
+            const gestorIds = [client?.performance_user_id, client?.cs_user_id].filter(Boolean) as string[];
+            const users = Array.from(new Set([...(staff ?? []).map((s: any) => s.user_id), ...gestorIds]));
             const url = client?.id ? `/clientes/${client.id}` : "/hoje";
+
+            const { data: gestorProfiles } = gestorIds.length
+              ? await supabaseAdmin.from("profiles").select("id, full_name, email").in("id", gestorIds)
+              : { data: [] as any[] };
+            const mentions = (gestorProfiles ?? [])
+              .map((p: any) => `@${handleFromName(p.full_name || p.email)}`)
+              .join(" ");
 
             await sendPushToUsers(users, { title, body, url, tag: `bal-${acc.id}-${severity}` });
 
@@ -103,10 +127,11 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
                 .eq("client_id", client.id)
                 .maybeSingle();
               if (channel?.id) {
+                const signed = `**CloudIA** 🤖\n${title}\n${body}${mentions ? `\n\n${mentions} fica de olho 👀` : ""}`;
                 await supabaseAdmin.from("messages").insert({
                   channel_id: channel.id,
                   author_id: null,
-                  body: `${title}\n${body}`,
+                  body: signed,
                 });
               }
             }
@@ -117,6 +142,7 @@ export const Route = createFileRoute("/api/public/hooks/check-balances")({
               .eq("id", acc.id);
 
             results.push({ id: acc.id, kind, severity, notified: users.length });
+
           } catch (e: any) {
             results.push({ id: acc.id, error: e?.message });
           }
