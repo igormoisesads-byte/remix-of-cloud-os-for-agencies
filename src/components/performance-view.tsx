@@ -935,9 +935,8 @@ function VerticalFunnel({ steps, spend }: { steps: { label: string; value: numbe
                   <div className="text-center px-2">
                     <div className="text-xs opacity-90 leading-tight">{s.label}</div>
                     <div className="text-lg font-bold tabular-nums leading-tight">{fmtInt(s.value)}</div>
-                    {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
-                      <div className="text-[10px] opacity-90 mt-0.5">{s.costLabel}: <span className="font-semibold">{fmtBRL(s.costValue)}</span></div>
-                    )}
+
+
                   </div>
                 </div>
               </div>
