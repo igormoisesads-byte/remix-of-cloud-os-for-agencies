@@ -18,6 +18,35 @@ import {
 } from "lucide-react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
+import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
+
+function statusBgClass(s: ScoredMetric["status"]) {
+  if (s === "good") return "bg-emerald-500";
+  if (s === "ok") return "bg-amber-500";
+  if (s === "bad") return "bg-rose-500";
+  return "bg-muted";
+}
+function statusTextClass(s: ScoredMetric["status"]) {
+  if (s === "good") return "text-emerald-700";
+  if (s === "ok") return "text-amber-700";
+  if (s === "bad") return "text-rose-700";
+  return "text-muted-foreground";
+}
+function fmtPct(n: number | null) { return n == null ? "—" : `${n.toFixed(1)}%`; }
+function HBCBar({ m }: { m: ScoredMetric }) {
+  const width = Math.max(2, Math.min(100, m.value ?? 0));
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-muted-foreground truncate">{m.label}</span>
+        <span className={`font-semibold ${statusTextClass(m.status)}`}>{fmtPct(m.value)}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className={`h-full ${statusBgClass(m.status)}`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
 
 export type PerfData = {
   insights: any[];
