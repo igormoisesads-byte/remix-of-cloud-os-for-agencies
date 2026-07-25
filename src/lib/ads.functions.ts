@@ -255,6 +255,27 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         const costPerUniqueOutbound = ins?.cost_per_unique_outbound_click?.[0]?.value ?? null;
         const messagingConversations = pickAction(actions, "onsite_conversion.messaging_conversation_started_7d");
 
+        // Espelha thumbnail/imagem no R2 (URLs do Meta expiram em horas).
+        // Só refaz o download se o registro atual ainda aponta pra CDN do Meta.
+        const { mirrorUrlToR2 } = await import("@/lib/r2-mirror.server");
+        const { data: existingCreative } = await supabaseAdmin
+          .from("ad_creatives")
+          .select("thumbnail_url, preview_url")
+          .eq("ad_account_id", acc.id)
+          .eq("external_id", String(ad.id))
+          .maybeSingle();
+        const r2Base = process.env.R2_PUBLIC_URL || "";
+        const rawThumb = creative.thumbnail_url || creative.image_url || null;
+        const rawPreview = creative.image_url || null;
+        const keepThumb = existingCreative?.thumbnail_url && r2Base && existingCreative.thumbnail_url.startsWith(r2Base);
+        const keepPreview = existingCreative?.preview_url && r2Base && existingCreative.preview_url.startsWith(r2Base);
+        const thumbUrl = keepThumb
+          ? existingCreative!.thumbnail_url
+          : (await mirrorUrlToR2(rawThumb, `ads/${acc.id}/thumb/${ad.id}.jpg`)) || existingCreative?.thumbnail_url || rawThumb;
+        const previewUrl = keepPreview
+          ? existingCreative!.preview_url
+          : (await mirrorUrlToR2(rawPreview, `ads/${acc.id}/preview/${ad.id}.jpg`)) || existingCreative?.preview_url || rawPreview;
+
         const { error: e } = await supabaseAdmin.from("ad_creatives").upsert(
           {
             ad_account_id: acc.id,
@@ -264,10 +285,11 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
             campaign_name: ad.campaign?.name || null,
             adset_id: ad.adset_id || ad.adset?.id || null,
             adset_name: ad.adset?.name || null,
-            thumbnail_url: creative.thumbnail_url || creative.image_url || null,
-            preview_url: creative.image_url || null,
+            thumbnail_url: thumbUrl,
+            preview_url: previewUrl,
             destination_url: linkUrl,
             status: ad.status || null,
+
             spend,
             impressions: Number(ins?.impressions ?? 0),
             clicks: Number(ins?.clicks ?? 0),
