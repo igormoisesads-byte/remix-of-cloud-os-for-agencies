@@ -95,25 +95,35 @@ function HojePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Wallet className="h-4 w-4 text-destructive" />
-              Contas de anúncio com saldo crítico
+              Alertas de contas de anúncio
             </CardTitle>
             <Badge variant="destructive">{lowBalance.data?.length}</Badge>
           </CardHeader>
           <CardContent className="space-y-3">
             {(lowBalance.data ?? []).map((a: any) => {
-              const d = Number(a.last_low_balance_days ?? 0);
-              const tone = d <= 1 ? "destructive" : d <= 3 ? "warning" : "primary";
               const cur = a.currency || "BRL";
               const nf = new Intl.NumberFormat("pt-BR", { style: "currency", currency: cur });
+              const isPrepaid = a.kind === "prepaid";
+              const critical = a.severity === "critical";
+              const tone = critical ? "destructive" : "warning";
+              const d = isPrepaid ? Number(a.days_remaining ?? a.last_low_balance_days ?? 0) : null;
               const bal = a.balance_cents != null ? Number(a.balance_cents) / 100 : null;
-              const taxRate = Number(a.tax_rate ?? 0.1215);
-              const taxEst = bal != null ? bal * taxRate : null;
-              const dailyWithTax = bal != null && d > 0 ? bal / d : null;
-              const dailyGross = dailyWithTax != null ? dailyWithTax / (1 + taxRate) : null;
-              const runOut = d > 0 ? new Date(Date.now() + d * 86400000) : null;
+              const runOut = d && d > 0 ? new Date(Date.now() + d * 86400000) : null;
               const runOutFmt = runOut
                 ? runOut.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
                 : "—";
+              const nextChargeFmt = a.next_charge_at
+                ? new Date(a.next_charge_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+                : null;
+
+              const headline = isPrepaid
+                ? critical
+                  ? `Pré-pago crítico — ~${d?.toFixed(1)} dia(s)`
+                  : `Pré-pago baixo — ~${d?.toFixed(1)} dia(s)`
+                : a.reason === "payment_failed"
+                ? "Pós-pago: cobrança falhou"
+                : "Pós-pago: cobra em breve";
+
               return (
                 <Link
                   key={a.id}
@@ -128,44 +138,53 @@ function HojePage() {
                     </div>
                     <Badge
                       variant={tone === "destructive" ? "destructive" : "outline"}
-                      className={
-                        tone === "warning"
-                          ? "border-warning text-warning"
-                          : tone === "primary"
-                          ? "border-primary text-primary"
-                          : ""
-                      }
+                      className={tone === "warning" ? "border-warning text-warning" : ""}
                     >
-                      ~{d.toFixed(1)} dia(s)
+                      {headline}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                      <div className="text-muted-foreground">Saldo atual</div>
-                      <div className="font-semibold text-sm">{bal != null ? nf.format(bal) : "—"}</div>
+                  {isPrepaid ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                        <div className="text-muted-foreground">Saldo atual</div>
+                        <div className="font-semibold text-sm">{bal != null ? nf.format(bal) : "—"}</div>
+                      </div>
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                        <div className="text-muted-foreground">Esgota em</div>
+                        <div className="font-semibold text-sm">{runOutFmt}</div>
+                      </div>
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                        <div className="text-muted-foreground">Aviso</div>
+                        <div className="font-semibold text-sm">
+                          {critical ? "Crítico (≤1,5d)" : "Aviso (≤7d)"}
+                        </div>
+                      </div>
                     </div>
-                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                      <div className="text-muted-foreground">Imposto ({(taxRate * 100).toFixed(2)}%)</div>
-                      <div className="font-semibold text-sm">{taxEst != null ? `+ ${nf.format(taxEst)}` : "—"}</div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                        <div className="text-muted-foreground">Tipo</div>
+                        <div className="font-semibold text-sm">Pós-pago</div>
+                      </div>
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                        <div className="text-muted-foreground">
+                          {a.reason === "payment_failed" ? "Status" : "Próxima cobrança"}
+                        </div>
+                        <div className="font-semibold text-sm">
+                          {a.reason === "payment_failed"
+                            ? "Falha reportada pela Meta"
+                            : nextChargeFmt ?? "≤ 36h"}
+                        </div>
+                      </div>
                     </div>
-                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                      <div className="text-muted-foreground">Gasto/dia c/ imposto</div>
-                      <div className="font-semibold text-sm">{dailyWithTax != null ? nf.format(dailyWithTax) : "—"}</div>
-                      {dailyGross != null && (
-                        <div className="text-[10px] text-muted-foreground">bruto {nf.format(dailyGross)}</div>
-                      )}
-                    </div>
-                    <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                      <div className="text-muted-foreground">Esgota em</div>
-                      <div className="font-semibold text-sm">{runOutFmt}</div>
-                    </div>
-                  </div>
+                  )}
                 </Link>
               );
             })}
           </CardContent>
         </Card>
       )}
+
 
 
       <div className="grid gap-4 lg:grid-cols-3">
