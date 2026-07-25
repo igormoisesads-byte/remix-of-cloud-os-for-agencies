@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 /* ---------- Meta Ads sync ---------- */
 
@@ -460,73 +462,29 @@ export const syncAllAdAccounts = createServerFn({ method: "POST" })
 export const getPublicReport = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ token: z.string().min(8) }).parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: report } = await supabaseAdmin
-      .from("public_reports")
-      .select("*")
-      .eq("token", data.token)
-      .eq("active", true)
-      .maybeSingle();
-    if (!report) throw new Error("Relatório não encontrado ou expirado.");
-    if (report.expires_at && new Date(report.expires_at) < new Date()) {
-      throw new Error("Este relatório expirou.");
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !publishableKey) {
+      throw new Error("Configuração pública do banco indisponível.");
     }
-    const [{ data: client }, { data: settings }] = await Promise.all([
-      supabaseAdmin
-        .from("clients")
-        .select("id, name, logo_url, city_uf, type")
-        .eq("id", report.client_id)
-        .maybeSingle(),
-      supabaseAdmin.from("app_settings").select("agency_name, agency_logo_url, agency_primary_color").eq("singleton", true).maybeSingle(),
-    ]);
-    if (!client) throw new Error("Cliente não encontrado.");
-    const { data: accounts } = await supabaseAdmin
-      .from("ad_accounts")
-      .select("id, provider, account_name, account_id, last_sync_at")
-      .eq("client_id", client.id);
-    const accountIds = (accounts ?? []).map((a) => a.id);
-    const daysBack = 30;
-    const since = new Date();
-    since.setDate(since.getDate() - daysBack);
-    const sinceStr = since.toISOString().slice(0, 10);
-    const [{ data: insights }, { data: creatives }, { data: geo }, { data: wa }, { data: campaignInsights }, { data: hourly }] = await Promise.all([
-      accountIds.length
-        ? supabaseAdmin.from("ad_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
-        : Promise.resolve({ data: [] as any[] }),
-      accountIds.length
-        ? supabaseAdmin.from("ad_creatives").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(50)
-        : Promise.resolve({ data: [] as any[] }),
-      accountIds.length
-        ? supabaseAdmin.from("ad_geo").select("*").in("ad_account_id", accountIds).order("spend", { ascending: false }).limit(300)
-        : Promise.resolve({ data: [] as any[] }),
-      accountIds.length
-        ? supabaseAdmin.from("ad_funnel_whatsapp").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
-        : Promise.resolve({ data: [] as any[] }),
-      accountIds.length
-        ? supabaseAdmin.from("ad_campaign_insights").select("*").in("ad_account_id", accountIds).gte("date", sinceStr).order("date")
-        : Promise.resolve({ data: [] as any[] }),
-      accountIds.length
-        ? supabaseAdmin.from("ad_hourly_leads").select("*").in("ad_account_id", accountIds)
-        : Promise.resolve({ data: [] as any[] }),
-    ]);
 
-    // Increment view count (best-effort)
-    supabaseAdmin
-      .from("public_reports")
-      .update({ view_count: (report.view_count ?? 0) + 1 })
-      .eq("id", report.id)
-      .then(() => {});
+    const supabasePublic = createClient<Database>(supabaseUrl, publishableKey, {
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+      global: {
+        fetch: (input, init) => {
+          const headers = new Headers(init?.headers);
+          if (publishableKey.startsWith("sb_") && headers.get("Authorization") === `Bearer ${publishableKey}`) {
+            headers.delete("Authorization");
+          }
+          headers.set("apikey", publishableKey);
+          return fetch(input, { ...init, headers });
+        },
+      },
+    });
 
-    return {
-      report: { id: report.id, title: report.title, created_at: report.created_at },
-      client,
-      agency: settings ?? { agency_name: "CloudOS", agency_logo_url: null, agency_primary_color: null },
-      accounts: accounts ?? [],
-      insights: insights ?? [],
-      creatives: creatives ?? [],
-      geo: geo ?? [],
-      whatsapp: wa ?? [],
-      campaignInsights: campaignInsights ?? [],
-      hourly: hourly ?? [],
-    };
+    const { data: payload, error } = await supabasePublic.rpc("get_public_report_payload", { _token: data.token });
+    if (error) throw new Error(error.message);
+    if (!payload) throw new Error("Relatório não encontrado ou expirado.");
+    return payload;
   });
