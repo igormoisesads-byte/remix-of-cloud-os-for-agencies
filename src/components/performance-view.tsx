@@ -935,9 +935,8 @@ function VerticalFunnel({ steps, spend }: { steps: { label: string; value: numbe
                   <div className="text-center px-2">
                     <div className="text-xs opacity-90 leading-tight">{s.label}</div>
                     <div className="text-lg font-bold tabular-nums leading-tight">{fmtInt(s.value)}</div>
-                    {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
-                      <div className="text-[10px] opacity-90 mt-0.5">{s.costLabel}: <span className="font-semibold">{fmtBRL(s.costValue)}</span></div>
-                    )}
+
+
                   </div>
                 </div>
               </div>
@@ -946,16 +945,24 @@ function VerticalFunnel({ steps, spend }: { steps: { label: string; value: numbe
         </div>
 
         {/* Coluna de conversão etapa a etapa */}
-        <div className="w-44 flex flex-col justify-around py-2">
+        <div className="w-64 flex flex-col justify-around py-2 gap-2">
           {steps.map((s, i) => {
+            const hasCost = s.costLabel && typeof s.costValue === "number" && s.costValue > 0;
+            const CostCard = hasCost ? (
+              <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-right min-w-[92px]">
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wide leading-tight">{s.costLabel}</div>
+                <div className="text-sm font-bold tabular-nums leading-tight text-foreground">{fmtBRL(s.costValue!)}</div>
+              </div>
+            ) : null;
+
             if (i === 0) {
               return (
-                <div key={s.label} className="text-right">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Topo</div>
-                  <div className="text-sm font-semibold text-muted-foreground">100%</div>
-                  {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{s.costLabel} <span className="font-semibold text-foreground">{fmtBRL(s.costValue)}</span></div>
-                  )}
+                <div key={s.label} className="flex items-center justify-end gap-2">
+                  <div className="text-right">
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Topo</div>
+                    <div className="text-sm font-semibold text-muted-foreground">100%</div>
+                  </div>
+                  {CostCard}
                 </div>
               );
             }
@@ -963,19 +970,20 @@ function VerticalFunnel({ steps, spend }: { steps: { label: string; value: numbe
             const conv = prev ? (s.value / prev) * 100 : 0;
             const dropoff = 100 - conv;
             return (
-              <div key={s.label} className="text-right border-l-2 border-emerald-500/40 pl-3">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  {steps[i - 1].label.split(" ")[0]} → {s.label.split(" ")[0]}
+              <div key={s.label} className="flex items-center justify-end gap-2">
+                <div className="text-right border-l-2 border-emerald-500/40 pl-3">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                    {steps[i - 1].label.split(" ")[0]} → {s.label.split(" ")[0]}
+                  </div>
+                  <div className="text-base font-bold text-emerald-600 tabular-nums leading-tight">{conv.toFixed(1)}%</div>
+                  <div className="text-[10px] text-rose-500">↓ {dropoff.toFixed(1)}% caiu</div>
                 </div>
-                <div className="text-base font-bold text-emerald-600 tabular-nums leading-tight">{conv.toFixed(1)}%</div>
-                <div className="text-[10px] text-rose-500">↓ {dropoff.toFixed(1)}% caiu</div>
-                {s.costLabel && typeof s.costValue === "number" && s.costValue > 0 && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{s.costLabel} <span className="font-semibold text-foreground">{fmtBRL(s.costValue)}</span></div>
-                )}
+                {CostCard}
               </div>
             );
           })}
         </div>
+
       </div>
     </div>
   );
