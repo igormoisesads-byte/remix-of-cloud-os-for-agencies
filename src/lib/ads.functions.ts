@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 /* ---------- Meta Ads sync ---------- */
 
-const META_V = "v20.0";
+const META_V = "v25.0";
 
 function pickAction(actions: any[], type: string) {
   return Number((actions ?? []).find((a) => a.action_type === type)?.value ?? 0);
