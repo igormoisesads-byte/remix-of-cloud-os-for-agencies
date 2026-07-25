@@ -2647,6 +2647,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_report_payload: { Args: { _token: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
