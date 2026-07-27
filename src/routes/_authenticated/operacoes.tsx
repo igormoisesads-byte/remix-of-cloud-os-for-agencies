@@ -601,10 +601,18 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     queryKey: ["task", taskId],
     queryFn: async () => (await supabase.from("tasks").select("*").eq("id", taskId).single()).data,
   });
+  const commentAuthors = useQuery({
+    queryKey: ["profiles-min"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => (await supabase.from("profiles").select("id, full_name")).data ?? [],
+  });
+  const authorName = (uid?: string | null) =>
+    (commentAuthors.data ?? []).find((p: any) => p.id === uid)?.full_name ?? null;
   const comments = useQuery({
     queryKey: ["task-comments", taskId],
     queryFn: async () => (await supabase.from("task_comments").select("*").eq("task_id", taskId).order("created_at")).data ?? [],
   });
+
   const checklist = useQuery({
     queryKey: ["task-checklist", taskId],
     queryFn: async () => (await supabase.from("task_checklist_items").select("*").eq("task_id", taskId).order("position")).data ?? [],
