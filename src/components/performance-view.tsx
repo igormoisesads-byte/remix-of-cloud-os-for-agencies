@@ -1360,7 +1360,8 @@ function PeriodPicker({
   function handleSelect(r: any) {
     // clique 1 => {from}; clique 2 => {from, to}
     if (!r?.from) { setDraft({}); return; }
-    if (r.from && r.to && r.from.getTime() !== r.to.getTime()) {
+    const sameDayConfirm = !!(r.from && r.to && r.from.getTime() === r.to.getTime() && draft.from && !draft.to && draft.from.getTime() === r.from.getTime());
+    if (r.from && r.to && (r.from.getTime() !== r.to.getTime() || sameDayConfirm)) {
       const from = new Date(r.from); from.setHours(0, 0, 0, 0);
       const to = new Date(r.to); to.setHours(0, 0, 0, 0);
       setDraft({ from, to });
