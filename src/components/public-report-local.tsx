@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, MousePointerClick, Eye, Users, Target, TrendingUp, MapPin, Calendar } from "lucide-react";
 import { CreativeThumb } from "@/components/creative-thumb";
+import { CreativeDetailDialog } from "@/components/creative-detail-dialog";
 
 
 /**
