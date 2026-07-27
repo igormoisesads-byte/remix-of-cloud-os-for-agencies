@@ -818,11 +818,11 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                   {(comments.data ?? []).map((c: any) => (
                     <div key={c.id} className="flex gap-3">
                       <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                        {initials(c.profiles?.full_name ?? "?")}
+                        {initials(authorName(c.user_id) ?? "?")}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="text-xs">
-                          <span className="font-semibold">{c.profiles?.full_name ?? "—"}</span>
+                          <span className="font-semibold">{authorName(c.user_id) ?? "—"}</span>
                           <span className="text-muted-foreground"> · {new Date(c.created_at).toLocaleString("pt-BR")}</span>
                         </div>
                         {c.body && <div className="text-sm bg-muted/50 rounded-md px-3 py-2 whitespace-pre-wrap">{c.body}</div>}
