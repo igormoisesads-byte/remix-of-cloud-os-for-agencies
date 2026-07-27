@@ -168,20 +168,36 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
     return { start, end: now };
   }, [period, customRange.from, customRange.to]);
 
-  // Geo rows are stored aggregated per sync period. Pick the stored period that
-  // best overlaps the selected range instead of summing every period (which
-  // showed "everything" regardless of the calendar selection).
+  // Geo rows may be daily (new sync) or aggregated by an older sync period.
+  // Prefer daily rows inside the selected range; otherwise fall back to the
+  // single aggregated period with the best overlap so old data doesn't sum all
+  // historical syncs together.
   const geoRows = useMemo(() => {
     const src = (data.geo ?? []).filter((r) => inAccount(r));
     if (src.length === 0) return [];
+    const selStart = periodBounds.start ? periodBounds.start.getTime() : -Infinity;
+    const selEnd = periodBounds.end.getTime();
+
+    const parseStart = (r: any) => new Date(String(r.period_start ?? r.period_end) + "T00:00").getTime();
+    const parseEnd = (r: any) => new Date(String(r.period_end ?? r.period_start) + "T00:00").getTime();
+    const overlapsSelection = (r: any) => Math.min(parseEnd(r), selEnd) >= Math.max(parseStart(r), selStart);
+    const isDaily = (r: any) => {
+      const s = parseStart(r);
+      const e = parseEnd(r);
+      return Number.isFinite(s) && Number.isFinite(e) && Math.abs(e - s) <= 86400000;
+    };
+
+    const dailyRows = src.filter((r) => isDaily(r) && overlapsSelection(r));
+    if (dailyRows.length > 0) return dailyRows;
+
     const groups = new Map<string, any[]>();
     for (const r of src) {
       const k = `${r.period_start}|${r.period_end}`;
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k)!.push(r);
+      const rows = groups.get(k) ?? [];
+      rows.push(r);
+      groups.set(k, rows);
     }
-    const selStart = periodBounds.start ? periodBounds.start.getTime() : -Infinity;
-    const selEnd = periodBounds.end.getTime();
+
     let best: any[] = [];
     let bestScore = -1;
     for (const [k, rows] of groups) {
@@ -195,6 +211,14 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
     }
     return best;
   }, [data.geo, accountId, periodBounds]);
+
+  const hasDailyGeoRows = useMemo(() => {
+    return geoRows.some((r: any) => {
+      const s = new Date(String(r.period_start ?? r.period_end) + "T00:00").getTime();
+      const e = new Date(String(r.period_end ?? r.period_start) + "T00:00").getTime();
+      return Number.isFinite(s) && Number.isFinite(e) && Math.abs(e - s) <= 86400000;
+    });
+  }, [geoRows]);
 
 
   // ---------- Filtered creatives ----------
@@ -478,28 +502,71 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
       cur.reach += Number(g.reach);
       map.set(code, cur);
     }
-    const total = [...map.values()].reduce((s, g) => s + g.spend, 0) || 1;
+    const rawTotals = [...map.values()].reduce(
+      (acc, g) => ({
+        spend: acc.spend + g.spend,
+        results: acc.results + g.results,
+        clicks: acc.clicks + g.clicks,
+        impressions: acc.impressions + g.impressions,
+        reach: acc.reach + g.reach,
+      }),
+      { spend: 0, results: 0, clicks: 0, impressions: 0, reach: 0 },
+    );
+    const scaleMetric = (value: number, metric: keyof typeof rawTotals, selectedTotal: number) => {
+      if (hasDailyGeoRows || rawTotals[metric] <= 0 || selectedTotal <= 0) return value;
+      return value * (selectedTotal / rawTotals[metric]);
+    };
+    const total = (hasDailyGeoRows ? rawTotals.spend : totals.spend) || 1;
     return [...map.entries()]
-      .map(([code, g]) => ({ code, name: regionName(code), ...g, pct: (g.spend / total) * 100 }))
+      .map(([code, g]) => {
+        const spend = scaleMetric(g.spend, "spend", totals.spend);
+        return {
+          code,
+          name: regionName(code),
+          spend,
+          results: scaleMetric(g.results, "results", totals.results),
+          clicks: scaleMetric(g.clicks, "clicks", totals.clicks),
+          impressions: scaleMetric(g.impressions, "impressions", totals.impressions),
+          reach: scaleMetric(g.reach, "reach", totals.reach),
+          pct: (spend / total) * 100,
+        };
+      })
       .sort((a, b) => b.spend - a.spend);
-  }, [geoRows]);
+  }, [geoRows, hasDailyGeoRows, totals]);
 
   const regionData = useMemo(() => {
     const src = geoRows.filter((r: any) => r.region);
-    const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
+    const rawTotals = src.reduce(
+      (acc, g) => ({
+        spend: acc.spend + Number(g.spend),
+        results: acc.results + Number(g.results),
+        clicks: acc.clicks + Number(g.clicks),
+        impressions: acc.impressions + Number(g.impressions),
+        reach: acc.reach + Number(g.reach),
+      }),
+      { spend: 0, results: 0, clicks: 0, impressions: 0, reach: 0 },
+    );
+    const scaleMetric = (value: number, metric: keyof typeof rawTotals, selectedTotal: number) => {
+      if (hasDailyGeoRows || rawTotals[metric] <= 0 || selectedTotal <= 0) return value;
+      return value * (selectedTotal / rawTotals[metric]);
+    };
+    const total = (hasDailyGeoRows ? rawTotals.spend : totals.spend) || 1;
     return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
-      .map((g) => ({
-        region: g.region_name || g.region,
-        country: g.country_code,
-        spend: Number(g.spend),
-        results: Number(g.results),
-        clicks: Number(g.clicks),
-        impressions: Number(g.impressions),
-        reach: Number(g.reach),
-        pct: (Number(g.spend) / total) * 100,
-      }));
-  }, [geoRows]);
+      .map((g) => {
+        const spend = scaleMetric(Number(g.spend), "spend", totals.spend);
+        return {
+          region: g.region_name || g.region,
+          country: g.country_code,
+          spend,
+          results: scaleMetric(Number(g.results), "results", totals.results),
+          clicks: scaleMetric(Number(g.clicks), "clicks", totals.clicks),
+          impressions: scaleMetric(Number(g.impressions), "impressions", totals.impressions),
+          reach: scaleMetric(Number(g.reach), "reach", totals.reach),
+          pct: (spend / total) * 100,
+        };
+      });
+  }, [geoRows, hasDailyGeoRows, totals]);
 
   const geoByCode = useMemo(() => {
     const m: Record<string, typeof geoData[number]> = {};

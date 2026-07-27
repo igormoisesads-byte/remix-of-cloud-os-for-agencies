@@ -135,18 +135,20 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
       }
     }
 
-    // 3) Country + Region breakdown (aggregated for the whole period)
-    // Clear previous period rows for this account to avoid stale data
+    // 3) Country + Region breakdown, stored by day so the report calendar can
+    // filter geography with the same precision as the main investment cards.
+    // Clear previous rows fully inside the synced range to avoid stale data.
     await supabaseAdmin
       .from("ad_geo")
       .delete()
       .eq("ad_account_id", acc.id)
-      .eq("period_start", fmt(since))
-      .eq("period_end", fmt(until));
+      .gte("period_start", fmt(since))
+      .lte("period_end", fmt(until));
 
     const geoUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/insights`);
     geoUrl.searchParams.set("fields", "spend,impressions,clicks,reach,actions");
     geoUrl.searchParams.set("breakdowns", "country");
+    geoUrl.searchParams.set("time_increment", "1");
     geoUrl.searchParams.set("time_range", timeRange);
     geoUrl.searchParams.set("limit", "500");
     geoUrl.searchParams.set("access_token", token);
@@ -155,8 +157,8 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
       for (const r of geo.data ?? []) {
         const { error: e } = await supabaseAdmin.from("ad_geo").insert({
           ad_account_id: acc.id,
-          period_start: fmt(since),
-          period_end: fmt(until),
+          period_start: r.date_start || fmt(since),
+          period_end: r.date_stop || r.date_start || fmt(until),
           country_code: r.country,
           country_name: null,
           region: null,
@@ -180,6 +182,7 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
     // Meta v25: combine country+region so we get the country code alongside each state.
     regionUrl.searchParams.set("breakdowns", "country,region");
     regionUrl.searchParams.set("level", "account");
+    regionUrl.searchParams.set("time_increment", "1");
     regionUrl.searchParams.set("time_range", timeRange);
     regionUrl.searchParams.set("limit", "500");
     regionUrl.searchParams.set("access_token", token);
@@ -189,8 +192,8 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         if (!r.region) continue;
         const { error: e } = await supabaseAdmin.from("ad_geo").insert({
           ad_account_id: acc.id,
-          period_start: fmt(since),
-          period_end: fmt(until),
+          period_start: r.date_start || fmt(since),
+          period_end: r.date_stop || r.date_start || fmt(until),
           country_code: r.country || "BR",
           region: r.region,
           region_name: r.region,
