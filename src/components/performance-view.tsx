@@ -194,22 +194,36 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
 
 
   // ---------- Filtered creatives ----------
+  // Só considera criativos que efetivamente rodaram no período selecionado:
+  // o registro precisa sobrepor o intervalo e ter veiculação (gasto/impressões).
+  const ranInPeriod = (c: any) => {
+    if (Number(c.spend ?? 0) <= 0 && Number(c.impressions ?? 0) <= 0) return false;
+    if (!c.period_start || !c.period_end) return true; // registros antigos sem período
+    const selStart = periodBounds.start ? periodBounds.start.getTime() : -Infinity;
+    const selEnd = periodBounds.end.getTime();
+    const s = new Date(String(c.period_start) + "T00:00").getTime();
+    const e = new Date(String(c.period_end) + "T00:00").getTime();
+    return Math.min(e, selEnd) >= Math.max(s, selStart);
+  };
+
   const filteredCreatives = useMemo(() => {
     return (data.creatives ?? []).filter((c) => {
       if (!inAccount(c)) return false;
+      if (!ranInPeriod(c)) return false;
       if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
       if (creativeId !== "all" && String(c.id) !== creativeId) return false;
       return true;
     });
-  }, [data.creatives, accountId, campaignId, creativeId]);
+  }, [data.creatives, accountId, campaignId, creativeId, periodBounds]);
 
   // Creative options depend on account/campaign selection
   const creativeOptions = useMemo(() => {
     return (data.creatives ?? [])
-      .filter((c) => inAccount(c) && (campaignId === "all" || String(c.campaign_id ?? "") === campaignId))
+      .filter((c) => inAccount(c) && ranInPeriod(c) && (campaignId === "all" || String(c.campaign_id ?? "") === campaignId))
       .map((c) => ({ id: String(c.id), name: c.name || "(sem nome)" }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.creatives, accountId, campaignId]);
+  }, [data.creatives, accountId, campaignId, periodBounds]);
+
 
   // ---------- Daily series (source depends on filters) ----------
   // Use campaign-level daily insights when campaignId filter is active;

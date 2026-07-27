@@ -257,6 +257,8 @@ export type Database = {
           last_sync_at: string | null
           messaging_conversations_started: number
           name: string | null
+          period_end: string | null
+          period_start: string | null
           preview_url: string | null
           purchase_value: number
           purchases: number
@@ -304,6 +306,8 @@ export type Database = {
           last_sync_at?: string | null
           messaging_conversations_started?: number
           name?: string | null
+          period_end?: string | null
+          period_start?: string | null
           preview_url?: string | null
           purchase_value?: number
           purchases?: number
@@ -351,6 +355,8 @@ export type Database = {
           last_sync_at?: string | null
           messaging_conversations_started?: number
           name?: string | null
+          period_end?: string | null
+          period_start?: string | null
           preview_url?: string | null
           purchase_value?: number
           purchases?: number

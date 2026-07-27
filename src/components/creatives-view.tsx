@@ -75,8 +75,12 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
   });
 
   const filtered = useMemo(() => {
-    let list = creatives as any[];
+    // Só criativos que rodaram no período sincronizado (com gasto/impressões).
+    let list = (creatives as any[]).filter(
+      (c) => Number(c.spend ?? 0) > 0 || Number(c.impressions ?? 0) > 0
+    );
     if (status !== "all") list = list.filter((c) => (c.status || "").toUpperCase() === status);
+
     if (q) {
       const s = q.toLowerCase();
       list = list.filter((c) => (c.name || "").toLowerCase().includes(s) || (c.campaign_name || "").toLowerCase().includes(s));
