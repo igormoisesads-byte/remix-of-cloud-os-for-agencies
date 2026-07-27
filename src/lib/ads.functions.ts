@@ -334,9 +334,12 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         );
         if (!e) upsertedCreatives++;
       }
-    } catch {
-
-      // ignore creatives errors
+    } catch (err: any) {
+      console.error("[ads] creatives failed:", err?.message || err);
+      await supabaseAdmin
+        .from("ad_accounts")
+        .update({ last_sync_error: `creatives: ${String(err?.message || err).slice(0, 300)}` })
+        .eq("id", acc.id);
     }
 
     // 5) Daily insights per campaign
