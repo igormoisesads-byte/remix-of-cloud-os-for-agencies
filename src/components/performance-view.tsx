@@ -1348,9 +1348,34 @@ function PeriodPicker({
   setCustomRange: (r: { from?: Date; to?: Date }) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const selectedRange = period === "custom" ? customRange : presetToRange(period);
+  const committedRange = period === "custom" ? customRange : presetToRange(period);
+  // Draft range: só aplica no relatório quando início E fim estiverem escolhidos
+  const [draft, setDraft] = useState<{ from?: Date; to?: Date }>(committedRange);
+
+  function handleOpenChange(v: boolean) {
+    setOpen(v);
+    if (v) setDraft(period === "custom" ? customRange : presetToRange(period));
+  }
+
+  function handleSelect(r: any) {
+    // clique 1 => {from}; clique 2 => {from, to}
+    if (!r?.from) { setDraft({}); return; }
+    if (r.from && r.to && r.from.getTime() !== r.to.getTime()) {
+      const from = new Date(r.from); from.setHours(0, 0, 0, 0);
+      const to = new Date(r.to); to.setHours(0, 0, 0, 0);
+      setDraft({ from, to });
+      setPeriod("custom");
+      setCustomRange({ from, to });
+      setOpen(false);
+      return;
+    }
+    // ainda escolhendo o fim — não atualiza o relatório
+    const from = new Date(r.from); from.setHours(0, 0, 0, 0);
+    setDraft({ from, to: undefined });
+  }
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
           <CalendarIcon className="h-3.5 w-3.5" />
@@ -1364,7 +1389,7 @@ function PeriodPicker({
             {PERIOD_PRESETS.map((p) => (
               <button
                 key={p.value}
-                onClick={() => { setPeriod(p.value); setCustomRange({}); }}
+                onClick={() => { setPeriod(p.value); setCustomRange({}); setDraft(presetToRange(p.value)); setOpen(false); }}
                 className={cn(
                   "w-full text-left text-xs rounded px-2 py-1.5 transition-colors",
                   period === p.value ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"
@@ -1377,15 +1402,21 @@ function PeriodPicker({
           <div className="p-1">
             <Calendar
               mode="range"
-              selected={selectedRange as any}
-              defaultMonth={selectedRange.from ?? new Date()}
-              onSelect={(r: any) => { setPeriod("custom"); setCustomRange(r || {}); }}
+              selected={draft as any}
+              defaultMonth={draft.from ?? new Date()}
+              onSelect={handleSelect}
               numberOfMonths={2}
               className="pointer-events-auto"
             />
+            <div className="px-2 pb-2 pt-1 text-[10px] text-muted-foreground">
+              {draft.from && !draft.to
+                ? `Início ${draft.from.toLocaleDateString("pt-BR")} — selecione a data final`
+                : "Selecione a data inicial e depois a final"}
+            </div>
           </div>
         </div>
       </PopoverContent>
     </Popover>
   );
 }
+
