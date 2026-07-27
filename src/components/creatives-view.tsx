@@ -215,10 +215,9 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
               </DialogHeader>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="aspect-video bg-muted rounded overflow-hidden flex items-center justify-center">
-                  {selected.preview_url || selected.thumbnail_url ? (
-                    <img src={selected.preview_url || selected.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                  ) : <ImageOff className="h-8 w-8 text-muted-foreground" />}
+                  <CreativeThumb src={selected.preview_url || selected.thumbnail_url} fallbackSrc={selected.thumbnail_url} eager />
                 </div>
+
                 <div className="space-y-2">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Hook / Body / CTA</div>
                   {scoreCreative(selected, focus).map((m) => (
