@@ -16,6 +16,8 @@ import {
   TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap, Filter, X,
   Calendar as CalendarIcon, ArrowUpDown,
 } from "lucide-react";
+import { CreativeThumb } from "@/components/creative-thumb";
+
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
 import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
@@ -803,11 +805,8 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                           return (
                             <div key={c.id} className="rounded-md border overflow-hidden bg-card">
                               <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                                {c.thumbnail_url ? (
-                                  <img src={c.thumbnail_url} alt={c.name || ""} className="w-full h-full object-cover" loading="lazy" />
-                                ) : (
-                                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                )}
+                                <CreativeThumb src={(c as any).preview_url || c.thumbnail_url} fallbackSrc={c.thumbnail_url} alt={c.name || ""} />
+
                               </div>
                               <div className="p-3 space-y-2">
                                 <div className="text-sm font-medium truncate" title={c.name || ""}>{c.name || "Sem nome"}</div>

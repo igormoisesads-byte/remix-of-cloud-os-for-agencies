@@ -227,8 +227,12 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         "fields",
         `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title},insights.time_range(${timeRange}){${insightsFields}}`
       );
+      // Meta devolve thumbnail 64x64 por padrão — pedimos uma versão maior.
+      adsUrl.searchParams.set("thumbnail_width", "600");
+      adsUrl.searchParams.set("thumbnail_height", "600");
       adsUrl.searchParams.set("limit", "100");
       adsUrl.searchParams.set("access_token", token);
+
       const ads = await metaFetch(adsUrl);
       for (const ad of ads.data ?? []) {
         const ins = ad.insights?.data?.[0];
@@ -273,16 +277,25 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
           .eq("external_id", String(ad.id))
           .maybeSingle();
         const r2Base = process.env.R2_PUBLIC_URL || "";
-        const rawThumb = creative.thumbnail_url || creative.image_url || null;
-        const rawPreview = creative.image_url || null;
+        const story = creative?.object_story_spec ?? {};
+        const storyPicture =
+          story?.link_data?.picture ||
+          story?.video_data?.image_url ||
+          story?.photo_data?.url ||
+          null;
+        const rawThumb = creative.thumbnail_url || creative.image_url || storyPicture || null;
+        const rawPreview = creative.image_url || storyPicture || creative.thumbnail_url || null;
         const keepThumb = existingCreative?.thumbnail_url && r2Base && existingCreative.thumbnail_url.startsWith(r2Base);
         const keepPreview = existingCreative?.preview_url && r2Base && existingCreative.preview_url.startsWith(r2Base);
+        // Se o espelhamento no R2 falhar (ou não estiver configurado), usamos a URL
+        // do Meta mesmo — melhor mostrar agora e migrar pro R2 no próximo sync.
         const thumbUrl = keepThumb
           ? existingCreative!.thumbnail_url
-          : (await mirrorUrlToR2(rawThumb, `ads/${acc.id}/thumb/${ad.id}.jpg`)) || existingCreative?.thumbnail_url || rawThumb;
+          : (await mirrorUrlToR2(rawThumb, `ads/${acc.id}/thumb/${ad.id}.jpg`)) || rawThumb || existingCreative?.thumbnail_url || null;
         const previewUrl = keepPreview
           ? existingCreative!.preview_url
-          : (await mirrorUrlToR2(rawPreview, `ads/${acc.id}/preview/${ad.id}.jpg`)) || existingCreative?.preview_url || rawPreview;
+          : (await mirrorUrlToR2(rawPreview, `ads/${acc.id}/preview/${ad.id}.jpg`)) || rawPreview || existingCreative?.preview_url || null;
+
 
         const { error: e } = await supabaseAdmin.from("ad_creatives").upsert(
           {

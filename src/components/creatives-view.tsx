@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ExternalLink, ImageOff, Video, Search } from "lucide-react";
+import { ExternalLink, Video, Search } from "lucide-react";
+import { CreativeThumb } from "@/components/creative-thumb";
 import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
+
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const intl = (n: number) => Math.round(n).toLocaleString("pt-BR");
@@ -174,11 +176,8 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
             return (
               <Card key={c.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelected(c)}>
                 <div className="aspect-video bg-muted relative flex items-center justify-center">
-                  {c.thumbnail_url || c.preview_url ? (
-                    <img src={c.preview_url || c.thumbnail_url} alt={c.name || ""} loading="lazy" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageOff className="h-8 w-8 text-muted-foreground" />
-                  )}
+                  <CreativeThumb src={c.preview_url || c.thumbnail_url} fallbackSrc={c.thumbnail_url} alt={c.name || ""} />
+
                   {c.video_plays > 0 && (
                     <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
                       <Video className="h-3 w-3" /> Vídeo
@@ -216,10 +215,9 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
               </DialogHeader>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="aspect-video bg-muted rounded overflow-hidden flex items-center justify-center">
-                  {selected.preview_url || selected.thumbnail_url ? (
-                    <img src={selected.preview_url || selected.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                  ) : <ImageOff className="h-8 w-8 text-muted-foreground" />}
+                  <CreativeThumb src={selected.preview_url || selected.thumbnail_url} fallbackSrc={selected.thumbnail_url} eager />
                 </div>
+
                 <div className="space-y-2">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Hook / Body / CTA</div>
                   {scoreCreative(selected, focus).map((m) => (

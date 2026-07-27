@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, MousePointerClick, Eye, Users, Target, TrendingUp, MapPin, Calendar } from "lucide-react";
+import { CreativeThumb } from "@/components/creative-thumb";
+
 
 /**
  * Template PÚBLICO fixo para NEGÓCIO LOCAL.
@@ -239,11 +241,10 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
             <div className="grid gap-3 sm:grid-cols-3">
               {topCreatives.map((c, i) => (
                 <div key={c.id || i} className="rounded-lg border overflow-hidden bg-card">
-                  {c.thumbnail_url ? (
-                    <img src={c.thumbnail_url} alt={c.name || "Criativo"} className="w-full aspect-video object-cover" loading="eager" decoding="async" fetchPriority="low" />
-                  ) : (
-                    <div className="w-full aspect-video bg-muted flex items-center justify-center text-xs text-muted-foreground">Sem preview</div>
-                  )}
+                  <div className="w-full aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                    <CreativeThumb src={(c as any).preview_url || c.thumbnail_url} fallbackSrc={c.thumbnail_url} alt={c.name || "Criativo"} eager />
+                  </div>
+
                   <div className="p-3 space-y-1">
                     <div className="text-sm font-medium truncate">{c.name || "Sem nome"}</div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
