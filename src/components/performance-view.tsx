@@ -17,6 +17,7 @@ import {
   Calendar as CalendarIcon, ArrowUpDown,
 } from "lucide-react";
 import { CreativeThumb } from "@/components/creative-thumb";
+import { CreativeDetailDialog } from "@/components/creative-detail-dialog";
 
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
