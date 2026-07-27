@@ -220,7 +220,7 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         "actions","action_values","unique_actions","cost_per_action_type","cost_per_unique_action_type",
         "unique_link_clicks_ctr","cost_per_unique_link_click","unique_outbound_clicks",
         "unique_outbound_clicks_ctr","cost_per_unique_outbound_click","outbound_clicks",
-        "video_play_actions","video_3_sec_watched_actions","video_p75_watched_actions","video_p25_watched_actions",
+        "video_play_actions","video_thruplay_watched_actions","video_p75_watched_actions","video_p25_watched_actions",
       ].join(",");
       const adsUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/ads`);
       adsUrl.searchParams.set(
