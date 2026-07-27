@@ -603,7 +603,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
   });
   const comments = useQuery({
     queryKey: ["task-comments", taskId],
-    queryFn: async () => (await supabase.from("task_comments").select("*, profiles(full_name)").eq("task_id", taskId).order("created_at")).data ?? [],
+    queryFn: async () => (await supabase.from("task_comments").select("*").eq("task_id", taskId).order("created_at")).data ?? [],
   });
   const checklist = useQuery({
     queryKey: ["task-checklist", taskId],
