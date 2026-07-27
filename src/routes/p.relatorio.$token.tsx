@@ -125,7 +125,7 @@ function PublicReportPage() {
             </>
           )}
         </div>
-        <PerformanceView data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
+        <PerformanceView initialPeriod={report?.default_period || "current_month"} data={{ insights, creatives, geo, whatsapp, accounts, campaignInsights, clientType: client.type }} />
         <div className="text-center text-[11px] sm:text-xs text-muted-foreground pt-6 pb-4">
           Powered by <span className="font-medium text-foreground/70">{agency.agency_name || "CloudOS"}</span>
         </div>
