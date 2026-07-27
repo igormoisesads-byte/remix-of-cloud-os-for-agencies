@@ -291,10 +291,10 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         // do Meta mesmo — melhor mostrar agora e migrar pro R2 no próximo sync.
         const thumbUrl = keepThumb
           ? existingCreative!.thumbnail_url
-          : (await mirrorUrlToR2(rawThumb, `ads/${acc.id}/thumb/${ad.id}.jpg`)) || rawThumb || existingCreative?.thumbnail_url || null;
+          : (await mirrorUrlToR2(rawThumb, `creatives/${acc.id}/thumb/${ad.id}.jpg`)) || rawThumb || existingCreative?.thumbnail_url || null;
         const previewUrl = keepPreview
           ? existingCreative!.preview_url
-          : (await mirrorUrlToR2(rawPreview, `ads/${acc.id}/preview/${ad.id}.jpg`)) || rawPreview || existingCreative?.preview_url || null;
+          : (await mirrorUrlToR2(rawPreview, `creatives/${acc.id}/preview/${ad.id}.jpg`)) || rawPreview || existingCreative?.preview_url || null;
 
 
         const { error: e } = await supabaseAdmin.from("ad_creatives").upsert(
