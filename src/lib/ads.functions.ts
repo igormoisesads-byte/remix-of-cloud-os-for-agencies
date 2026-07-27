@@ -255,8 +255,8 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         const spend = Number(ins?.spend ?? 0);
         const roas = spend > 0 ? purchaseValue / spend : null;
         const videoPlays = pickAction(ins?.video_play_actions ?? [], "video_view");
-        const video3s = pickAction(ins?.video_3_sec_watched_actions ?? [], "video_view");
-        const videoP3s = video3s || videoPlays; // prefer real 3s+ metric
+        const video3s = pickAction(ins?.video_thruplay_watched_actions ?? [], "video_view");
+        const videoP3s = video3s || videoPlays; // thruplay como proxy de 3s+ (v25 removeu 3s)
         const videoP75 = pickAction(ins?.video_p75_watched_actions ?? [], "video_view");
         const uniqueOutbound = pickAction(ins?.unique_outbound_clicks ?? [], "outbound_click");
         const uniqueOutboundCtr = ins?.unique_outbound_clicks_ctr?.[0]?.value ?? null;
