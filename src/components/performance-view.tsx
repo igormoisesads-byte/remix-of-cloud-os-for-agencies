@@ -16,6 +16,8 @@ import {
   TrendingUp, TrendingDown, Eye, MousePointer, Users, Target, DollarSign, Zap, Filter, X,
   Calendar as CalendarIcon, ArrowUpDown,
 } from "lucide-react";
+import { CreativeThumb } from "@/components/creative-thumb";
+
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
 import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
