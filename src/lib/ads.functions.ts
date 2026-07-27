@@ -220,12 +220,12 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         "actions","action_values","unique_actions","cost_per_action_type","cost_per_unique_action_type",
         "unique_link_clicks_ctr","cost_per_unique_link_click","unique_outbound_clicks",
         "unique_outbound_clicks_ctr","cost_per_unique_outbound_click","outbound_clicks",
-        "video_play_actions","video_3_sec_watched_actions","video_p75_watched_actions","video_p25_watched_actions",
+        "video_play_actions","video_thruplay_watched_actions","video_p75_watched_actions","video_p25_watched_actions",
       ].join(",");
       const adsUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/ads`);
       adsUrl.searchParams.set(
         "fields",
-        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title,link_url},insights.time_range(${timeRange}){${insightsFields}}`
+        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title},insights.time_range(${timeRange}){${insightsFields}}`
       );
       adsUrl.searchParams.set("limit", "100");
       adsUrl.searchParams.set("access_token", token);
@@ -255,8 +255,8 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         const spend = Number(ins?.spend ?? 0);
         const roas = spend > 0 ? purchaseValue / spend : null;
         const videoPlays = pickAction(ins?.video_play_actions ?? [], "video_view");
-        const video3s = pickAction(ins?.video_3_sec_watched_actions ?? [], "video_view");
-        const videoP3s = video3s || videoPlays; // prefer real 3s+ metric
+        const video3s = pickAction(ins?.video_thruplay_watched_actions ?? [], "video_view");
+        const videoP3s = video3s || videoPlays; // thruplay como proxy de 3s+ (v25 removeu 3s)
         const videoP75 = pickAction(ins?.video_p75_watched_actions ?? [], "video_view");
         const uniqueOutbound = pickAction(ins?.unique_outbound_clicks ?? [], "outbound_click");
         const uniqueOutboundCtr = ins?.unique_outbound_clicks_ctr?.[0]?.value ?? null;
@@ -334,9 +334,12 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         );
         if (!e) upsertedCreatives++;
       }
-    } catch {
-
-      // ignore creatives errors
+    } catch (err: any) {
+      console.error("[ads] creatives failed:", err?.message || err);
+      await supabaseAdmin
+        .from("ad_accounts")
+        .update({ last_sync_error: `creatives: ${String(err?.message || err).slice(0, 300)}` })
+        .eq("id", acc.id);
     }
 
     // 5) Daily insights per campaign
