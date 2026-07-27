@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, MousePointerClick, Eye, Users, Target, TrendingUp, MapPin, Calendar } from "lucide-react";
 import { CreativeThumb } from "@/components/creative-thumb";
+import { CreativeDetailDialog } from "@/components/creative-detail-dialog";
 
 
 /**
@@ -78,6 +79,8 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
     () => [...creatives].sort((a, b) => Number(b.spend || 0) - Number(a.spend || 0)).slice(0, 3),
     [creatives],
   );
+  const [selectedCreative, setSelectedCreative] = useState<any | null>(null);
+
 
   // Funil: Impressões → Cliques → Conversas → Novos contatos
   const funnel = [
@@ -240,7 +243,11 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-3">
               {topCreatives.map((c, i) => (
-                <div key={c.id || i} className="rounded-lg border overflow-hidden bg-card">
+                <div
+                  key={c.id || i}
+                  className="rounded-lg border overflow-hidden bg-card cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedCreative(c)}
+                >
                   <div className="w-full aspect-video bg-muted flex items-center justify-center overflow-hidden">
                     <CreativeThumb src={(c as any).preview_url || c.thumbnail_url} fallbackSrc={c.thumbnail_url} alt={c.name || "Criativo"} eager />
                   </div>
@@ -255,6 +262,7 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
                       <span>Impressões</span>
                       <span className="tabular-nums">{INT(Number(c.impressions || 0))}</span>
                     </div>
+                    <div className="text-[10px] text-primary pt-1">Ver métricas completas</div>
                   </div>
                 </div>
               ))}
@@ -262,7 +270,10 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
           </CardContent>
         </Card>
       )}
+
+      <CreativeDetailDialog creative={selectedCreative} focus="local" onOpenChange={(o) => !o && setSelectedCreative(null)} />
     </div>
+
   );
 }
 
