@@ -227,8 +227,12 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
         "fields",
         `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title},insights.time_range(${timeRange}){${insightsFields}}`
       );
+      // Meta devolve thumbnail 64x64 por padrão — pedimos uma versão maior.
+      adsUrl.searchParams.set("thumbnail_width", "600");
+      adsUrl.searchParams.set("thumbnail_height", "600");
       adsUrl.searchParams.set("limit", "100");
       adsUrl.searchParams.set("access_token", token);
+
       const ads = await metaFetch(adsUrl);
       for (const ad of ads.data ?? []) {
         const ins = ad.insights?.data?.[0];
