@@ -31,10 +31,10 @@ function rate(num: number, den: number): number | null {
 
 // Health thresholds per Cloud OS playbook
 const THRESHOLDS: Record<ScoredMetric["key"], { good: number; ok: number }> = {
-  playrate_hook: { good: 25, ok: 15 },
-  retencao_hook: { good: 15, ok: 8 },
+  playrate_hook: { good: 20, ok: 15 },
+  retencao_hook: { good: 40, ok: 25 },
   conversao_body: { good: 8, ok: 4 },
-  retencao_75_body: { good: 40, ok: 20 },
+  retencao_75_body: { good: 60, ok: 40 },
   medidor_cta: { good: 25, ok: 10 },
 };
 
@@ -74,43 +74,43 @@ export function scoreCreative(input: CreativeMetricsInput, focus: ClientFocus): 
   const out: ScoredMetric[] = [
     {
       key: "playrate_hook",
-      label: "Playrate do Hook",
+      label: "Hook Rate (Gancho)",
       value: playrate,
       numerator: p3s,
       denominator: impressions,
       status: statusFor("playrate_hook", playrate),
-      hint: "3s ÷ impressões — a capa/1º segundo prendeu a atenção.",
+      hint: "Vídeo 3s ÷ impressões — o ideal é acima de 15% a 20%.",
     },
     {
       key: "retencao_hook",
-      label: "Retenção do Hook",
+      label: "Body Hold Rate (Retenção do Vídeo)",
       value: retencaoHook,
       numerator: p75,
       denominator: p3s,
       status: statusFor("retencao_hook", retencaoHook),
-      hint: "75% ÷ 3s — o gancho segurou o espectador.",
+      hint: "Vídeo 75% ÷ vídeo 3s — quantos passaram do gancho e viram quase tudo.",
     },
     {
       key: "conversao_body",
-      label: "Conversão do Body",
+      label: "Conversão do Corpo",
       value: conversaoBody,
       numerator: conversaoBodyNum,
       denominator: p3s,
       status: statusFor("conversao_body", conversaoBody),
       hint: focus === "perpetuo"
-        ? "Landing views ÷ 3s — o meio do vídeo gerou clique e a página carregou."
-        : "Cliques no link únicos ÷ 3s — o argumento gerou desejo de clique.",
+        ? "Landing views ÷ vídeo 3s — o meio do vídeo gerou clique e a página carregou."
+        : "Cliques no link únicos ÷ vídeo 3s — o argumento gerou desejo de clique.",
     },
     {
       key: "retencao_75_body",
-      label: "Retenção 75% Body",
+      label: focus === "perpetuo" ? "Qualidade do Clique" : "Qualidade do Clique (Outbound CTR)",
       value: retencao75,
       numerator: retencao75Num,
       denominator: retencao75Den,
       status: statusFor("retencao_75_body", retencao75),
       hint: focus === "perpetuo"
         ? "Checkouts iniciados ÷ Landing views — convenceu a abrir o checkout."
-        : "Cliques de saída únicos ÷ Cliques no link — clique de intenção real (saiu da rede).",
+        : "Cliques de saída únicos ÷ cliques no link únicos — intenção real de sair da rede.",
     },
     {
       key: "medidor_cta",
@@ -121,7 +121,7 @@ export function scoreCreative(input: CreativeMetricsInput, focus: ClientFocus): 
       status: statusFor("medidor_cta", medidorCta),
       hint: focus === "perpetuo"
         ? "Compras ÷ Checkouts iniciados — fechamento da oferta."
-        : "Conversas iniciadas ÷ Cliques de saída — mensagens reais no WhatsApp.",
+        : "Conversas iniciadas ÷ Cliques de saída únicos — conversão do script/página.",
     },
   ];
   return out;
