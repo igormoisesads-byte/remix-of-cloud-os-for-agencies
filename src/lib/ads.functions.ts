@@ -297,6 +297,9 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
             preview_url: previewUrl,
             destination_url: linkUrl,
             status: ad.status || null,
+            period_start: fmt(since),
+            period_end: fmt(until),
+
 
             spend,
             impressions: Number(ins?.impressions ?? 0),
