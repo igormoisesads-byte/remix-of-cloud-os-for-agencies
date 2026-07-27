@@ -804,7 +804,11 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                         {filteredCreatives.slice(0, 24).map((c) => {
                           const scored = scoreCreative(c, focus);
                           return (
-                            <div key={c.id} className="rounded-md border overflow-hidden bg-card">
+                            <div
+                              key={c.id}
+                              className="rounded-md border overflow-hidden bg-card cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => setSelectedCreative(c)}
+                            >
                               <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
                                 <CreativeThumb src={(c as any).preview_url || c.thumbnail_url} fallbackSrc={c.thumbnail_url} alt={c.name || ""} />
 
@@ -821,17 +825,18 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                                   {scored.map((m) => <HBCBar key={m.key} m={m} />)}
                                 </div>
                                 {c.destination_url && (
-                                  <a href={c.destination_url} target="_blank" rel="noreferrer" className="text-xs text-primary flex items-center gap-1 truncate">
+                                  <a href={c.destination_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-primary flex items-center gap-1 truncate">
                                     <ExternalLink className="h-3 w-3" /> {c.destination_url}
                                   </a>
                                 )}
                                 <div className="flex items-center gap-1 flex-wrap">
                                   {c.status && <Badge variant="outline" className="text-[10px]">{c.status}</Badge>}
-                                  <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 ml-auto" onClick={() => setCreativeId(String(c.id))}>
+                                  <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 ml-auto" onClick={(e) => { e.stopPropagation(); setCreativeId(String(c.id)); }}>
                                     Filtrar
                                   </Button>
                                 </div>
                               </div>
+
                             </div>
                           );
                         })}
