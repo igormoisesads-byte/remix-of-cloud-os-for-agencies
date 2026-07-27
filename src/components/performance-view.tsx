@@ -449,7 +449,7 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
 
   const geoData = useMemo(() => {
     // Country-level only (no region) — deduplica agregando por country_code
-    const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
+    const src = geoRows.filter((r: any) => !r.region);
     const map = new Map<string, { spend: number; results: number; clicks: number; impressions: number; reach: number }>();
     for (const g of src) {
       const code = String(g.country_code || "").toUpperCase();
@@ -464,10 +464,10 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
     return [...map.entries()]
       .map(([code, g]) => ({ code, name: regionName(code), ...g, pct: (g.spend / total) * 100 }))
       .sort((a, b) => b.spend - a.spend);
-  }, [data.geo, accountId]);
+  }, [geoRows]);
 
   const regionData = useMemo(() => {
-    const src = (data.geo ?? []).filter((r) => inAccount(r) && r.region);
+    const src = geoRows.filter((r: any) => r.region);
     const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
     return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
@@ -481,7 +481,7 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
         reach: Number(g.reach),
         pct: (Number(g.spend) / total) * 100,
       }));
-  }, [data.geo, accountId]);
+  }, [geoRows]);
 
   const geoByCode = useMemo(() => {
     const m: Record<string, typeof geoData[number]> = {};
@@ -757,7 +757,7 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center justify-between gap-2">
-                      <span>Hook · Body · CTA (agregado — {filteredCreatives.length} criativos)</span>
+                      <span>Hook · Body · CTA</span>
                       <Badge variant="outline" className="text-[10px]">
                         Foco: {focus === "local" ? "Local (WhatsApp)" : "Perpétuo/Lançamento (Site)"}
                       </Badge>

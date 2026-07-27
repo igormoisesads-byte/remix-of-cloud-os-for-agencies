@@ -139,7 +139,7 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
       {/* Aggregated Hook/Body/CTA */}
       <Card className="p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-          Hook · Body · CTA (agregado — {filtered.length} criativos)
+          Hook · Body · CTA
         </div>
         <div className="grid gap-3 md:grid-cols-5">
           {agg.map((m) => (
