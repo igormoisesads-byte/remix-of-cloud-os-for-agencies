@@ -34,8 +34,17 @@ export async function mirrorUrlToR2(
   if (sourceUrl.startsWith(publicBase)) return sourceUrl;
 
   try {
-    const resp = await fetch(sourceUrl);
+    const resp = await fetch(sourceUrl, {
+      headers: {
+        // A CDN do Meta devolve 403 pra clientes sem user-agent/referer.
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+        Accept: "image/avif,image/webp,image/jpeg,image/png,*/*",
+        Referer: "https://www.facebook.com/",
+      },
+    });
     if (!resp.ok) return null;
+
     const contentType = resp.headers.get("content-type") || "image/jpeg";
     const body = await resp.arrayBuffer();
     // Guarda: não subir arquivos gigantes (evita estourar em vídeo)
