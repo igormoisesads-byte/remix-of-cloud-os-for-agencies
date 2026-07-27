@@ -357,7 +357,6 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
       "onsite_conversion.profile_visit",
       "ig_profile_visit",
       "profile_visit",
-      "onsite_conversion.view_content",
     ];
     let newContacts = 0, retContacts = 0, igVisits = 0;
     for (const r of (data.insights ?? []).filter((r: any) => inAccount(r) && inPeriod(r.date))) {
@@ -560,7 +559,9 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                 <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por novo contato" hint="Investimento ÷ novos contatos" value={fmtBRL(cpNew)} accent="violet" />
                 <Kpi icon={<MessageCircle className="h-4 w-4" />} label="Contatos que retornam" hint="Contatos por mensagem recorrentes" value={fmtInt(waExtras.retContacts)} />
                 <Kpi icon={<Zap className="h-4 w-4" />} label="Custo por contato que retorna" hint="Investimento ÷ contatos que retornam" value={fmtBRL(cpRet)} accent="violet" />
-                <Kpi icon={<Eye className="h-4 w-4" />} label="Visitas ao perfil Instagram" hint="Visitas ao perfil do Instagram vindas do anúncio" value={fmtInt(waExtras.igVisits)} />
+                {waExtras.igVisits > 0 && (
+                  <Kpi icon={<Eye className="h-4 w-4" />} label="Visitas ao perfil Instagram" hint="Visitas ao perfil do Instagram vindas do anúncio" value={fmtInt(waExtras.igVisits)} />
+                )}
               </div>
             )}
           </div>

@@ -601,10 +601,18 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     queryKey: ["task", taskId],
     queryFn: async () => (await supabase.from("tasks").select("*").eq("id", taskId).single()).data,
   });
+  const commentAuthors = useQuery({
+    queryKey: ["profiles-min"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => (await supabase.from("profiles").select("id, full_name")).data ?? [],
+  });
+  const authorName = (uid?: string | null) =>
+    (commentAuthors.data ?? []).find((p: any) => p.id === uid)?.full_name ?? null;
   const comments = useQuery({
     queryKey: ["task-comments", taskId],
-    queryFn: async () => (await supabase.from("task_comments").select("*, profiles(full_name)").eq("task_id", taskId).order("created_at")).data ?? [],
+    queryFn: async () => (await supabase.from("task_comments").select("*").eq("task_id", taskId).order("created_at")).data ?? [],
   });
+
   const checklist = useQuery({
     queryKey: ["task-checklist", taskId],
     queryFn: async () => (await supabase.from("task_checklist_items").select("*").eq("task_id", taskId).order("position")).data ?? [],
@@ -810,11 +818,11 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                   {(comments.data ?? []).map((c: any) => (
                     <div key={c.id} className="flex gap-3">
                       <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                        {initials(c.profiles?.full_name ?? "?")}
+                        {initials(authorName(c.user_id) ?? "?")}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="text-xs">
-                          <span className="font-semibold">{c.profiles?.full_name ?? "—"}</span>
+                          <span className="font-semibold">{authorName(c.user_id) ?? "—"}</span>
                           <span className="text-muted-foreground"> · {new Date(c.created_at).toLocaleString("pt-BR")}</span>
                         </div>
                         {c.body && <div className="text-sm bg-muted/50 rounded-md px-3 py-2 whitespace-pre-wrap">{c.body}</div>}
