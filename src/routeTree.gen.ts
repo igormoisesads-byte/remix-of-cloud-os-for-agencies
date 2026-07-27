@@ -30,6 +30,7 @@ import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
 import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
 import { Route as PRelatorioTokenRouteImport } from './routes/p.relatorio.$token'
+import { Route as ApiPublicCreativeImageRouteImport } from './routes/api/public/creative-image'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as AuthenticatedAjustesSquadsRouteImport } from './routes/_authenticated/ajustes.squads'
 import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
@@ -150,6 +151,11 @@ const PRelatorioTokenRoute = PRelatorioTokenRouteImport.update({
   path: '/p/relatorio/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCreativeImageRoute = ApiPublicCreativeImageRouteImport.update({
+  id: '/api/public/creative-image',
+  path: '/api/public/creative-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/api/public/creative-image': typeof ApiPublicCreativeImageRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/clientes/': typeof AuthenticatedClientesIndexRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/api/public/creative-image': typeof ApiPublicCreativeImageRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes': typeof AuthenticatedAjustesIndexRoute
   '/clientes': typeof AuthenticatedClientesIndexRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/_authenticated/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/_authenticated/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/api/public/creative-image': typeof ApiPublicCreativeImageRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
   '/_authenticated/clientes/': typeof AuthenticatedClientesIndexRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/ajustes/planos'
     | '/ajustes/squads'
     | '/clientes/$id'
+    | '/api/public/creative-image'
     | '/p/relatorio/$token'
     | '/ajustes/'
     | '/clientes/'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/ajustes/planos'
     | '/ajustes/squads'
     | '/clientes/$id'
+    | '/api/public/creative-image'
     | '/p/relatorio/$token'
     | '/ajustes'
     | '/clientes'
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ajustes/planos'
     | '/_authenticated/ajustes/squads'
     | '/_authenticated/clientes/$id'
+    | '/api/public/creative-image'
     | '/p/relatorio/$token'
     | '/_authenticated/ajustes/'
     | '/_authenticated/clientes/'
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   ApiR2UploadRoute: typeof ApiR2UploadRoute
   NpsTokenRoute: typeof NpsTokenRoute
+  ApiPublicCreativeImageRoute: typeof ApiPublicCreativeImageRoute
   PRelatorioTokenRoute: typeof PRelatorioTokenRoute
   ApiPublicHooksCheckBalancesRoute: typeof ApiPublicHooksCheckBalancesRoute
   ApiPublicHooksSyncAdsRoute: typeof ApiPublicHooksSyncAdsRoute
@@ -587,6 +600,13 @@ declare module '@tanstack/react-router' {
       path: '/p/relatorio/$token'
       fullPath: '/p/relatorio/$token'
       preLoaderRoute: typeof PRelatorioTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/creative-image': {
+      id: '/api/public/creative-image'
+      path: '/api/public/creative-image'
+      fullPath: '/api/public/creative-image'
+      preLoaderRoute: typeof ApiPublicCreativeImageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/clientes/$id': {
@@ -759,6 +779,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   ApiR2UploadRoute: ApiR2UploadRoute,
   NpsTokenRoute: NpsTokenRoute,
+  ApiPublicCreativeImageRoute: ApiPublicCreativeImageRoute,
   PRelatorioTokenRoute: PRelatorioTokenRoute,
   ApiPublicHooksCheckBalancesRoute: ApiPublicHooksCheckBalancesRoute,
   ApiPublicHooksSyncAdsRoute: ApiPublicHooksSyncAdsRoute,
