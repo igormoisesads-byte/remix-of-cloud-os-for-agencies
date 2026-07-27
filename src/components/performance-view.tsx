@@ -103,13 +103,13 @@ function regionName(code: string) {
   try { return REGION.of(code) || code; } catch { return code; }
 }
 
-export function PerformanceView({ data }: { data: PerfData }) {
+export function PerformanceView({ data, initialPeriod }: { data: PerfData; initialPeriod?: string }) {
   // ---------- Filters ----------
   const accountsList = data.accounts ?? [];
   const [accountId, setAccountId] = useState<string>("all");
   const [campaignId, setCampaignId] = useState<string>("all");
   const [creativeId, setCreativeId] = useState<string>("all");
-  const [period, setPeriod] = useState<string>("current_month"); // presets: current_month|7|15|30|90|365|current_week|all|custom
+  const [period, setPeriod] = useState<string>(initialPeriod || "current_month"); // presets: current_month|7|15|30|90|365|current_week|all|custom
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
   const [campaignSort, setCampaignSort] = useState<"spend" | "cpl" | "results" | "ctr">("cpl");
 
