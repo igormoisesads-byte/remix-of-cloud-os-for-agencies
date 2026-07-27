@@ -43,7 +43,7 @@ export const Route = createFileRoute("/api/r2-upload")({
             R2_ACCESS_KEY_ID: accessKeyId, R2_SECRET_ACCESS_KEY: secretAccessKey,
             R2_ENDPOINT: endpoint, R2_BUCKET: bucket, R2_PUBLIC_URL: publicBase,
           }).filter(([, v]) => !v).map(([k]) => k);
-          if (missing.length) {
+          if (missing.length || !accessKeyId || !secretAccessKey || !endpoint || !bucket || !publicBase) {
             return new Response(JSON.stringify({ error: `R2 não configurado. Variáveis ausentes: ${missing.join(", ")}` }), {
               status: 500, headers: { "Content-Type": "application/json" },
             });
