@@ -174,11 +174,8 @@ export function CreativesView({ clientId, clientType }: { clientId: string; clie
             return (
               <Card key={c.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelected(c)}>
                 <div className="aspect-video bg-muted relative flex items-center justify-center">
-                  {c.thumbnail_url || c.preview_url ? (
-                    <img src={c.preview_url || c.thumbnail_url} alt={c.name || ""} loading="lazy" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageOff className="h-8 w-8 text-muted-foreground" />
-                  )}
+                  <CreativeThumb src={c.preview_url || c.thumbnail_url} fallbackSrc={c.thumbnail_url} alt={c.name || ""} />
+
                   {c.video_plays > 0 && (
                     <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
                       <Video className="h-3 w-3" /> Vídeo
