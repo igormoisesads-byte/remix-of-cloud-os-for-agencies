@@ -79,6 +79,8 @@ export function PublicReportLocal({ insights, creatives, geo, whatsapp, client }
     () => [...creatives].sort((a, b) => Number(b.spend || 0) - Number(a.spend || 0)).slice(0, 3),
     [creatives],
   );
+  const [selectedCreative, setSelectedCreative] = useState<any | null>(null);
+
 
   // Funil: Impressões → Cliques → Conversas → Novos contatos
   const funnel = [
