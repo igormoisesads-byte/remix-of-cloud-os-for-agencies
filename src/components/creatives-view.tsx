@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ExternalLink, ImageOff, Video, Search } from "lucide-react";
+import { ExternalLink, Video, Search } from "lucide-react";
+import { CreativeThumb } from "@/components/creative-thumb";
 import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
+
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const intl = (n: number) => Math.round(n).toLocaleString("pt-BR");
