@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, MousePointerClick, Eye, Users, Target, TrendingUp, MapPin, Calendar } from "lucide-react";
+import { CreativeThumb } from "@/components/creative-thumb";
+
 
 /**
  * Template PÚBLICO fixo para NEGÓCIO LOCAL.
