@@ -2116,6 +2116,7 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string | null
+          default_period: string
           expires_at: string | null
           id: string
           password_hash: string | null
@@ -2129,6 +2130,7 @@ export type Database = {
           client_id: string
           created_at?: string
           created_by?: string | null
+          default_period?: string
           expires_at?: string | null
           id?: string
           password_hash?: string | null
@@ -2142,6 +2144,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           created_by?: string | null
+          default_period?: string
           expires_at?: string | null
           id?: string
           password_hash?: string | null
