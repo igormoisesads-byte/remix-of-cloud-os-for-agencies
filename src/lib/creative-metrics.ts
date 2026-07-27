@@ -31,10 +31,10 @@ function rate(num: number, den: number): number | null {
 
 // Health thresholds per Cloud OS playbook
 const THRESHOLDS: Record<ScoredMetric["key"], { good: number; ok: number }> = {
-  playrate_hook: { good: 25, ok: 15 },
-  retencao_hook: { good: 15, ok: 8 },
+  playrate_hook: { good: 20, ok: 15 },
+  retencao_hook: { good: 40, ok: 25 },
   conversao_body: { good: 8, ok: 4 },
-  retencao_75_body: { good: 40, ok: 20 },
+  retencao_75_body: { good: 60, ok: 40 },
   medidor_cta: { good: 25, ok: 10 },
 };
 
