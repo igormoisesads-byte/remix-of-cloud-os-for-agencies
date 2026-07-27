@@ -225,7 +225,7 @@ async function syncMetaAccountInternal(adAccountRowId: string, range?: SyncRange
       const adsUrl = new URL(`https://graph.facebook.com/${META_V}/${accountId}/ads`);
       adsUrl.searchParams.set(
         "fields",
-        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title,link_url},insights.time_range(${timeRange}){${insightsFields}}`
+        `id,name,status,campaign_id,campaign{id,name},adset_id,adset{id,name},creative{thumbnail_url,image_url,object_story_spec,body,title},insights.time_range(${timeRange}){${insightsFields}}`
       );
       adsUrl.searchParams.set("limit", "100");
       adsUrl.searchParams.set("access_token", token);
