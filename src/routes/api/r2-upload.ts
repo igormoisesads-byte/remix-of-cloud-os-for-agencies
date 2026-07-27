@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/r2-upload")({
           const supaUrl = process.env.SUPABASE_URL;
           const supaKey = process.env.SUPABASE_PUBLISHABLE_KEY;
           if (!supaUrl || !supaKey) {
-            return new Response(JSON.stringify({ error: "Supabase env missing" }), {
+            return new Response(JSON.stringify({ error: `Variáveis ausentes: ${[!supaUrl && "SUPABASE_URL", !supaKey && "SUPABASE_PUBLISHABLE_KEY"].filter(Boolean).join(", ")}` }), {
               status: 500, headers: { "Content-Type": "application/json" },
             });
           }
@@ -39,8 +39,12 @@ export const Route = createFileRoute("/api/r2-upload")({
           const endpoint = process.env.R2_ENDPOINT;
           const bucket = process.env.R2_BUCKET;
           const publicBase = process.env.R2_PUBLIC_URL;
-          if (!accessKeyId || !secretAccessKey || !endpoint || !bucket || !publicBase) {
-            return new Response(JSON.stringify({ error: "R2 not configured" }), {
+          const missing = Object.entries({
+            R2_ACCESS_KEY_ID: accessKeyId, R2_SECRET_ACCESS_KEY: secretAccessKey,
+            R2_ENDPOINT: endpoint, R2_BUCKET: bucket, R2_PUBLIC_URL: publicBase,
+          }).filter(([, v]) => !v).map(([k]) => k);
+          if (missing.length) {
+            return new Response(JSON.stringify({ error: `R2 não configurado. Variáveis ausentes: ${missing.join(", ")}` }), {
               status: 500, headers: { "Content-Type": "application/json" },
             });
           }
