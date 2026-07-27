@@ -150,6 +150,49 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
   };
   const inAccount = (row: any) => accountId === "all" || row.ad_account_id === accountId;
 
+  // Selected period as concrete bounds (used by aggregated datasets like geo)
+  const periodBounds = useMemo<{ start: Date | null; end: Date }>(() => {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    if (period === "all") return { start: null, end: now };
+    if (period === "custom") return { start: customRange.from ?? null, end: customRange.to ?? now };
+    if (period === "current_week") {
+      const start = new Date(now); start.setDate(now.getDate() - now.getDay());
+      return { start, end: now };
+    }
+    if (period === "current_month") return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+    const start = new Date(now); start.setDate(now.getDate() - Number(period));
+    return { start, end: now };
+  }, [period, customRange.from, customRange.to]);
+
+  // Geo rows are stored aggregated per sync period. Pick the stored period that
+  // best overlaps the selected range instead of summing every period (which
+  // showed "everything" regardless of the calendar selection).
+  const geoRows = useMemo(() => {
+    const src = (data.geo ?? []).filter((r) => inAccount(r));
+    if (src.length === 0) return [];
+    const groups = new Map<string, any[]>();
+    for (const r of src) {
+      const k = `${r.period_start}|${r.period_end}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(r);
+    }
+    const selStart = periodBounds.start ? periodBounds.start.getTime() : -Infinity;
+    const selEnd = periodBounds.end.getTime();
+    let best: any[] = [];
+    let bestScore = -1;
+    for (const [k, rows] of groups) {
+      const [ps, pe] = k.split("|");
+      const s = new Date(ps + "T00:00").getTime();
+      const e = new Date(pe + "T00:00").getTime();
+      const overlap = Math.min(e, selEnd) - Math.max(s, selStart);
+      // prefer max overlap; tie-break by the tightest (most specific) period
+      const score = overlap - Math.max(0, (e - s) - (selEnd - selStart)) * 0.25;
+      if (overlap > 0 && score > bestScore) { bestScore = score; best = rows; }
+    }
+    return best;
+  }, [data.geo, accountId, periodBounds]);
+
+
   // ---------- Filtered creatives ----------
   const filteredCreatives = useMemo(() => {
     return (data.creatives ?? []).filter((c) => {
@@ -406,7 +449,7 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
 
   const geoData = useMemo(() => {
     // Country-level only (no region) — deduplica agregando por country_code
-    const src = (data.geo ?? []).filter((r) => inAccount(r) && !r.region);
+    const src = geoRows.filter((r: any) => !r.region);
     const map = new Map<string, { spend: number; results: number; clicks: number; impressions: number; reach: number }>();
     for (const g of src) {
       const code = String(g.country_code || "").toUpperCase();
@@ -421,10 +464,10 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
     return [...map.entries()]
       .map(([code, g]) => ({ code, name: regionName(code), ...g, pct: (g.spend / total) * 100 }))
       .sort((a, b) => b.spend - a.spend);
-  }, [data.geo, accountId]);
+  }, [geoRows]);
 
   const regionData = useMemo(() => {
-    const src = (data.geo ?? []).filter((r) => inAccount(r) && r.region);
+    const src = geoRows.filter((r: any) => r.region);
     const total = src.reduce((s, g) => s + Number(g.spend), 0) || 1;
     return [...src]
       .sort((a, b) => Number(b.spend) - Number(a.spend))
@@ -438,7 +481,7 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
         reach: Number(g.reach),
         pct: (Number(g.spend) / total) * 100,
       }));
-  }, [data.geo, accountId]);
+  }, [geoRows]);
 
   const geoByCode = useMemo(() => {
     const m: Record<string, typeof geoData[number]> = {};
@@ -714,7 +757,7 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center justify-between gap-2">
-                      <span>Hook · Body · CTA (agregado — {filteredCreatives.length} criativos)</span>
+                      <span>Hook · Body · CTA</span>
                       <Badge variant="outline" className="text-[10px]">
                         Foco: {focus === "local" ? "Local (WhatsApp)" : "Perpétuo/Lançamento (Site)"}
                       </Badge>
