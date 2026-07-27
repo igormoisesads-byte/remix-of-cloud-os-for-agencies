@@ -706,10 +706,22 @@ function Performance({ clientId, clientType }: { clientId: string; clientType: s
 }
 
 
+const SHARE_PERIODS = [
+  { value: "current_month", label: "Mês atual" },
+  { value: "current_week", label: "Semana atual" },
+  { value: "7", label: "Últimos 7 dias" },
+  { value: "15", label: "Últimos 15 dias" },
+  { value: "30", label: "Últimos 30 dias" },
+  { value: "90", label: "Últimos 90 dias" },
+  { value: "365", label: "Último ano" },
+  { value: "all", label: "Todo o período" },
+];
+
 function SharePublicLinkDialog({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [title, setTitle] = useState("Relatório de performance");
+  const [defaultPeriod, setDefaultPeriod] = useState("current_month");
   const [existing, setExisting] = useState<any[]>([]);
 
   async function refresh() {
@@ -719,7 +731,7 @@ function SharePublicLinkDialog({ clientId }: { clientId: string }) {
   async function create() {
     setBusy(true);
     const token = crypto.randomUUID().replace(/-/g, "") + Math.random().toString(36).slice(2, 8);
-    const { error } = await supabase.from("public_reports").insert({ client_id: clientId, token, title });
+    const { error } = await supabase.from("public_reports").insert({ client_id: clientId, token, title, default_period: defaultPeriod } as any);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Link público criado.");
@@ -728,6 +740,12 @@ function SharePublicLinkDialog({ clientId }: { clientId: string }) {
   async function toggle(r: any) {
     await supabase.from("public_reports").update({ active: !r.active }).eq("id", r.id);
     refresh();
+  }
+  async function changePeriod(r: any, value: string) {
+    setExisting((prev) => prev.map((x) => (x.id === r.id ? { ...x, default_period: value } : x)));
+    const { error } = await supabase.from("public_reports").update({ default_period: value } as any).eq("id", r.id);
+    if (error) return toast.error(error.message);
+    toast.success("Visualização padrão atualizada.");
   }
   async function copyLink(token: string) {
     const url = `${window.location.origin}/p/relatorio/${token}`;
@@ -744,9 +762,18 @@ function SharePublicLinkDialog({ clientId }: { clientId: string }) {
         <DialogHeader><DialogTitle>Compartilhar com o cliente</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="text-sm text-muted-foreground">Crie um link para o cliente ver o dashboard em tempo real, sem login.</div>
-          <div className="flex gap-2">
+          <div className="space-y-2">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título do relatório" />
-            <Button onClick={create} disabled={busy}><Plus className="h-4 w-4" />Criar</Button>
+            <div className="flex gap-2">
+              <Select value={defaultPeriod} onValueChange={setDefaultPeriod}>
+                <SelectTrigger className="flex-1"><SelectValue placeholder="Visualização padrão" /></SelectTrigger>
+                <SelectContent>
+                  {SHARE_PERIODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button onClick={create} disabled={busy}><Plus className="h-4 w-4" />Criar</Button>
+            </div>
+            <div className="text-[11px] text-muted-foreground">O cliente abre o relatório já nesse período (ele ainda pode trocar).</div>
           </div>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {existing.map((r) => {
@@ -762,6 +789,15 @@ function SharePublicLinkDialog({ clientId }: { clientId: string }) {
                     <Button size="icon" variant="ghost" onClick={() => copyLink(r.token)}><Copy className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => window.open(url, "_blank")}><ExternalLink className="h-4 w-4" /></Button>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-muted-foreground shrink-0">Visualização</span>
+                    <Select value={r.default_period || "current_month"} onValueChange={(v) => changePeriod(r, v)}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SHARE_PERIODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{r.view_count} visualizações</span>
                     <button className="underline" onClick={() => toggle(r)}>{r.active ? "Desativar" : "Reativar"}</button>
@@ -776,6 +812,7 @@ function SharePublicLinkDialog({ clientId }: { clientId: string }) {
     </Dialog>
   );
 }
+
 
 
 function ConnectAdAccountDialog({ clientId, onSaved }: { clientId: string; onSaved: () => void }) {
