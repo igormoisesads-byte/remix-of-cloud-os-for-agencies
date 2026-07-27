@@ -844,6 +844,8 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
                     )}
                   </CardContent>
                 </Card>
+
+                <CreativeDetailDialog creative={selectedCreative} focus={focus} onOpenChange={(o) => !o && setSelectedCreative(null)} />
               </div>
             );
           })()}
