@@ -509,7 +509,45 @@ export const syncAllAdAccounts = createServerFn({ method: "POST" })
     return { ran: results.length, results };
   });
 
+/* ---------- Criativos por período (busca ao vivo na Meta) ---------- */
+
+export const getCreativesForPeriod = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      ad_account_ids: z.array(z.string().uuid()).min(1),
+      since: z.string(),
+      until: z.string(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: allowed } = await context.supabase
+      .from("ad_accounts")
+      .select("id")
+      .in("id", data.ad_account_ids);
+    const ids = (allowed ?? []).map((a: any) => a.id);
+    if (ids.length === 0) return [];
+    const { fetchCreativesForPeriod } = await import("@/lib/ads-creatives.server");
+    return await fetchCreativesForPeriod(ids, data.since, data.until);
+  });
+
+export const getPublicCreativesForPeriod = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      token: z.string().min(8),
+      since: z.string(),
+      until: z.string(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { fetchCreativesForPeriod, accountIdsForPublicToken } = await import("@/lib/ads-creatives.server");
+    const ids = await accountIdsForPublicToken(data.token);
+    if (ids.length === 0) return [];
+    return await fetchCreativesForPeriod(ids, data.since, data.until);
+  });
+
 /* ---------- Public report ---------- */
+
 
 export const getPublicReport = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ token: z.string().min(8) }).parse(d))
