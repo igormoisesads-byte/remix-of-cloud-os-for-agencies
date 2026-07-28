@@ -172,6 +172,52 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
     return { start, end: now };
   }, [period, customRange.from, customRange.to]);
 
+  // ---------- Criativos do período selecionado ----------
+  // Os registros salvos em `ad_creatives` são agregados pela janela do último
+  // sync, então buscamos ao vivo na Meta com o intervalo exato escolhido.
+  const fmtDay = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const rangeSince = periodBounds.start ? fmtDay(periodBounds.start) : "2015-01-01";
+  const rangeUntil = fmtDay(periodBounds.end);
+  const accountIdsForFetch = useMemo(() => {
+    const ids = (data.accounts ?? []).map((a: any) => String(a.id));
+    return accountId === "all" ? ids : ids.filter((id) => id === accountId);
+  }, [data.accounts, accountId]);
+
+  const fetchAuthCreatives = useServerFn(getCreativesForPeriod);
+  const fetchPublicCreatives = useServerFn(getPublicCreativesForPeriod);
+
+  const periodCreativesQuery = useQuery({
+    queryKey: ["creatives_period", publicToken ?? "auth", accountIdsForFetch.join(","), rangeSince, rangeUntil],
+    enabled: accountIdsForFetch.length > 0,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    queryFn: async () => {
+      if (publicToken) {
+        return (await fetchPublicCreatives({ data: { token: publicToken, since: rangeSince, until: rangeUntil } })) as any[];
+      }
+      return (await fetchAuthCreatives({
+        data: { ad_account_ids: accountIdsForFetch, since: rangeSince, until: rangeUntil },
+      })) as any[];
+    },
+  });
+
+  // Enquanto carrega (ou se a Meta falhar), cai no que já está no banco.
+  const creativesSource: any[] = periodCreativesQuery.data?.length
+    ? periodCreativesQuery.data
+    : periodCreativesQuery.isSuccess
+      ? []
+      : (data.creatives ?? []);
+  const creativesArePeriodExact = Boolean(periodCreativesQuery.data);
+
+
+
   // Geo rows may be daily (new sync) or aggregated by an older sync period.
   // Prefer daily rows inside the selected range; otherwise fall back to the
   // single aggregated period with the best overlap so old data doesn't sum all
