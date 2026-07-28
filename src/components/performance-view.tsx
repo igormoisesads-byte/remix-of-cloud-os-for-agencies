@@ -276,6 +276,8 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
   // o registro precisa sobrepor o intervalo e ter veiculação (gasto/impressões).
   const ranInPeriod = (c: any) => {
     if (Number(c.spend ?? 0) <= 0 && Number(c.impressions ?? 0) <= 0) return false;
+    // Dados vindos direto da Meta já respeitam o intervalo escolhido.
+    if (creativesArePeriodExact) return true;
     if (!c.period_start || !c.period_end) return true; // registros antigos sem período
     const selStart = periodBounds.start ? periodBounds.start.getTime() : -Infinity;
     const selEnd = periodBounds.end.getTime();
@@ -285,22 +287,23 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
   };
 
   const filteredCreatives = useMemo(() => {
-    return (data.creatives ?? []).filter((c) => {
+    return creativesSource.filter((c) => {
       if (!inAccount(c)) return false;
       if (!ranInPeriod(c)) return false;
       if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
       if (creativeId !== "all" && String(c.id) !== creativeId) return false;
       return true;
     });
-  }, [data.creatives, accountId, campaignId, creativeId, periodBounds]);
+  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, creativeId, periodBounds]);
 
   // Creative options depend on account/campaign selection
   const creativeOptions = useMemo(() => {
-    return (data.creatives ?? [])
+    return creativesSource
       .filter((c) => inAccount(c) && ranInPeriod(c) && (campaignId === "all" || String(c.campaign_id ?? "") === campaignId))
       .map((c) => ({ id: String(c.id), name: c.name || "(sem nome)" }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.creatives, accountId, campaignId, periodBounds]);
+  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, periodBounds]);
+
 
 
   // ---------- Daily series (source depends on filters) ----------
