@@ -21,7 +21,11 @@ import { CreativeDetailDialog } from "@/components/creative-detail-dialog";
 
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getCreativesForPeriod, getPublicCreativesForPeriod } from "@/lib/ads.functions";
 import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
+
 
 function statusBgClass(s: ScoredMetric["status"]) {
   if (s === "good") return "bg-emerald-500";
