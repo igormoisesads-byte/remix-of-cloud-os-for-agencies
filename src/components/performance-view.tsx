@@ -110,7 +110,7 @@ function regionName(code: string) {
   try { return REGION.of(code) || code; } catch { return code; }
 }
 
-export function PerformanceView({ data, initialPeriod }: { data: PerfData; initialPeriod?: string }) {
+export function PerformanceView({ data, initialPeriod, publicToken }: { data: PerfData; initialPeriod?: string; publicToken?: string }) {
   // ---------- Filters ----------
   const accountsList = data.accounts ?? [];
   const [accountId, setAccountId] = useState<string>("all");
