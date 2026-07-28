@@ -21,7 +21,11 @@ import { CreativeDetailDialog } from "@/components/creative-detail-dialog";
 
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getCreativesForPeriod, getPublicCreativesForPeriod } from "@/lib/ads.functions";
 import { scoreCreative, aggregateScores, focusFromClientType, type ScoredMetric } from "@/lib/creative-metrics";
+
 
 function statusBgClass(s: ScoredMetric["status"]) {
   if (s === "good") return "bg-emerald-500";
@@ -106,7 +110,7 @@ function regionName(code: string) {
   try { return REGION.of(code) || code; } catch { return code; }
 }
 
-export function PerformanceView({ data, initialPeriod }: { data: PerfData; initialPeriod?: string }) {
+export function PerformanceView({ data, initialPeriod, publicToken }: { data: PerfData; initialPeriod?: string; publicToken?: string }) {
   // ---------- Filters ----------
   const accountsList = data.accounts ?? [];
   const [accountId, setAccountId] = useState<string>("all");
@@ -168,6 +172,52 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
     return { start, end: now };
   }, [period, customRange.from, customRange.to]);
 
+  // ---------- Criativos do período selecionado ----------
+  // Os registros salvos em `ad_creatives` são agregados pela janela do último
+  // sync, então buscamos ao vivo na Meta com o intervalo exato escolhido.
+  const fmtDay = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const rangeSince = periodBounds.start ? fmtDay(periodBounds.start) : "2015-01-01";
+  const rangeUntil = fmtDay(periodBounds.end);
+  const accountIdsForFetch = useMemo(() => {
+    const ids = (data.accounts ?? []).map((a: any) => String(a.id));
+    return accountId === "all" ? ids : ids.filter((id) => id === accountId);
+  }, [data.accounts, accountId]);
+
+  const fetchAuthCreatives = useServerFn(getCreativesForPeriod);
+  const fetchPublicCreatives = useServerFn(getPublicCreativesForPeriod);
+
+  const periodCreativesQuery = useQuery({
+    queryKey: ["creatives_period", publicToken ?? "auth", accountIdsForFetch.join(","), rangeSince, rangeUntil],
+    enabled: accountIdsForFetch.length > 0,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    queryFn: async () => {
+      if (publicToken) {
+        return (await fetchPublicCreatives({ data: { token: publicToken, since: rangeSince, until: rangeUntil } })) as any[];
+      }
+      return (await fetchAuthCreatives({
+        data: { ad_account_ids: accountIdsForFetch, since: rangeSince, until: rangeUntil },
+      })) as any[];
+    },
+  });
+
+  // Enquanto carrega (ou se a Meta falhar), cai no que já está no banco.
+  const creativesSource: any[] = periodCreativesQuery.data?.length
+    ? periodCreativesQuery.data
+    : periodCreativesQuery.isSuccess
+      ? []
+      : (data.creatives ?? []);
+  const creativesArePeriodExact = Boolean(periodCreativesQuery.data);
+
+
+
   // Geo rows may be daily (new sync) or aggregated by an older sync period.
   // Prefer daily rows inside the selected range; otherwise fall back to the
   // single aggregated period with the best overlap so old data doesn't sum all
@@ -226,6 +276,8 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
   // o registro precisa sobrepor o intervalo e ter veiculação (gasto/impressões).
   const ranInPeriod = (c: any) => {
     if (Number(c.spend ?? 0) <= 0 && Number(c.impressions ?? 0) <= 0) return false;
+    // Dados vindos direto da Meta já respeitam o intervalo escolhido.
+    if (creativesArePeriodExact) return true;
     if (!c.period_start || !c.period_end) return true; // registros antigos sem período
     const selStart = periodBounds.start ? periodBounds.start.getTime() : -Infinity;
     const selEnd = periodBounds.end.getTime();
@@ -235,22 +287,23 @@ export function PerformanceView({ data, initialPeriod }: { data: PerfData; initi
   };
 
   const filteredCreatives = useMemo(() => {
-    return (data.creatives ?? []).filter((c) => {
+    return creativesSource.filter((c) => {
       if (!inAccount(c)) return false;
       if (!ranInPeriod(c)) return false;
       if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
       if (creativeId !== "all" && String(c.id) !== creativeId) return false;
       return true;
     });
-  }, [data.creatives, accountId, campaignId, creativeId, periodBounds]);
+  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, creativeId, periodBounds]);
 
   // Creative options depend on account/campaign selection
   const creativeOptions = useMemo(() => {
-    return (data.creatives ?? [])
+    return creativesSource
       .filter((c) => inAccount(c) && ranInPeriod(c) && (campaignId === "all" || String(c.campaign_id ?? "") === campaignId))
       .map((c) => ({ id: String(c.id), name: c.name || "(sem nome)" }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.creatives, accountId, campaignId, periodBounds]);
+  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, periodBounds]);
+
 
 
   // ---------- Daily series (source depends on filters) ----------
