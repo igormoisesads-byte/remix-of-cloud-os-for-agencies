@@ -116,6 +116,8 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
   const [accountId, setAccountId] = useState<string>("all");
   const [campaignId, setCampaignId] = useState<string>("all");
   const [creativeId, setCreativeId] = useState<string>("all");
+  const [creativeStatus, setCreativeStatus] = useState<"all" | "ACTIVE" | "INACTIVE">("all");
+
   const [selectedCreative, setSelectedCreative] = useState<any | null>(null);
   const [period, setPeriod] = useState<string>(initialPeriod || "current_month"); // presets: current_month|7|15|30|90|365|current_week|all|custom
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
