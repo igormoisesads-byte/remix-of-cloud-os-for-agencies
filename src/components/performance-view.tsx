@@ -116,6 +116,8 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
   const [accountId, setAccountId] = useState<string>("all");
   const [campaignId, setCampaignId] = useState<string>("all");
   const [creativeId, setCreativeId] = useState<string>("all");
+  const [creativeStatus, setCreativeStatus] = useState<"all" | "ACTIVE" | "INACTIVE">("all");
+
   const [selectedCreative, setSelectedCreative] = useState<any | null>(null);
   const [period, setPeriod] = useState<string>(initialPeriod || "current_month"); // presets: current_month|7|15|30|90|365|current_week|all|custom
   const [customRange, setCustomRange] = useState<{ from?: Date; to?: Date }>({});
@@ -292,9 +294,15 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
       if (!ranInPeriod(c)) return false;
       if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
       if (creativeId !== "all" && String(c.id) !== creativeId) return false;
+      if (creativeStatus !== "all") {
+        const st = String((c as any).status ?? "").toUpperCase();
+        if (creativeStatus === "ACTIVE" && st !== "ACTIVE") return false;
+        if (creativeStatus === "INACTIVE" && st === "ACTIVE") return false;
+      }
       return true;
     });
-  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, creativeId, periodBounds]);
+  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, creativeId, creativeStatus, periodBounds]);
+
 
   // Creative options depend on account/campaign selection
   const creativeOptions = useMemo(() => {
@@ -892,6 +900,19 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
             const agg = aggregateScores(filteredCreatives, focus);
             return (
               <div className="space-y-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Status do criativo</span>
+                  <Select value={creativeStatus} onValueChange={(v) => setCreativeStatus(v as any)}>
+                    <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="ACTIVE">Somente ativos</SelectItem>
+                      <SelectItem value="INACTIVE">Somente inativos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Badge variant="secondary" className="text-[10px]">{filteredCreatives.length} criativo(s)</Badge>
+                </div>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center justify-between gap-2">
