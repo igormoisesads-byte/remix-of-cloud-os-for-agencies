@@ -482,46 +482,96 @@ function CalendarView({ tasks, onOpen }: { tasks: any[]; onOpen: (id: string) =>
 
 function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
   const overdue = task.due_date && task.status !== "done" && task.due_date < new Date().toISOString().slice(0, 10);
+  const m = task.meta ?? { chk: 0, chkDone: 0, comments: 0, files: 0 };
+  const hasFooter = m.chk > 0 || m.comments > 0 || m.files > 0 || task.due_date || task.assignee;
   return (
     <Card
       draggable
       onDragStart={(e) => { e.dataTransfer.setData("text/task-id", task.id); e.dataTransfer.effectAllowed = "move"; }}
       onClick={onOpen}
-      className="cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-sm transition-all"
+      className="cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-md transition-all"
     >
-      <CardContent className="p-3 space-y-2">
+      <CardContent className="p-3 space-y-2.5">
         <div className="flex items-start justify-between gap-2">
-          <div className="text-sm font-medium leading-snug">{task.title}</div>
-          <PriorityBadge p={task.priority} />
+          <div className="text-sm font-medium leading-snug min-w-0">{task.title}</div>
+          <div className="shrink-0"><PriorityBadge p={task.priority} /></div>
         </div>
+
+        {task.description && (
+          <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">{task.description}</p>
+        )}
+
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
           <Badge variant="outline" className="text-[10px] py-0 px-1.5">{KIND_LABEL[task.kind]}</Badge>
-          {task.clients?.name && <span className="inline-flex items-center gap-1"><Building2 className="h-3 w-3" />{task.clients.name}</span>}
+          {task.clients?.name && (
+            <span className="inline-flex items-center gap-1 min-w-0">
+              {task.clients.logo_url ? (
+                <img src={task.clients.logo_url} alt="" className="h-4 w-4 rounded-full object-cover shrink-0" loading="lazy" />
+              ) : (
+                <Building2 className="h-3 w-3 shrink-0" />
+              )}
+              <span className="truncate max-w-[140px]">{task.clients.name}</span>
+            </span>
+          )}
         </div>
+
         {(task.tags?.length ?? 0) > 0 && (
           <div className="flex flex-wrap gap-1">
             {task.tags.slice(0, 4).map((tg: string) => (
               <span key={tg} className="text-[10px] rounded-full bg-primary/10 text-primary px-1.5 py-0.5">#{tg}</span>
             ))}
+            {task.tags.length > 4 && (
+              <span className="text-[10px] rounded-full bg-muted text-muted-foreground px-1.5 py-0.5">+{task.tags.length - 4}</span>
+            )}
           </div>
         )}
-        <div className="flex items-center justify-between pt-1">
-          {task.due_date ? (
-            <div className={cn("text-[11px] inline-flex items-center gap-1", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-              <CalendarIcon className="h-3 w-3" />
-              {new Date(task.due_date + "T00:00").toLocaleDateString("pt-BR")}
+
+        {hasFooter && (
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t">
+            <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground min-w-0">
+              {task.due_date && (
+                <span className={cn(
+                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5",
+                  overdue ? "bg-destructive/10 text-destructive font-medium" : "bg-muted"
+                )}>
+                  <CalendarIcon className="h-3 w-3" />
+                  {new Date(task.due_date + "T00:00").toLocaleDateString("pt-BR")}
+                </span>
+              )}
+              {m.chk > 0 && (
+                <span className={cn("inline-flex items-center gap-1", m.chkDone === m.chk && "text-emerald-600")}>
+                  <CheckSquare className="h-3 w-3" />{m.chkDone}/{m.chk}
+                </span>
+              )}
+              {m.comments > 0 && (
+                <span className="inline-flex items-center gap-1"><MessageSquare className="h-3 w-3" />{m.comments}</span>
+              )}
+              {m.files > 0 && (
+                <span className="inline-flex items-center gap-1"><Paperclip className="h-3 w-3" />{m.files}</span>
+              )}
             </div>
-          ) : <span />}
-          {task.assignee?.full_name && (
-            <div className="h-6 w-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center" title={task.assignee.full_name}>
-              {initials(task.assignee.full_name)}
-            </div>
-          )}
-        </div>
+            {task.assignee?.full_name && (
+              task.assignee.avatar_url ? (
+                <img
+                  src={task.assignee.avatar_url}
+                  alt={task.assignee.full_name}
+                  title={task.assignee.full_name}
+                  className="h-6 w-6 rounded-full object-cover ring-2 ring-background shrink-0"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-6 w-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0" title={task.assignee.full_name}>
+                  {initials(task.assignee.full_name)}
+                </div>
+              )
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+
 
 function PriorityBadge({ p }: { p: string }) {
   const v = p === "urgente" ? "destructive" : p === "alta" ? "default" : "secondary";
