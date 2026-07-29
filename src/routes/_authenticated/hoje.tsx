@@ -46,10 +46,21 @@ function HojePage() {
       const recebidoMes = (feesMonth.data ?? []).filter(f => f.status === "pago").reduce((s, f) => s + Number(f.amount), 0);
 
       const tasks = tasksOpen.data ?? [];
-      const overdue = tasks.filter(t => t.due_date && t.due_date < todayStr);
+      // Janela de atraso: só os últimos 14 dias (evita encher com rotinas antigas).
+      const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 14);
+      const cutoffStr = ymd(cutoff);
+      // Tarefas recorrentes de otimização só interessam na semana atual.
+      const optCutoff = new Date(today); optCutoff.setDate(optCutoff.getDate() - 7);
+      const optCutoffStr = ymd(optCutoff);
+      const isRoutine = (t: any) => t.kind === "rotina" || /^otimiza/i.test(t.title ?? "");
+      const overdue = tasks.filter(t => {
+        if (!t.due_date || t.due_date >= todayStr) return false;
+        return t.due_date >= (isRoutine(t) ? optCutoffStr : cutoffStr);
+      });
       const forToday = tasks.filter(t => t.due_date === todayStr);
       const week = tasks.filter(t => t.due_date && t.due_date > todayStr && t.due_date <= in7Str);
       const noDate = tasks.filter(t => !t.due_date);
+
 
       return {
         activos: activos ?? 0,
