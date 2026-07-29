@@ -292,9 +292,15 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
       if (!ranInPeriod(c)) return false;
       if (campaignId !== "all" && String(c.campaign_id ?? "") !== campaignId) return false;
       if (creativeId !== "all" && String(c.id) !== creativeId) return false;
+      if (creativeStatus !== "all") {
+        const st = String((c as any).status ?? "").toUpperCase();
+        if (creativeStatus === "ACTIVE" && st !== "ACTIVE") return false;
+        if (creativeStatus === "INACTIVE" && st === "ACTIVE") return false;
+      }
       return true;
     });
-  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, creativeId, periodBounds]);
+  }, [creativesSource, creativesArePeriodExact, accountId, campaignId, creativeId, creativeStatus, periodBounds]);
+
 
   // Creative options depend on account/campaign selection
   const creativeOptions = useMemo(() => {
