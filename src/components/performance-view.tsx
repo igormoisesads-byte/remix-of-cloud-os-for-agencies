@@ -900,6 +900,19 @@ export function PerformanceView({ data, initialPeriod, publicToken }: { data: Pe
             const agg = aggregateScores(filteredCreatives, focus);
             return (
               <div className="space-y-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Status do criativo</span>
+                  <Select value={creativeStatus} onValueChange={(v) => setCreativeStatus(v as any)}>
+                    <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="ACTIVE">Somente ativos</SelectItem>
+                      <SelectItem value="INACTIVE">Somente inativos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Badge variant="secondary" className="text-[10px]">{filteredCreatives.length} criativo(s)</Badge>
+                </div>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center justify-between gap-2">
