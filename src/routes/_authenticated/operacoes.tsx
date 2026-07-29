@@ -100,12 +100,29 @@ function OperacoesPage() {
   });
   const team = useQuery({
     queryKey: ["team-min"],
-    queryFn: async () => (await supabase.from("profiles").select("id, full_name").order("full_name")).data ?? [],
+    queryFn: async () => (await supabase.from("profiles").select("id, full_name, avatar_url").order("full_name")).data ?? [],
+  });
+
+  // Contadores de subtarefas / comentários / anexos por tarefa
+  const taskMeta = useQuery({
+    queryKey: ["tasks-meta"],
+    queryFn: async () => {
+      const [chk, cmt] = await Promise.all([
+        supabase.from("task_checklist_items").select("task_id, done"),
+        supabase.from("task_comments").select("task_id, attachment_url"),
+      ]);
+      const m: Record<string, { chk: number; chkDone: number; comments: number; files: number }> = {};
+      const get = (id: string) => (m[id] ??= { chk: 0, chkDone: 0, comments: 0, files: 0 });
+      (chk.data ?? []).forEach((r: any) => { const e = get(r.task_id); e.chk++; if (r.done) e.chkDone++; });
+      (cmt.data ?? []).forEach((r: any) => { const e = get(r.task_id); e.comments++; if (r.attachment_url) e.files++; });
+      return m;
+    },
   });
 
   // Tarefas visíveis (aplica janela semanal em rotinas de otimização)
   const visibleTasks = useMemo(() => {
-    const nameMap = new Map<string, string>((team.data ?? []).map((p: any) => [p.id, p.full_name]));
+    const profMap = new Map<string, any>((team.data ?? []).map((p: any) => [p.id, p]));
+    const meta = taskMeta.data ?? {};
     return (tasks.data ?? [])
       .filter((t: any) => {
         if (t.kind !== "rotina") return true;
@@ -114,8 +131,14 @@ function OperacoesPage() {
         if (!t.due_date) return false;
         return t.due_date >= week.start && t.due_date <= week.end;
       })
-      .map((t: any) => ({ ...t, assignee: t.assignee_id ? { full_name: nameMap.get(t.assignee_id) ?? "—" } : null }));
-  }, [tasks.data, team.data, week.start, week.end]);
+      .map((t: any) => ({
+        ...t,
+        assignee: t.assignee_id
+          ? { full_name: profMap.get(t.assignee_id)?.full_name ?? "—", avatar_url: profMap.get(t.assignee_id)?.avatar_url ?? null }
+          : null,
+        meta: meta[t.id] ?? { chk: 0, chkDone: 0, comments: 0, files: 0 },
+      }));
+  }, [tasks.data, team.data, taskMeta.data, week.start, week.end]);
 
   // Agrupa rotinas (mesma data + variante FULL/LIGHT + mesmo status) num único card com subtarefas por cliente
   const grouped = useMemo(() => {
