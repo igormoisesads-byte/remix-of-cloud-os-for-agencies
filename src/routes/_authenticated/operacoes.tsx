@@ -73,7 +73,7 @@ function OperacoesPage() {
   const tasks = useQuery({
     queryKey: ["tasks", filterClient, filterAssignee, filterKind, filterTag],
     queryFn: async () => {
-      let q = supabase.from("tasks").select("*, clients(name)").order("position");
+      let q = supabase.from("tasks").select("*, clients(name, logo_url)").order("position");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       if (filterAssignee !== "all") q = q.eq("assignee_id", filterAssignee);
       if (filterKind !== "all") q = q.eq("kind", filterKind as any);
