@@ -698,15 +698,15 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     const { error } = await supabase.from("task_checklist_items").insert({ task_id: taskId, title, position: pos });
     if (error) return toast.error(error.message);
     setNewChkTitle("");
-    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] }); qc.invalidateQueries({ queryKey: ["tasks-meta"] });
   }
   async function toggleChk(id: string, done: boolean) {
     await supabase.from("task_checklist_items").update({ done, done_at: done ? new Date().toISOString() : null }).eq("id", id);
-    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] }); qc.invalidateQueries({ queryKey: ["tasks-meta"] });
   }
   async function delChk(id: string) {
     await supabase.from("task_checklist_items").delete().eq("id", id);
-    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] });
+    qc.invalidateQueries({ queryKey: ["task-checklist", taskId] }); qc.invalidateQueries({ queryKey: ["tasks-meta"] });
   }
 
   const t = task.data;
@@ -746,7 +746,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
     const { error } = await supabase.from("task_comments").insert(payload);
     if (error) return toast.error(error.message);
     setComment(""); setPendingFile(null);
-    qc.invalidateQueries({ queryKey: ["task-comments", taskId] });
+    qc.invalidateQueries({ queryKey: ["task-comments", taskId] }); qc.invalidateQueries({ queryKey: ["tasks-meta"] });
   }
 
   const clientName = clients.find(c => c.id === t?.client_id)?.name;
