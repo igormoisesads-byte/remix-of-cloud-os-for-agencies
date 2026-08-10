@@ -260,10 +260,12 @@ function NicheDialog({ niche, onSaved }: { niche?: Niche; onSaved: () => void })
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="ghost" className="h-7 w-7"><Plus className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-7 w-7">
+          {niche ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-4 w-4" />}
+        </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Novo nicho</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{niche ? "Editar nicho" : "Novo nicho"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-2">
             <Label>Nome do nicho</Label>
