@@ -91,6 +91,7 @@ function OnboardingConfigPage() {
                 qc.invalidateQueries({ queryKey: ["niches"] });
                 qc.invalidateQueries({ queryKey: ["templates-all"] });
               }}
+              editDialog={<NicheDialog niche={n} onSaved={() => qc.invalidateQueries({ queryKey: ["niches"] })} />}
             />
           ))}
         </Column>
@@ -127,6 +128,7 @@ function OnboardingConfigPage() {
                 if (selectedTemplate === t.id) setSelectedTemplate(null);
                 qc.invalidateQueries({ queryKey: ["templates-all"] });
               }}
+              editDialog={<TemplateDialog nicheId={selectedNiche} template={t} onSaved={() => qc.invalidateQueries({ queryKey: ["templates-all"] })} />}
             />
           ))}
         </Column>
@@ -178,7 +180,7 @@ function Column({
 }
 
 function ItemRow({
-  title, subtitle, active, badge, onClick, onDelete,
+  title, subtitle, active, badge, onClick, onDelete, editDialog,
 }: {
   title: string;
   subtitle?: string;
@@ -186,6 +188,7 @@ function ItemRow({
   badge?: number;
   onClick?: () => void;
   onDelete?: () => void;
+  editDialog?: React.ReactNode;
 }) {
   return (
     <div
@@ -201,15 +204,18 @@ function ItemRow({
       {typeof badge === "number" && (
         <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{badge}</Badge>
       )}
-      {onDelete && (
-        <Button
-          size="icon" variant="ghost"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100"
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
-      )}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+        {editDialog}
+        {onDelete && (
+          <Button
+            size="icon" variant="ghost"
+            className="h-6 w-6"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
       {active && <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
     </div>
   );
@@ -226,30 +232,41 @@ function Empty({ label, hint }: { label: string; hint?: string }) {
 
 /* ------- dialogs ------- */
 
-function NicheDialog({ onSaved }: { onSaved: () => void }) {
+function NicheDialog({ niche, onSaved }: { niche?: Niche; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [sigla, setSigla] = useState("");
+  const [name, setName] = useState(niche?.name ?? "");
+  const [sigla, setSigla] = useState(niche?.sigla ?? "");
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     if (!name.trim()) return;
     const finalSigla = (sigla || name).replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase();
     setBusy(true);
-    const { error } = await supabase.from("niches").insert({ name: name.trim(), sigla: finalSigla });
+    let error;
+    if (niche) {
+      const res = await supabase.from("niches").update({ name: name.trim(), sigla: finalSigla }).eq("id", niche.id);
+      error = res.error;
+    } else {
+      const res = await supabase.from("niches").insert({ name: name.trim(), sigla: finalSigla });
+      error = res.error;
+    }
+    setBusy(true);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Nicho criado");
-    setName(""); setSigla(""); setOpen(false); onSaved();
+    toast.success(niche ? "Nicho atualizado" : "Nicho criado");
+    if (!niche) { setName(""); setSigla(""); }
+    setOpen(false); onSaved();
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="ghost" className="h-7 w-7"><Plus className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" className="h-7 w-7">
+          {niche ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-4 w-4" />}
+        </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Novo nicho</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{niche ? "Editar nicho" : "Novo nicho"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-2">
             <Label>Nome do nicho</Label>
