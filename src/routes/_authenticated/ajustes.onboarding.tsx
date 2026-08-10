@@ -231,21 +231,30 @@ function Empty({ label, hint }: { label: string; hint?: string }) {
 
 /* ------- dialogs ------- */
 
-function NicheDialog({ onSaved }: { onSaved: () => void }) {
+function NicheDialog({ niche, onSaved }: { niche?: Niche; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [sigla, setSigla] = useState("");
+  const [name, setName] = useState(niche?.name ?? "");
+  const [sigla, setSigla] = useState(niche?.sigla ?? "");
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     if (!name.trim()) return;
     const finalSigla = (sigla || name).replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase();
     setBusy(true);
-    const { error } = await supabase.from("niches").insert({ name: name.trim(), sigla: finalSigla });
+    let error;
+    if (niche) {
+      const res = await supabase.from("niches").update({ name: name.trim(), sigla: finalSigla }).eq("id", niche.id);
+      error = res.error;
+    } else {
+      const res = await supabase.from("niches").insert({ name: name.trim(), sigla: finalSigla });
+      error = res.error;
+    }
+    setBusy(true);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Nicho criado");
-    setName(""); setSigla(""); setOpen(false); onSaved();
+    toast.success(niche ? "Nicho atualizado" : "Nicho criado");
+    if (!niche) { setName(""); setSigla(""); }
+    setOpen(false); onSaved();
   }
 
   return (
