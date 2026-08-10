@@ -84,7 +84,6 @@ function OnboardingConfigPage() {
               title={n.name}
               subtitle={n.sigla ? `Sigla: ${n.sigla}` : undefined}
               badge={templateCountByNiche[n.id] ?? 0}
-              onEdit={() => pickNiche(n.id)}
               onDelete={async () => {
                 if (!confirm("Excluir este nicho e todos os templates?")) return;
                 await supabase.from("niches").delete().eq("id", n.id);
@@ -92,7 +91,7 @@ function OnboardingConfigPage() {
                 qc.invalidateQueries({ queryKey: ["niches"] });
                 qc.invalidateQueries({ queryKey: ["templates-all"] });
               }}
-              editDialog={n ? <NicheDialog niche={n} onSaved={() => qc.invalidateQueries({ queryKey: ["niches"] })} /> : null}
+              editDialog={<NicheDialog niche={n} onSaved={() => qc.invalidateQueries({ queryKey: ["niches"] })} />}
             />
           ))}
         </Column>
