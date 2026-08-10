@@ -128,6 +128,7 @@ function OnboardingConfigPage() {
                 if (selectedTemplate === t.id) setSelectedTemplate(null);
                 qc.invalidateQueries({ queryKey: ["templates-all"] });
               }}
+              editDialog={<TemplateDialog nicheId={selectedNiche} template={t} onSaved={() => qc.invalidateQueries({ queryKey: ["templates-all"] })} />}
             />
           ))}
         </Column>
