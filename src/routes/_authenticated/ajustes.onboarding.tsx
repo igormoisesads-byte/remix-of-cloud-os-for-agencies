@@ -180,7 +180,7 @@ function Column({
 }
 
 function ItemRow({
-  title, subtitle, active, badge, onClick, onDelete,
+  title, subtitle, active, badge, onClick, onDelete, editDialog,
 }: {
   title: string;
   subtitle?: string;
@@ -188,6 +188,7 @@ function ItemRow({
   badge?: number;
   onClick?: () => void;
   onDelete?: () => void;
+  editDialog?: React.ReactNode;
 }) {
   return (
     <div
