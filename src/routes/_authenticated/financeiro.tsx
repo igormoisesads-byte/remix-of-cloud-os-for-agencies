@@ -401,6 +401,89 @@ function FeeDetailDialog({ fee, onClose, onSaved }: { fee: any; onClose: () => v
   );
 }
 
+function FeeAddDialog({ open, onOpenChange, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
+  const [clients, setClients] = useState<any[]>([]);
+  const [clientId, setClientId] = useState("");
+  const [referenceMonth, setReferenceMonth] = useState(new Date().toISOString().slice(0, 7) + "-01");
+  const [amount, setAmount] = useState("");
+  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useMemo(() => {
+    if (open) {
+      (async () => {
+        const { data } = await supabase.from("clients").select("id, name").order("name");
+        setClients(data ?? []);
+      })();
+    }
+  }, [open]);
+
+  async function save() {
+    if (!clientId || !amount || !dueDate || !referenceMonth) {
+      toast.error("Preencha cliente, valor, vencimento e mês de referência");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("monthly_fees").insert({
+      client_id: clientId,
+      reference_month: referenceMonth.length === 7 ? referenceMonth + "-01" : referenceMonth,
+      amount: Number(amount),
+      due_date: dueDate,
+      status: "pendente",
+      notes: notes || null
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Mensalidade cadastrada");
+    onSaved();
+    onOpenChange(false);
+    // Reset local state
+    setClientId(""); setAmount(""); setNotes("");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Nova Mensalidade</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Cliente *</label>
+            <Select value={clientId} onValueChange={setClientId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+              <SelectContent>
+                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-muted-foreground">Valor *</label>
+              <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Referência *</label>
+              <Input type="month" value={referenceMonth.slice(0, 7)} onChange={(e) => setReferenceMonth(e.target.value + "-01")} />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Vencimento *</label>
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Notas</label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Cadastrando…" : "Cadastrar"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ============= Despesas =============
 function ExpensesTab() {
   const qc = useQueryClient();
