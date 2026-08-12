@@ -1,67 +1,44 @@
-# Criativos — Meta Ads com métricas completas + Hook/Body/CTA
+# Plan - Fix Monthly Fee Generation and Status Enum Error
 
-## 1. Banco de dados (migração)
+The user reported two issues:
+1. **Invalid Enum Value**: An error `invalid input value for enum fee_status: "paid"` when marking a fee as paid. This is likely due to the database using `pago` (Portuguese) while some code or trigger uses `paid` (English).
+2. **Excessive Fee Generation**: Monthly fees are being generated up to 2027 even when a `contract_end` date is set (e.g., if `contract_end` is shorter than 12 months, or the logic is incorrectly extending).
 
-Expandir `public.ad_creatives` com colunas para todas as métricas solicitadas:
+## User Review Required
 
-- Alcance / Freq / CPM / CPP (já parciais)
-- `frequency`, `cpp` (custo por mil alcançadas)
-- Cliques no link únicos: `unique_link_clicks`, `unique_link_ctr`, `unique_link_cpc`
-- Cliques de saída únicos: `unique_outbound_clicks`, `unique_outbound_ctr`, `unique_outbound_cpc`
-- Landing page: `landing_page_views`, `cost_per_landing_page_view`
-- Checkout: `initiate_checkout`, `cost_per_initiate_checkout`, `initiate_checkout_value`
-- Compras: `purchases`, `cost_per_purchase`, `purchase_value`, `roas`
-- Vídeo: `video_plays`, `video_p3s`, `video_p75`
-- WhatsApp (para local): `messaging_conversations_started`
+> [!IMPORTANT]
+> The system currently generates fees up to the `contract_end` date provided in the wizard. If no `contract_end` is provided, it defaults to 12 months from the start date. I will ensure it strictly respects the `contract_end` date and does not generate fees beyond it.
 
-Índice por `ad_account_id, status`.
+## Proposed Changes
 
-## 2. Sync Meta (`src/lib/ads.functions.ts`)
+### Database & Backend
+- Update the `tg_monthly_fees_audit` function in Supabase to use `pago` instead of `paid` in its logic to match the `fee_status` enum definition (`'pendente', 'pago', 'atrasado', 'cancelado'`).
 
-Atualizar a query de `/ads` incluindo `insights` com fields:
-`spend,impressions,reach,frequency,cpm,cpp,actions,action_values,unique_actions,cost_per_unique_action_type,unique_ctr,cost_per_unique_click,outbound_clicks,unique_outbound_clicks,cost_per_unique_outbound_click,outbound_clicks_ctr,video_play_actions,video_p75_watched_actions,video_p25_watched_actions`
+### Client Wizard (`src/components/new-client-wizard.tsx`)
+- Refine the loop that generates monthly fees to ensure the `endCursor` (which represents the contract end) is correctly calculated and that the `while` loop condition strictly stops at that date.
+- Ensure that if `contract_end` is present, it takes absolute precedence over the default 12-month period.
 
-Mapear cada action_type Meta → coluna. Salvar `purchase_value` a partir de `action_values`. Calcular `roas = purchase_value / spend`.
+### Client Details (`src/routes/_authenticated/clientes.$id.tsx`)
+- Verify and fix any similar fee generation logic if present in the client editing/updating view.
 
-## 3. Cálculo Hook / Body / CTA (client-side)
+## Technical Details
 
-Utilitário `src/lib/creative-metrics.ts` que recebe criativo + `clientType` ("local" | "perpetuo") e devolve:
+### 1. Fix Audit Trigger
+The trigger function `public.tg_monthly_fees_audit` has a hardcoded `'paid'` string:
+```sql
+CASE WHEN NEW.status='paid' THEN 'Mensalidade paga' ELSE 'Mensalidade '||NEW.status END
+```
+I will change it to `'pago'`.
 
-- **playrate_hook** = `p3s / impressions * 100`
-- **retencao_hook** = `p75 / p3s * 100`
-- **conversao_body**:
-  - perpetuo → `landing_page_views / p3s * 100`
-  - local → `unique_link_clicks / p3s * 100`
-- **retencao_75_body**:
-  - perpetuo → `initiate_checkout / landing_page_views * 100`
-  - local → `unique_outbound_clicks / unique_link_clicks * 100`
-- **medidor_cta**:
-  - perpetuo → `purchases / initiate_checkout * 100`
-  - local → `messaging_conversations_started / unique_outbound_clicks * 100`
-
-Cada métrica com faixa de saúde (verde ≥ X, amarelo, vermelho) para pintar o card.
-
-## 4. Componente `CreativesGrid` (`src/components/creatives-view.tsx`)
-
-- Filtros: período, conta, campanha, status (ATIVO/PAUSADO), busca por nome
-- Ordenação: gasto, ROAS, playrate, CTR
-- Grid de cards com thumbnail/preview do criativo, nome, campanha
-- Cada card mostra: gasto, impressões, ROAS/CPA, e 5 barras (Hook Playrate, Hook Retenção, Body Conversão, Body 75%, CTA) coloridas conforme faixa
-- Modal ao clicar: todas as métricas cruas em tabela + explicação das 5 métricas Hook/Body/CTA para o tipo do cliente
-- Cabeçalho mostra somatórios agregados das 5 métricas Hook/Body/CTA (soma dos numeradores/denominadores, não média das taxas)
-
-## 5. Onde aparece
-
-**a) Subpágina no cliente:** aba "Criativos" em `src/routes/_authenticated/clientes.$id.tsx` — usa `clientType` do próprio cliente para escolher fórmulas local vs perpetuo.
-
-**b) Página global:** nova rota `src/routes/_authenticated/criativos.tsx` no menu lateral (Operações), com seletor de cliente no topo. Item de sidebar em `src/components/app-sidebar.tsx`.
-
-**c) Em Performance:** adicionar as 5 barras Hook/Body/CTA agregadas no topo do `performance-view.tsx` do cliente.
-
-## 6. Sem mocks
-
-Zero dados inventados. Se conta não tiver sync recente, mostrar estado vazio com botão "Sincronizar agora".
-
----
-
-Detalhes técnicos: sem quebrar sync existente (colunas novas nullable, defaults 0). Sem tocar em código de chat, financeiro, PDA, NPS.
+### 2. Fix Wizard Loop
+In `src/components/new-client-wizard.tsx`:
+```typescript
+const end = form.contract_end ? new Date(form.contract_end + "T00:00:00") : new Date(start.getFullYear() + 1, start.getMonth(), start.getDate());
+// ...
+const endCursor = new Date(end.getFullYear(), end.getMonth(), 1);
+while (cursor <= endCursor) {
+  // ...
+  cursor.setMonth(cursor.getMonth() + 1);
+}
+```
+If `form.contract_end` is, for example, `2026-12-31`, `endCursor` becomes `2026-12-01`. The loop correctly generates for Dec 2026. However, if there's any off-by-one or timezone issue, it might jump. I will add safer date handling.
