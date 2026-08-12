@@ -186,6 +186,9 @@ function FeesTab() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="text-base">Mensalidades ({filtered.length})</CardTitle>
             <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setShowAddForm(true)}>
+                <Plus className="h-4 w-4 mr-1.5" />Nova mensalidade
+              </Button>
               {atrasadoQtd > 0 && (
                 <Button variant="outline" size="sm" onClick={markOverdue}>
                   <AlertTriangle className="h-4 w-4 mr-1.5 text-amber-600" />Marcar {atrasadoQtd} vencido(s)
