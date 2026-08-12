@@ -275,7 +275,23 @@ function FeesTab() {
         </CardContent>
       </Card>
 
-      <FeeDetailDialog fee={openFee} onClose={() => setOpenFee(null)} onSaved={() => { qc.invalidateQueries({ queryKey: ["financeiro-fees"] }); qc.invalidateQueries({ queryKey: ["fin-overview-month"] }); }} />
+      <FeeDetailDialog 
+        fee={openFee} 
+        onClose={() => setOpenFee(null)} 
+        onSaved={() => { 
+          qc.invalidateQueries({ queryKey: ["financeiro-fees"] }); 
+          qc.invalidateQueries({ queryKey: ["fin-overview-month"] }); 
+        }} 
+      />
+      
+      <FeeAddDialog 
+        open={showAddForm} 
+        onOpenChange={setShowAddForm} 
+        onSaved={() => { 
+          qc.invalidateQueries({ queryKey: ["financeiro-fees"] }); 
+          qc.invalidateQueries({ queryKey: ["fin-overview-month"] }); 
+        }} 
+      />
     </div>
   );
 }
