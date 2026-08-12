@@ -63,7 +63,7 @@ export const Route = createFileRoute("/_authenticated/clientes/$id")({
   component: ClienteDetail,
 });
 
-const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria" };
+const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria", desenvolvimento: "Desenvolvimento" };
 
 function fmtBRL(v: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v ?? 0);
