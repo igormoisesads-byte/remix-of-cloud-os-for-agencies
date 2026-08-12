@@ -44,6 +44,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     contract_start: "", contract_end: "",
     monthly_fee_amount: "", monthly_fee_day: "5",
     primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
+    dev_second_payment_date: "", dev_total_amount: "",
     launch_commission_pct: "",
     optimization_frequency: "2s",
     notes: "",
@@ -78,6 +79,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       performance_user_id: "", cs_user_id: "", squad_id: "", plan_id: "",
       contract_start: "", contract_end: "", monthly_fee_amount: "", monthly_fee_day: "5",
       primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
+      dev_second_payment_date: "", dev_total_amount: "",
       launch_commission_pct: "", optimization_frequency: "2s", notes: "",
     });
   }
@@ -99,7 +101,8 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     setForm((f) => ({ ...f, plan_id: id, monthly_fee_amount: p?.amount ? String(p.amount) : f.monthly_fee_amount }));
   }
 
-  const steps = ["Cadastro", "Briefing (BI)", "Responsáveis", "Contrato", isLaunch ? "Comissão" : "Financeiro", "Revisão"];
+  const isDev = form.type === "desenvolvimento";
+  const steps = ["Cadastro", "Briefing (BI)", "Responsáveis", "Contrato", isLaunch ? "Comissão" : isDev ? "Pagamento (50/50)" : "Financeiro", "Revisão"];
 
   function canNext(): boolean {
     if (step === 0) return !!form.name.trim() && !!form.type;
@@ -199,7 +202,34 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     }
 
     // Auto-generate mensalidades
-    if (!isLaunch && form.monthly_fee_amount && Number(form.monthly_fee_amount) > 0) {
+    if (isDev && form.dev_total_amount) {
+      const total = Number(form.dev_total_amount);
+      const half = total / 2;
+      const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+      
+      const fees = [
+        {
+          client_id: client.id,
+          reference_month: start.toISOString().slice(0, 7) + "-01",
+          due_date: start.toISOString().slice(0, 10),
+          amount: half,
+          notes: "Entrada (50%) - Desenvolvimento"
+        }
+      ];
+
+      if (form.dev_second_payment_date) {
+        const secondDate = new Date(form.dev_second_payment_date + "T00:00:00");
+        fees.push({
+          client_id: client.id,
+          reference_month: secondDate.toISOString().slice(0, 7) + "-01",
+          due_date: form.dev_second_payment_date,
+          amount: half,
+          notes: "Parcela Final (50%) - Desenvolvimento"
+        });
+      }
+      
+      await supabase.from("monthly_fees").insert(fees);
+    } else if (!isLaunch && !isDev && form.monthly_fee_amount && Number(form.monthly_fee_amount) > 0) {
       const amount = Number(form.monthly_fee_amount);
       const day = Math.min(Math.max(Number(form.monthly_fee_day) || 5, 1), 28);
       const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
