@@ -203,11 +203,20 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       const amount = Number(form.monthly_fee_amount);
       const day = Math.min(Math.max(Number(form.monthly_fee_day) || 5, 1), 28);
       const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
-      const end = form.contract_end ? new Date(form.contract_end + "T00:00:00") : new Date(start.getFullYear() + 1, start.getMonth(), start.getDate());
+      // If contract_end is not set, default to 12 months from start
+      let end: Date;
+      if (form.contract_end) {
+        end = new Date(form.contract_end + "T00:00:00");
+      } else {
+        end = new Date(start);
+        end.setFullYear(start.getFullYear() + 1);
+      }
+
       const fees: any[] = [];
       const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
-      const endCursor = new Date(end.getFullYear(), end.getMonth(), 1);
-      while (cursor <= endCursor) {
+      const endLimit = new Date(end.getFullYear(), end.getMonth(), 1);
+
+      while (cursor <= endLimit) {
         const y = cursor.getFullYear();
         const m = cursor.getMonth();
         const ref = `${y}-${String(m + 1).padStart(2, "0")}-01`;
