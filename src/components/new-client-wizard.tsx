@@ -525,6 +525,25 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
             </div>
           )}
 
+          {step === 4 && isDev && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label>Valor Total do Projeto (R$)</Label>
+                <Input type="number" step="0.01" value={form.dev_total_amount} onChange={(e) => setForm({ ...form, dev_total_amount: e.target.value })} />
+                <p className="text-xs text-muted-foreground">O pagamento será dividido em 50% na entrada e 50% em data futura.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor da Entrada (50%)</Label>
+                <Input disabled value={brl(Number(form.dev_total_amount) / 2)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Data da 2ª Parcela (50%)</Label>
+                <Input type="date" value={form.dev_second_payment_date} onChange={(e) => setForm({ ...form, dev_second_payment_date: e.target.value })} />
+              </div>
+              <div className="col-span-2 space-y-2"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            </div>
+          )}
+
           {step === 4 && !isLaunch && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Mensalidade (R$)</Label><Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} />{form.plan_id && <p className="text-xs text-muted-foreground">Preenchido pelo plano — pode ajustar.</p>}</div>
