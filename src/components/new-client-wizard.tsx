@@ -640,3 +640,6 @@ function ReviewRow({ k, v }: { k: string; v: string }) {
 function brl(n: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
 }
+function fmtDate(v: string | null | undefined) {
+  return v ? new Date(v + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+}
