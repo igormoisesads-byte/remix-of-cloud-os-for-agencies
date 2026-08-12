@@ -12,7 +12,7 @@ import { Plus, Check, ChevronRight, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria" };
+const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria", desenvolvimento: "Desenvolvimento" };
 
 type Plan = { id: string; name: string; kind: string; amount: number | null; active: boolean };
 type Tier = { id: string; min_revenue: number; max_revenue: number | null; pct: number; label: string | null };
