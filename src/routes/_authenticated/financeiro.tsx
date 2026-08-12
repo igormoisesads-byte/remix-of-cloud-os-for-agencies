@@ -115,6 +115,7 @@ function FeesTab() {
   const [month, setMonth] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openFee, setOpenFee] = useState<any | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["financeiro-fees"],
