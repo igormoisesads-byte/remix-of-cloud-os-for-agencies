@@ -379,9 +379,22 @@ function FeeDetailDialog({ fee, onClose, onSaved }: { fee: any; onClose: () => v
           </div>
           <Link to="/clientes/$id" params={{ id: fee.client_id }} className="text-xs text-primary hover:underline">Abrir painel do cliente →</Link>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+        <DialogFooter className="sm:justify-between">
+          <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={async () => {
+            if (!confirm("Excluir esta mensalidade?")) return;
+            setSaving(true);
+            const { error } = await supabase.from("monthly_fees").delete().eq("id", fee.id);
+            setSaving(false);
+            if (error) { toast.error(error.message); return; }
+            toast.success("Mensalidade excluída");
+            onSaved(); onClose();
+          }} disabled={saving}>
+            <Trash2 className="h-4 w-4 mr-1.5" /> Excluir
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
