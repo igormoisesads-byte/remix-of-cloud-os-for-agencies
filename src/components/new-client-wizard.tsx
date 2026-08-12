@@ -596,10 +596,18 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"} (${form.tempo_contrato_meses || "—"} meses)`} />
               <ReviewRow k="Investimento mensal" v={form.investimento_mensal ? brl(Number(form.investimento_mensal)) : "—"} />
               <ReviewRow k="Otimização" v={form.optimization_frequency ? form.optimization_frequency.toUpperCase() : "—"} />
-              {!isLaunch
-                ? <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
-                : <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />}
-              <ReviewRow k="Valor total" v={brl((Number(form.monthly_fee_amount) || 0) * (Number(form.tempo_contrato_meses) || 0))} />
+              {isLaunch ? (
+                <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />
+              ) : isDev ? (
+                <>
+                  <ReviewRow k="Total Projeto" v={brl(Number(form.dev_total_amount))} />
+                  <ReviewRow k="Entrada (50%)" v={brl(Number(form.dev_total_amount) / 2)} />
+                  <ReviewRow k="2ª Parcela" v={form.dev_second_payment_date ? fmtDate(form.dev_second_payment_date) : "—"} />
+                </>
+              ) : (
+                <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
+              )}
+              <ReviewRow k="Valor total contrato" v={isDev ? brl(Number(form.dev_total_amount)) : brl((Number(form.monthly_fee_amount) || 0) * (Number(form.tempo_contrato_meses) || 0))} />
             </div>
           )}
         </div>
