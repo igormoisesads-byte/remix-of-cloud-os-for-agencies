@@ -12,7 +12,7 @@ import { Plus, Check, ChevronRight, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria" };
+const TYPE_LABEL: Record<string, string> = { local: "Local", perpetuo: "Perpétuo", lancamento: "Lançamento", autoria: "Autoria", desenvolvimento: "Desenvolvimento" };
 
 type Plan = { id: string; name: string; kind: string; amount: number | null; active: boolean };
 type Tier = { id: string; min_revenue: number; max_revenue: number | null; pct: number; label: string | null };
@@ -44,6 +44,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     contract_start: "", contract_end: "",
     monthly_fee_amount: "", monthly_fee_day: "5",
     primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
+    dev_second_payment_date: "", dev_total_amount: "",
     launch_commission_pct: "",
     optimization_frequency: "2s",
     notes: "",
@@ -78,6 +79,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
       performance_user_id: "", cs_user_id: "", squad_id: "", plan_id: "",
       contract_start: "", contract_end: "", monthly_fee_amount: "", monthly_fee_day: "5",
       primeiro_vencimento: "", tempo_contrato_meses: "12", investimento_mensal: "",
+      dev_second_payment_date: "", dev_total_amount: "",
       launch_commission_pct: "", optimization_frequency: "2s", notes: "",
     });
   }
@@ -99,7 +101,8 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     setForm((f) => ({ ...f, plan_id: id, monthly_fee_amount: p?.amount ? String(p.amount) : f.monthly_fee_amount }));
   }
 
-  const steps = ["Cadastro", "Briefing (BI)", "Responsáveis", "Contrato", isLaunch ? "Comissão" : "Financeiro", "Revisão"];
+  const isDev = form.type === "desenvolvimento";
+  const steps = ["Cadastro", "Briefing (BI)", "Responsáveis", "Contrato", isLaunch ? "Comissão" : isDev ? "Pagamento (50/50)" : "Financeiro", "Revisão"];
 
   function canNext(): boolean {
     if (step === 0) return !!form.name.trim() && !!form.type;
@@ -199,7 +202,34 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
     }
 
     // Auto-generate mensalidades
-    if (!isLaunch && form.monthly_fee_amount && Number(form.monthly_fee_amount) > 0) {
+    if (isDev && form.dev_total_amount) {
+      const total = Number(form.dev_total_amount);
+      const half = total / 2;
+      const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
+      
+      const fees = [
+        {
+          client_id: client.id,
+          reference_month: start.toISOString().slice(0, 7) + "-01",
+          due_date: start.toISOString().slice(0, 10),
+          amount: half,
+          notes: "Entrada (50%) - Desenvolvimento"
+        }
+      ];
+
+      if (form.dev_second_payment_date) {
+        const secondDate = new Date(form.dev_second_payment_date + "T00:00:00");
+        fees.push({
+          client_id: client.id,
+          reference_month: secondDate.toISOString().slice(0, 7) + "-01",
+          due_date: form.dev_second_payment_date,
+          amount: half,
+          notes: "Parcela Final (50%) - Desenvolvimento"
+        });
+      }
+      
+      await supabase.from("monthly_fees").insert(fees);
+    } else if (!isLaunch && !isDev && form.monthly_fee_amount && Number(form.monthly_fee_amount) > 0) {
       const amount = Number(form.monthly_fee_amount);
       const day = Math.min(Math.max(Number(form.monthly_fee_day) || 5, 1), 28);
       const start = form.contract_start ? new Date(form.contract_start + "T00:00:00") : new Date();
@@ -331,6 +361,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                     <SelectItem value="perpetuo">Perpétuo</SelectItem>
                     <SelectItem value="lancamento">Lançamento</SelectItem>
                     <SelectItem value="autoria">Autoria</SelectItem>
+                    <SelectItem value="desenvolvimento">Desenvolvimento</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -494,6 +525,25 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
             </div>
           )}
 
+          {step === 4 && isDev && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label>Valor Total do Projeto (R$)</Label>
+                <Input type="number" step="0.01" value={form.dev_total_amount} onChange={(e) => setForm({ ...form, dev_total_amount: e.target.value })} />
+                <p className="text-xs text-muted-foreground">O pagamento será dividido em 50% na entrada e 50% em data futura.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor da Entrada (50%)</Label>
+                <Input disabled value={brl(Number(form.dev_total_amount) / 2)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Data da 2ª Parcela (50%)</Label>
+                <Input type="date" value={form.dev_second_payment_date} onChange={(e) => setForm({ ...form, dev_second_payment_date: e.target.value })} />
+              </div>
+              <div className="col-span-2 space-y-2"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            </div>
+          )}
+
           {step === 4 && !isLaunch && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Mensalidade (R$)</Label><Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} />{form.plan_id && <p className="text-xs text-muted-foreground">Preenchido pelo plano — pode ajustar.</p>}</div>
@@ -546,10 +596,18 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
               <ReviewRow k="Contrato" v={`${form.contract_start || "—"} → ${form.contract_end || "—"} (${form.tempo_contrato_meses || "—"} meses)`} />
               <ReviewRow k="Investimento mensal" v={form.investimento_mensal ? brl(Number(form.investimento_mensal)) : "—"} />
               <ReviewRow k="Otimização" v={form.optimization_frequency ? form.optimization_frequency.toUpperCase() : "—"} />
-              {!isLaunch
-                ? <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
-                : <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />}
-              <ReviewRow k="Valor total" v={brl((Number(form.monthly_fee_amount) || 0) * (Number(form.tempo_contrato_meses) || 0))} />
+              {isLaunch ? (
+                <ReviewRow k="Comissão" v={form.launch_commission_pct ? `${form.launch_commission_pct}%` : "—"} />
+              ) : isDev ? (
+                <>
+                  <ReviewRow k="Total Projeto" v={brl(Number(form.dev_total_amount))} />
+                  <ReviewRow k="Entrada (50%)" v={brl(Number(form.dev_total_amount) / 2)} />
+                  <ReviewRow k="2ª Parcela" v={form.dev_second_payment_date ? fmtDate(form.dev_second_payment_date) : "—"} />
+                </>
+              ) : (
+                <ReviewRow k="Mensalidade" v={form.monthly_fee_amount ? `${brl(Number(form.monthly_fee_amount))} · vence dia ${form.monthly_fee_day}` : "—"} />
+              )}
+              <ReviewRow k="Valor total contrato" v={isDev ? brl(Number(form.dev_total_amount)) : brl((Number(form.monthly_fee_amount) || 0) * (Number(form.tempo_contrato_meses) || 0))} />
             </div>
           )}
         </div>
@@ -581,4 +639,7 @@ function ReviewRow({ k, v }: { k: string; v: string }) {
 }
 function brl(n: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
+}
+function fmtDate(v: string | null | undefined) {
+  return v ? new Date(v + "T00:00:00").toLocaleDateString("pt-BR") : "—";
 }
