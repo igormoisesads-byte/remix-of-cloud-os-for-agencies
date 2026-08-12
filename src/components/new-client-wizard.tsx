@@ -331,6 +331,7 @@ export function NewClientWizard({ onCreated }: { onCreated?: () => void }) {
                     <SelectItem value="perpetuo">Perpétuo</SelectItem>
                     <SelectItem value="lancamento">Lançamento</SelectItem>
                     <SelectItem value="autoria">Autoria</SelectItem>
+                    <SelectItem value="desenvolvimento">Desenvolvimento</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
