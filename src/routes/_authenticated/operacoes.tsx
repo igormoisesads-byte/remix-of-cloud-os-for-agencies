@@ -721,7 +721,7 @@ function ProductivityView({ team, tasks, onOpenTask }: { team: any[]; tasks: any
                     <Clock className="h-3 w-3" />
                     {t.done_at ? new Date(t.done_at).toLocaleDateString("pt-BR") : "—"}
                   </div>
-                  <Badge variant="outline" className="text-[10px]">{initials(team.find(p => p.id === t.assignee_id)?.full_name || "?")}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{getInitials(team.find(p => p.id === t.assignee_id)?.full_name || "?")}</Badge>
                 </div>
               </div>
             ))}
