@@ -1146,7 +1146,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                   {(comments.data ?? []).map((c: any) => (
                     <div key={c.id} className="flex gap-3">
                       <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                        {initials(authorName(c.user_id) ?? "?")}
+                        {getInitials(authorName(c.user_id) ?? "?")}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="text-xs">
