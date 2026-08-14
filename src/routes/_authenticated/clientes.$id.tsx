@@ -76,13 +76,15 @@ function fmtDate(v: string | null | undefined) {
 type Section =
   | "visao" | "performance" | "criativos" | "vendas" | "projecoes" | "seo" | "rotinas" | "health"
   | "pdas" | "nps" | "relatorios" | "reunioes" | "onboarding" | "moodboards"
-  | "acesso" | "auditoria";
+  | "acesso" | "auditoria" | "documentos";
 
 const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "visao", label: "Visão Geral", icon: LayoutGrid },
   { key: "performance", label: "Performance", icon: BarChart3 },
   { key: "criativos", label: "Criativos", icon: Film },
   { key: "vendas", label: "Vendas", icon: DollarSign },
+  { key: "documentos", label: "Documentos", icon: FileText },
+  { key: "onboarding", label: "Onboarding", icon: ListChecks },
   { key: "projecoes", label: "Projeções", icon: LineChart },
   { key: "seo", label: "SEO", icon: Search },
   { key: "rotinas", label: "Rotinas", icon: Repeat },
@@ -91,7 +93,6 @@ const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "nps", label: "NPS", icon: Star },
   { key: "relatorios", label: "Relatórios", icon: FileText },
   { key: "reunioes", label: "Reuniões", icon: Video },
-  { key: "onboarding", label: "Onboarding", icon: ListChecks },
   { key: "moodboards", label: "Moodboards", icon: ImageIcon },
   { key: "acesso", label: "Acesso", icon: Key },
   { key: "auditoria", label: "Auditoria", icon: ClipboardList },
@@ -177,6 +178,7 @@ function ClienteDetail() {
           <h1 className="text-lg sm:text-xl font-bold tracking-tight break-words min-w-0">{c.name}</h1>
           <Badge variant="outline">{TYPE_LABEL[c.type]}</Badge>
           <Badge>{c.status}</Badge>
+          {c.onboarding_skipped && <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Onboarding OK</Badge>}
           {c.niches?.name && <Badge variant="secondary">{c.niches.name}</Badge>}
           <div className="w-full sm:w-auto sm:ml-auto text-xs text-muted-foreground truncate">
             {[c.site, c.city_uf].filter(Boolean).join(" · ")}
@@ -201,6 +203,7 @@ function ClienteDetail() {
           {section === "relatorios" && <Relatorios clientId={id} />}
           {section === "reunioes" && <Reunioes clientId={id} />}
           {section === "onboarding" && <Onboarding clientId={id} />}
+          {section === "documentos" && <Documentos clientId={id} />}
           {section === "moodboards" && <Moodboards clientId={id} />}
           {section === "acesso" && <Acessos clientId={id} />}
           {section === "auditoria" && <Auditoria clientId={id} />}
@@ -359,6 +362,8 @@ function EditClientDialog({ client }: { client: any }) {
     monthly_fee_day: client.monthly_fee_day ?? "",
     investimento_mensal: client.investimento_mensal ?? "",
     logo_url: client.logo_url || "",
+    onboarding_skipped: client.onboarding_skipped || false,
+    status: client.status || "onboarding",
     notes: client.notes || "",
   });
 
@@ -396,6 +401,7 @@ function EditClientDialog({ client }: { client: any }) {
         contract_start: form.contract_start || null,
         contract_end: form.contract_end || null,
         logo_url: form.logo_url || null,
+        status: form.onboarding_skipped && form.status === "onboarding" ? "ativo" : form.status,
       };
       const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
       if (error) throw error;
@@ -456,6 +462,18 @@ function EditClientDialog({ client }: { client: any }) {
             <div><Label>Mensalidade (R$)</Label><Input type="number" step="0.01" value={form.monthly_fee_amount} onChange={(e) => setForm({ ...form, monthly_fee_amount: e.target.value })} /></div>
             <div><Label>Dia do vencimento</Label><Input type="number" min="1" max="31" value={form.monthly_fee_day} onChange={(e) => setForm({ ...form, monthly_fee_day: e.target.value })} /></div>
             <div><Label>Investimento mensal (R$)</Label><Input type="number" step="0.01" value={form.investimento_mensal} onChange={(e) => setForm({ ...form, investimento_mensal: e.target.value })} /></div>
+          </div>
+
+          <div className="flex items-center space-x-2 border p-3 rounded-md bg-muted/20">
+            <Checkbox id="onboarding_skipped" checked={form.onboarding_skipped} onCheckedChange={(v) => setForm({ ...form, onboarding_skipped: !!v })} />
+            <div className="grid gap-1.5 leading-none">
+              <label htmlFor="onboarding_skipped" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Onboarding Concluído / Pular
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Marca o onboarding como finalizado e altera o status para ativo.
+              </p>
+            </div>
           </div>
 
           <div><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
@@ -1686,6 +1704,128 @@ function Auditoria({ clientId }: { clientId: string }) {
             {a.description && <div className="text-xs mt-0.5">{a.description}</div>}
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ============ DOCUMENTOS ============ */
+function Documentos({ clientId }: { clientId: string }) {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({ title: "", type: "contrato", url: "", file_name: "", file_size: 0 });
+
+  const q = useQuery({
+    queryKey: ["client_documents", clientId],
+    queryFn: async () => (await supabase.from("client_documents").select("*").eq("client_id", clientId).order("created_at", { ascending: false })).data ?? [],
+  });
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    try {
+      const url = await uploadToR2(file, { folder: `documents/${clientId}`, filename: file.name });
+      setForm((f) => ({ ...f, url, file_name: file.name, file_size: file.size, title: f.title || file.name }));
+      toast.success("Arquivo carregado.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function submit() {
+    if (!form.url || !form.title || !user) return toast.error("Preencha o título e envie o arquivo.");
+    setBusy(true);
+    const { error } = await supabase.from("client_documents").insert({
+      ...form,
+      client_id: clientId,
+      created_by: user.id
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Documento salvo.");
+    setOpen(false);
+    setForm({ title: "", type: "contrato", url: "", file_name: "", file_size: 0 });
+    qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Excluir este documento?")) return;
+    const { error } = await supabase.from("client_documents").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Removido.");
+    qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-base">Documentos</CardTitle>
+          <div className="text-xs text-muted-foreground mt-1">Contratos, propostas e outros arquivos do cliente.</div>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4" /> Documento</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Novo documento</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Arquivo</Label>
+                <div className="flex gap-2">
+                  <input id="doc-upload" type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                  <Button asChild variant="outline" size="sm" className="w-full" disabled={uploading}>
+                    <label htmlFor="doc-upload" className="cursor-pointer inline-flex items-center gap-2">
+                      <Upload className="h-3.5 w-3.5" />
+                      {uploading ? "Enviando..." : form.file_name || "Selecionar arquivo"}
+                    </label>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Contrato de Prestação de Serviços" /></div>
+              <div className="space-y-2">
+                <Label>Tipo</Label>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contrato">Contrato</SelectItem>
+                    <SelectItem value="proposta">Proposta</SelectItem>
+                    <SelectItem value="briefing">Briefing</SelectItem>
+                    <SelectItem value="documento">Documento</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter><Button onClick={submit} disabled={busy || uploading}>Salvar</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader><TableRow><TableHead>Documento</TableHead><TableHead>Tipo</TableHead><TableHead>Data</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {(q.data ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sem documentos</TableCell></TableRow>}
+            {(q.data ?? []).map((d: any) => (
+              <TableRow key={d.id}>
+                <TableCell>
+                  <div className="font-medium text-sm">{d.title}</div>
+                  <div className="text-[10px] text-muted-foreground">{d.file_name} · {(d.file_size / 1024 / 1024).toFixed(2)}MB</div>
+                </TableCell>
+                <TableCell><Badge variant="outline" className="capitalize">{d.type}</Badge></TableCell>
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(d.created_at)}</TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="icon" variant="ghost" asChild className="h-8 w-8">
+                    <a href={d.url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => remove(d.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

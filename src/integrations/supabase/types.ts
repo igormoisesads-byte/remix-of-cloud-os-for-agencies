@@ -820,6 +820,50 @@ export type Database = {
           },
         ]
       }
+      client_documents: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          title: string
+          type: string
+          url: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          title: string
+          type: string
+          url: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          title?: string
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_onboarding_stages: {
         Row: {
           client_id: string
@@ -1057,6 +1101,7 @@ export type Database = {
           niche: string | null
           niche_id: string | null
           notes: string | null
+          onboarding_skipped: boolean | null
           onboarding_template_id: string | null
           optimization_frequency: string | null
           performance_user_id: string | null
@@ -1094,6 +1139,7 @@ export type Database = {
           niche?: string | null
           niche_id?: string | null
           notes?: string | null
+          onboarding_skipped?: boolean | null
           onboarding_template_id?: string | null
           optimization_frequency?: string | null
           performance_user_id?: string | null
@@ -1131,6 +1177,7 @@ export type Database = {
           niche?: string | null
           niche_id?: string | null
           notes?: string | null
+          onboarding_skipped?: boolean | null
           onboarding_template_id?: string | null
           optimization_frequency?: string | null
           performance_user_id?: string | null
