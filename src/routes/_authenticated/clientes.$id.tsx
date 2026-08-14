@@ -202,6 +202,7 @@ function ClienteDetail() {
           {section === "relatorios" && <Relatorios clientId={id} />}
           {section === "reunioes" && <Reunioes clientId={id} />}
           {section === "onboarding" && <Onboarding clientId={id} />}
+          {section === "documentos" && <Documentos clientId={id} />}
           {section === "moodboards" && <Moodboards clientId={id} />}
           {section === "acesso" && <Acessos clientId={id} />}
           {section === "auditoria" && <Auditoria clientId={id} />}
