@@ -178,6 +178,7 @@ function ClienteDetail() {
           <h1 className="text-lg sm:text-xl font-bold tracking-tight break-words min-w-0">{c.name}</h1>
           <Badge variant="outline">{TYPE_LABEL[c.type]}</Badge>
           <Badge>{c.status}</Badge>
+          {c.onboarding_skipped && <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Onboarding OK</Badge>}
           {c.niches?.name && <Badge variant="secondary">{c.niches.name}</Badge>}
           <div className="w-full sm:w-auto sm:ml-auto text-xs text-muted-foreground truncate">
             {[c.site, c.city_uf].filter(Boolean).join(" · ")}
