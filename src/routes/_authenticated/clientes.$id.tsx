@@ -361,6 +361,8 @@ function EditClientDialog({ client }: { client: any }) {
     monthly_fee_day: client.monthly_fee_day ?? "",
     investimento_mensal: client.investimento_mensal ?? "",
     logo_url: client.logo_url || "",
+    onboarding_skipped: client.onboarding_skipped || false,
+    status: client.status || "onboarding",
     notes: client.notes || "",
   });
 
@@ -398,6 +400,7 @@ function EditClientDialog({ client }: { client: any }) {
         contract_start: form.contract_start || null,
         contract_end: form.contract_end || null,
         logo_url: form.logo_url || null,
+        status: form.onboarding_skipped && form.status === "onboarding" ? "ativo" : form.status,
       };
       const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
       if (error) throw error;
