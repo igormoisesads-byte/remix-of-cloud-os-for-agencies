@@ -2598,6 +2598,41 @@ export type Database = {
           },
         ]
       }
+      task_status_history: {
+        Row: {
+          created_at: string | null
+          from_status: string | null
+          id: string
+          task_id: string
+          to_status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          task_id: string
+          to_status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          task_id?: string
+          to_status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_status_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee_id: string | null
