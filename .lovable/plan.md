@@ -48,6 +48,7 @@ Implement a time tracking system for tasks to analyze employee performance, incl
     - Add "Produtividade" to `ViewMode`.
     - Add a toggle button for the new view.
     - Implement `ProductivityView` component showing:
+        - **Date Range Filter**: Select period (last 7 days, 30 days, month).
         - **Employee Performance Table**: Member name, Tasks Completed, Avg Lead Time (To Do → Doing), Avg Execution Time (Doing → Done).
         - **Recent Tasks Breakdown**: List of tasks with time spent in each status.
     - Calculate times using the `task_status_history` data.
