@@ -208,6 +208,9 @@ function OperacoesPage() {
               <Button size="sm" variant={view === "calendar" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("calendar")} aria-label="Calendário">
                 <CalendarDays className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Calendário</span>
               </Button>
+              <Button size="sm" variant={view === "productivity" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("productivity")} aria-label="Produtividade">
+                <BarChart3 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Produtividade</span>
+              </Button>
             </div>
             <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
           </div>
