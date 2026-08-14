@@ -33,7 +33,7 @@ const COLUMNS: { key: "todo" | "doing" | "review" | "done"; label: string; accen
 const PRIORITY_LABEL: Record<string, string> = { baixa: "Baixa", media: "Média", alta: "Alta", urgente: "Urgente" };
 const KIND_LABEL: Record<string, string> = { kickoff: "Kickoff", rotina: "Rotina", demanda: "Demanda", auditoria: "Auditoria" };
 
-type ViewMode = "kanban" | "calendar";
+type ViewMode = "kanban" | "calendar" | "productivity";
 
 // ---------- Helpers de semana / rotina ----------
 function ymd(d: Date) {
