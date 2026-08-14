@@ -463,6 +463,18 @@ function EditClientDialog({ client }: { client: any }) {
             <div><Label>Investimento mensal (R$)</Label><Input type="number" step="0.01" value={form.investimento_mensal} onChange={(e) => setForm({ ...form, investimento_mensal: e.target.value })} /></div>
           </div>
 
+          <div className="flex items-center space-x-2 border p-3 rounded-md bg-muted/20">
+            <Checkbox id="onboarding_skipped" checked={form.onboarding_skipped} onCheckedChange={(v) => setForm({ ...form, onboarding_skipped: !!v })} />
+            <div className="grid gap-1.5 leading-none">
+              <label htmlFor="onboarding_skipped" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Onboarding Concluído / Pular
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Marca o onboarding como finalizado e altera o status para ativo.
+              </p>
+            </div>
+          </div>
+
           <div><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
         </div>
         <DialogFooter>
