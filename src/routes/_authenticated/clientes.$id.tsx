@@ -383,7 +383,7 @@ function EditClientDialog({ client }: { client: any }) {
       // 1. If due day changed, update it and future fees
       const newDay = form.monthly_fee_day === "" ? null : Number(form.monthly_fee_day);
       if (newDay !== null && newDay !== client.monthly_fee_day) {
-        await updateDueDate({ clientId: client.id, newDay });
+        await updateDueDate({ data: { clientId: client.id, newDay } });
       }
 
       // 2. Update remaining fields
