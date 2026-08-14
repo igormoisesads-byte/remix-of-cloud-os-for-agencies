@@ -727,6 +727,7 @@ function ProductivityView({ team, tasks, onOpenTask }: { team: any[]; tasks: any
             )}
           </div>
         </CardContent>
+      </Card>
     </div>
   );
 }
