@@ -36,6 +36,8 @@ const KIND_LABEL: Record<string, string> = { kickoff: "Kickoff", rotina: "Rotina
 
 type ViewMode = "kanban" | "calendar" | "productivity";
 
+const getInitials = (name?: string) => name ? name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "?";
+
 // ---------- Helpers de semana / rotina ----------
 function ymd(d: Date) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
