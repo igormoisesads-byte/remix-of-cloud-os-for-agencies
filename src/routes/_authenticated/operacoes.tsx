@@ -510,8 +510,6 @@ function ProductivityView({ team, tasks, onOpenTask }: { team: any[]; tasks: any
     enabled: tasks.length > 0,
   });
 
-  const initials = (name?: string) => name ? name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "?";
-
   const stats = useMemo(() => {
     const userStats = new Map<string, {
       id: string;
