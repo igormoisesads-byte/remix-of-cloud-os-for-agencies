@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Plus, Trash2, MessageSquare, Filter, Paperclip, Calendar as CalendarIcon, User, Tag,
   AlignLeft, Building2, X, FileText, Image as ImageIcon, Download, CheckSquare,
-  LayoutGrid, CalendarDays, Layers, ChevronLeft, ChevronRight,
+  LayoutGrid, CalendarDays, Layers, ChevronLeft, ChevronRight, BarChart3, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
