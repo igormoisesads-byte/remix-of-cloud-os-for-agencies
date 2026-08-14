@@ -640,7 +640,7 @@ function ProductivityView({ team, tasks, onOpenTask }: { team: any[]; tasks: any
                           <img src={s.avatar} alt={s.name} className="h-6 w-6 rounded-full object-cover" />
                         ) : (
                           <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center">
-                            {initials(s.name)}
+                            {getInitials(s.name)}
                           </div>
                         )}
                         <span className="font-medium">{s.name}</span>
