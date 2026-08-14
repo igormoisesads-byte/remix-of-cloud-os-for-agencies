@@ -727,8 +727,9 @@ function ProductivityView({ team, tasks, onOpenTask }: { team: any[]; tasks: any
             )}
           </div>
         </CardContent>
-      </Card>
     </div>
+  );
+}
 
 function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
   const overdue = task.due_date && task.status !== "done" && task.due_date < new Date().toISOString().slice(0, 10);
