@@ -301,8 +301,10 @@ function OperacoesPage() {
             </div>
           ))}
         </div>
-      ) : (
+      ) : view === "calendar" ? (
         <CalendarView tasks={visibleTasks} onOpen={(id) => setOpenTask(id)} />
+      ) : (
+        <ProductivityView team={team.data ?? []} tasks={visibleTasks} onOpenTask={setOpenTask} />
       )}
 
       {openTask && (
