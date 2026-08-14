@@ -194,7 +194,9 @@ function OperacoesPage() {
             <p className="hidden sm:block text-muted-foreground mt-1 text-sm">
               {view === "kanban"
                 ? "Kanban de demandas, kickoffs e rotinas. Arraste os cards entre colunas."
-                : "Calendário de tarefas por data de entrega."}
+                : view === "calendar"
+                ? "Calendário de tarefas por data de entrega."
+                : "Análise de produtividade e tempo de execução por membro da equipe."}
               {" "}Rotinas: <b>{new Date(week.start + "T00:00").toLocaleDateString("pt-BR")} – {new Date(week.end + "T00:00").toLocaleDateString("pt-BR")}</b>.
             </p>
           </div>
