@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Plus, Trash2, MessageSquare, Filter, Paperclip, Calendar as CalendarIcon, User, Tag,
   AlignLeft, Building2, X, FileText, Image as ImageIcon, Download, CheckSquare,
-  LayoutGrid, CalendarDays, Layers, ChevronLeft, ChevronRight,
+  LayoutGrid, CalendarDays, Layers, ChevronLeft, ChevronRight, BarChart3, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,9 @@ const COLUMNS: { key: "todo" | "doing" | "review" | "done"; label: string; accen
 const PRIORITY_LABEL: Record<string, string> = { baixa: "Baixa", media: "Média", alta: "Alta", urgente: "Urgente" };
 const KIND_LABEL: Record<string, string> = { kickoff: "Kickoff", rotina: "Rotina", demanda: "Demanda", auditoria: "Auditoria" };
 
-type ViewMode = "kanban" | "calendar";
+type ViewMode = "kanban" | "calendar" | "productivity";
+
+const getInitials = (name?: string) => name ? name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "?";
 
 // ---------- Helpers de semana / rotina ----------
 function ymd(d: Date) {
@@ -194,7 +197,9 @@ function OperacoesPage() {
             <p className="hidden sm:block text-muted-foreground mt-1 text-sm">
               {view === "kanban"
                 ? "Kanban de demandas, kickoffs e rotinas. Arraste os cards entre colunas."
-                : "Calendário de tarefas por data de entrega."}
+                : view === "calendar"
+                ? "Calendário de tarefas por data de entrega."
+                : "Análise de produtividade e tempo de execução por membro da equipe."}
               {" "}Rotinas: <b>{new Date(week.start + "T00:00").toLocaleDateString("pt-BR")} – {new Date(week.end + "T00:00").toLocaleDateString("pt-BR")}</b>.
             </p>
           </div>
@@ -205,6 +210,9 @@ function OperacoesPage() {
               </Button>
               <Button size="sm" variant={view === "calendar" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("calendar")} aria-label="Calendário">
                 <CalendarDays className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Calendário</span>
+              </Button>
+              <Button size="sm" variant={view === "productivity" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("productivity")} aria-label="Produtividade">
+                <BarChart3 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Produtividade</span>
               </Button>
             </div>
             <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
@@ -296,8 +304,10 @@ function OperacoesPage() {
             </div>
           ))}
         </div>
-      ) : (
+      ) : view === "calendar" ? (
         <CalendarView tasks={visibleTasks} onOpen={(id) => setOpenTask(id)} />
+      ) : (
+        <ProductivityView team={team.data ?? []} tasks={visibleTasks} onOpenTask={setOpenTask} />
       )}
 
       {openTask && (
@@ -480,6 +490,251 @@ function CalendarView({ tasks, onOpen }: { tasks: any[]; onOpen: (id: string) =>
   );
 }
 
+/* ============ PRODUCTIVITY VIEW ============ */
+function ProductivityView({ team, tasks, onOpenTask }: { team: any[]; tasks: any[]; onOpenTask: (id: string) => void }) {
+  const [period, setPeriod] = useState<"7d" | "30d" | "all">("30d");
+
+  // Fetch history for all tasks in the current filter
+  const history = useQuery({
+    queryKey: ["tasks-productivity-history", tasks.map(t => t.id).sort()],
+    queryFn: async () => {
+      if (tasks.length === 0) return [];
+      const { data, error } = await supabase
+        .from("task_status_history")
+        .select("*")
+        .in("task_id", tasks.map(t => t.id))
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: tasks.length > 0,
+  });
+
+  const stats = useMemo(() => {
+    const userStats = new Map<string, {
+      id: string;
+      name: string;
+      avatar: string | null;
+      completed: number;
+      leadTimes: number[];
+      execTimes: number[];
+    }>();
+
+    team.forEach(p => {
+      userStats.set(p.id, {
+        id: p.id,
+        name: p.full_name,
+        avatar: p.avatar_url,
+        completed: 0,
+        leadTimes: [],
+        execTimes: [],
+      });
+    });
+
+    const now = new Date();
+    const filteredTasks = tasks.filter(t => {
+      if (period === "all") return true;
+      const days = period === "7d" ? 7 : 30;
+      const date = t.done_at || t.created_at;
+      return (now.getTime() - new Date(date).getTime()) <= (days * 24 * 60 * 60 * 1000);
+    });
+
+    const histData = history.data ?? [];
+    const histByTask = new Map<string, any[]>();
+    histData.forEach(h => {
+      if (!histByTask.has(h.task_id)) histByTask.set(h.task_id, []);
+      histByTask.get(h.task_id)!.push(h);
+    });
+
+    filteredTasks.forEach(t => {
+      if (!t.assignee_id) return;
+      const s = userStats.get(t.assignee_id);
+      if (!s) return;
+
+      const tHist = histByTask.get(t.id) || [];
+      const created = new Date(t.created_at).getTime();
+      const doingTransition = tHist.find(h => h.to_status === "doing");
+      const doneTransition = tHist.find(h => h.to_status === "done");
+
+      if (doingTransition) {
+        const doingTime = new Date(doingTransition.created_at).getTime();
+        s.leadTimes.push(doingTime - created);
+      }
+
+      if (doingTransition && doneTransition) {
+        const doingTime = new Date(doingTransition.created_at).getTime();
+        const doneTime = new Date(doneTransition.created_at).getTime();
+        s.execTimes.push(doneTime - doingTime);
+      } else if (t.status === "done" && t.done_at && doingTransition) {
+        // Fallback for missing 'done' transition but having 'done_at'
+        const doingTime = new Date(doingTransition.created_at).getTime();
+        const doneTime = new Date(t.done_at).getTime();
+        s.execTimes.push(doneTime - doingTime);
+      }
+
+      if (t.status === "done") {
+        s.completed++;
+      }
+    });
+
+    return Array.from(userStats.values()).sort((a, b) => b.completed - a.completed);
+  }, [team, tasks, history.data, period]);
+
+  const fmtDuration = (ms: number) => {
+    if (!ms) return "—";
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    if (days > 0) return `${days}d ${hours % 24}h`;
+    if (hours > 0) return `${hours}h`;
+    const mins = Math.floor(ms / (1000 * 60));
+    return `${mins}m`;
+  };
+
+  const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col gap-6 overflow-y-auto pr-2">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant={period === "7d" ? "default" : "outline"}
+            onClick={() => setPeriod("7d")}
+          >Últimos 7 dias</Button>
+          <Button
+            size="sm"
+            variant={period === "30d" ? "default" : "outline"}
+            onClick={() => setPeriod("30d")}
+          >Últimos 30 dias</Button>
+          <Button
+            size="sm"
+            variant={period === "all" ? "default" : "outline"}
+            onClick={() => setPeriod("all")}
+          >Tudo</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="h-4 w-4" /> Desempenho por Membro
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Membro</TableHead>
+                  <TableHead className="text-center">Concluídas</TableHead>
+                  <TableHead className="text-right">Lead Time (Médio)</TableHead>
+                  <TableHead className="text-right">Execução (Média)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {s.avatar ? (
+                          <img src={s.avatar} alt={s.name} className="h-6 w-6 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center">
+                            {getInitials(s.name)}
+                          </div>
+                        )}
+                        <span className="font-medium">{s.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">{s.completed}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{fmtDuration(avg(s.leadTimes))}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{fmtDuration(avg(s.execTimes))}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4" /> Métricas Globais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Total Concluídas</div>
+                <div className="text-2xl font-bold text-emerald-600">
+                  {stats.reduce((acc, s) => acc + s.completed, 0)}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Avg Lead Time</div>
+                <div className="text-2xl font-bold">
+                  {fmtDuration(avg(stats.flatMap(s => s.leadTimes)))}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Avg Exec Time</div>
+                <div className="text-2xl font-bold">
+                  {fmtDuration(avg(stats.flatMap(s => s.execTimes)))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t space-y-3">
+              <div className="text-xs font-semibold">Destaque de Eficiência</div>
+              {stats[0] && stats[0].completed > 0 ? (
+                <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="secondary" className="bg-primary/20 text-primary hover:bg-primary/20">Top Performer</Badge>
+                  </div>
+                  <div className="text-sm font-medium">{stats[0].name}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {stats[0].completed} tarefas concluídas no período.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">Dados insuficientes para destaque.</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tarefas Recentes (Breve Resumo)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-1">
+            {tasks.filter(t => t.status === "done").slice(0, 10).map(t => (
+              <div key={t.id} className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-muted/30 px-2 rounded-md transition-colors cursor-pointer" onClick={() => onOpenTask(t.id)}>
+                <div className="min-w-0 flex-1 pr-4">
+                  <div className="text-sm font-medium truncate">{t.title}</div>
+                  <div className="text-[10px] text-muted-foreground">{t.clients?.name || "Sem cliente"}</div>
+                </div>
+                <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {t.done_at ? new Date(t.done_at).toLocaleDateString("pt-BR") : "—"}
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">{getInitials(team.find(p => p.id === t.assignee_id)?.full_name || "?")}</Badge>
+                </div>
+              </div>
+            ))}
+            {tasks.filter(t => t.status === "done").length === 0 && (
+              <div className="text-center py-8 text-sm text-muted-foreground italic">Nenhuma tarefa concluída no período.</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
   const overdue = task.due_date && task.status !== "done" && task.due_date < new Date().toISOString().slice(0, 10);
   const m = task.meta ?? { chk: 0, chkDone: 0, comments: 0, files: 0 };
@@ -561,7 +816,7 @@ function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
                 />
               ) : (
                 <div className="h-6 w-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0" title={task.assignee.full_name}>
-                  {initials(task.assignee.full_name)}
+                  {getInitials(task.assignee.full_name)}
                 </div>
               )
             )}
@@ -857,7 +1112,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
 
                 <div className="flex gap-3">
                   <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                    {initials(user?.email ?? "?")}
+                    {getInitials(user?.email ?? "?")}
                   </div>
                   <div className="flex-1 space-y-2">
                     <Textarea
@@ -891,7 +1146,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
                   {(comments.data ?? []).map((c: any) => (
                     <div key={c.id} className="flex gap-3">
                       <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                        {initials(authorName(c.user_id) ?? "?")}
+                        {getInitials(authorName(c.user_id) ?? "?")}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="text-xs">
