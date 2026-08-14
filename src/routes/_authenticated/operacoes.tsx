@@ -816,7 +816,7 @@ function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
                 />
               ) : (
                 <div className="h-6 w-6 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0" title={task.assignee.full_name}>
-                  {initials(task.assignee.full_name)}
+                  {getInitials(task.assignee.full_name)}
                 </div>
               )
             )}
