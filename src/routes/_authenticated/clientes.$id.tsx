@@ -1692,3 +1692,125 @@ function Auditoria({ clientId }: { clientId: string }) {
     </Card>
   );
 }
+
+/* ============ DOCUMENTOS ============ */
+function Documentos({ clientId }: { clientId: string }) {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({ title: "", type: "contrato", url: "", file_name: "", file_size: 0 });
+
+  const q = useQuery({
+    queryKey: ["client_documents", clientId],
+    queryFn: async () => (await supabase.from("client_documents").select("*").eq("client_id", clientId).order("created_at", { ascending: false })).data ?? [],
+  });
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    try {
+      const url = await uploadToR2(file, { folder: `documents/${clientId}`, filename: file.name });
+      setForm((f) => ({ ...f, url, file_name: file.name, file_size: file.size, title: f.title || file.name }));
+      toast.success("Arquivo carregado.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function submit() {
+    if (!form.url || !form.title || !user) return toast.error("Preencha o título e envie o arquivo.");
+    setBusy(true);
+    const { error } = await supabase.from("client_documents").insert({
+      ...form,
+      client_id: clientId,
+      created_by: user.id
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Documento salvo.");
+    setOpen(false);
+    setForm({ title: "", type: "contrato", url: "", file_name: "", file_size: 0 });
+    qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Excluir este documento?")) return;
+    const { error } = await supabase.from("client_documents").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Removido.");
+    qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-base">Documentos</CardTitle>
+          <div className="text-xs text-muted-foreground mt-1">Contratos, propostas e outros arquivos do cliente.</div>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4" /> Documento</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Novo documento</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Arquivo</Label>
+                <div className="flex gap-2">
+                  <input id="doc-upload" type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                  <Button asChild variant="outline" size="sm" className="w-full" disabled={uploading}>
+                    <label htmlFor="doc-upload" className="cursor-pointer inline-flex items-center gap-2">
+                      <Upload className="h-3.5 w-3.5" />
+                      {uploading ? "Enviando..." : form.file_name || "Selecionar arquivo"}
+                    </label>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex: Contrato de Prestação de Serviços" /></div>
+              <div className="space-y-2">
+                <Label>Tipo</Label>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contrato">Contrato</SelectItem>
+                    <SelectItem value="proposta">Proposta</SelectItem>
+                    <SelectItem value="briefing">Briefing</SelectItem>
+                    <SelectItem value="documento">Documento</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter><Button onClick={submit} disabled={busy || uploading}>Salvar</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader><TableRow><TableHead>Documento</TableHead><TableHead>Tipo</TableHead><TableHead>Data</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {(q.data ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Sem documentos</TableCell></TableRow>}
+            {(q.data ?? []).map((d: any) => (
+              <TableRow key={d.id}>
+                <TableCell>
+                  <div className="font-medium text-sm">{d.title}</div>
+                  <div className="text-[10px] text-muted-foreground">{d.file_name} · {(d.file_size / 1024 / 1024).toFixed(2)}MB</div>
+                </TableCell>
+                <TableCell><Badge variant="outline" className="capitalize">{d.type}</Badge></TableCell>
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(d.created_at)}</TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="icon" variant="ghost" asChild className="h-8 w-8">
+                    <a href={d.url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => remove(d.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
