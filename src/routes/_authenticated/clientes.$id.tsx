@@ -32,6 +32,7 @@ const AiDataChat = lazy(() => import("@/components/ai-data-chat").then((m) => ({
 const CreativesView = lazy(() => import("@/components/creatives-view").then((m) => ({ default: m.CreativesView })));
 
 import { uploadToR2 } from "@/lib/upload-r2";
+import { updateDueDateFn } from "@/lib/monthly-fees.functions";
 import { Pencil, Upload } from "lucide-react";
 
 
@@ -340,6 +341,7 @@ function VisaoGeral({ c }: { c: any }) {
 
 function EditClientDialog({ client }: { client: any }) {
   const qc = useQueryClient();
+  const updateDueDate = useServerFn(updateDueDateFn);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -377,22 +379,35 @@ function EditClientDialog({ client }: { client: any }) {
 
   async function save() {
     setBusy(true);
-    const payload: any = {
-      ...form,
-      monthly_fee_amount: form.monthly_fee_amount === "" ? null : Number(form.monthly_fee_amount),
-      monthly_fee_day: form.monthly_fee_day === "" ? null : Number(form.monthly_fee_day),
-      investimento_mensal: form.investimento_mensal === "" ? null : Number(form.investimento_mensal),
-      brand_anniversary: form.brand_anniversary || null,
-      contract_start: form.contract_start || null,
-      contract_end: form.contract_end || null,
-      logo_url: form.logo_url || null,
-    };
-    const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Cliente atualizado.");
-    qc.invalidateQueries({ queryKey: ["client", client.id] });
-    setOpen(false);
+    try {
+      // 1. If due day changed, update it and future fees
+      const newDay = form.monthly_fee_day === "" ? null : Number(form.monthly_fee_day);
+      if (newDay !== null && newDay !== client.monthly_fee_day) {
+        await updateDueDate({ clientId: client.id, newDay });
+      }
+
+      // 2. Update remaining fields
+      const payload: any = {
+        ...form,
+        monthly_fee_amount: form.monthly_fee_amount === "" ? null : Number(form.monthly_fee_amount),
+        monthly_fee_day: newDay,
+        investimento_mensal: form.investimento_mensal === "" ? null : Number(form.investimento_mensal),
+        brand_anniversary: form.brand_anniversary || null,
+        contract_start: form.contract_start || null,
+        contract_end: form.contract_end || null,
+        logo_url: form.logo_url || null,
+      };
+      const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
+      if (error) throw error;
+
+      toast.success("Cliente atualizado.");
+      qc.invalidateQueries({ queryKey: ["client", client.id] });
+      setOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao salvar");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
