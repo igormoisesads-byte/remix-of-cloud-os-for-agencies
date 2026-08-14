@@ -1112,7 +1112,7 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
 
                 <div className="flex gap-3">
                   <div className="h-8 w-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center shrink-0">
-                    {initials(user?.email ?? "?")}
+                    {getInitials(user?.email ?? "?")}
                   </div>
                   <div className="flex-1 space-y-2">
                     <Textarea
