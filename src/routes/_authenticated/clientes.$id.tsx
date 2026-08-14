@@ -76,13 +76,14 @@ function fmtDate(v: string | null | undefined) {
 type Section =
   | "visao" | "performance" | "criativos" | "vendas" | "projecoes" | "seo" | "rotinas" | "health"
   | "pdas" | "nps" | "relatorios" | "reunioes" | "onboarding" | "moodboards"
-  | "acesso" | "auditoria";
+  | "acesso" | "auditoria" | "documentos";
 
 const NAV: { key: Section; label: string; icon: any }[] = [
   { key: "visao", label: "Visão Geral", icon: LayoutGrid },
   { key: "performance", label: "Performance", icon: BarChart3 },
   { key: "criativos", label: "Criativos", icon: Film },
   { key: "vendas", label: "Vendas", icon: DollarSign },
+  { key: "documentos", label: "Documentos", icon: FileText },
   { key: "onboarding", label: "Onboarding", icon: ListChecks },
   { key: "projecoes", label: "Projeções", icon: LineChart },
   { key: "seo", label: "SEO", icon: Search },
