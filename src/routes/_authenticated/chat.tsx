@@ -600,10 +600,9 @@ function ChannelView({ channel, profiles, isAgencyAdmin, onBack }: { channel: Ch
                       <img
                         src={m.attachment_url}
                         alt={m.attachment_name || "imagem"}
-                        loading="eager"
+                        loading="lazy"
                         decoding="async"
-                        fetchPriority="low"
-                        className="max-h-64 rounded-md border cursor-zoom-in hover:opacity-90 transition"
+                        className="max-h-64 rounded-md border cursor-zoom-in hover:opacity-90 transition w-auto h-auto object-contain bg-muted/20"
                       />
                     </button>
                   )}
