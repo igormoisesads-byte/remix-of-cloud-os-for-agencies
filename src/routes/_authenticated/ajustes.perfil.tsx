@@ -1,13 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut, Upload, Loader2, Bell, BellOff } from "lucide-react";
+import { LogOut, Upload, Loader2, Bell, BellOff, Edit2, Check, X as XIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadToR2 } from "@/lib/upload-r2";
 import { toast } from "sonner";
 import { usePushNotifications } from "@/hooks/use-push";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/ajustes/perfil")({
   component: PerfilPage,
@@ -99,7 +100,16 @@ function PerfilPage() {
       <Card>
         <CardHeader><CardTitle className="text-base">Informações</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <Row k="Nome" v={profile?.full_name || "—"} />
+          <EditableRow 
+            label="Nome" 
+            value={profile?.full_name || "—"} 
+            onSave={async (val) => {
+              if (!user) return;
+              const { error } = await supabase.from("profiles").update({ full_name: val }).eq("id", user.id);
+              if (error) throw error;
+              await refresh();
+            }}
+          />
           <Row k="E-mail" v={profile?.email || "—"} />
           <Row k="Papéis" v={roles.join(", ") || "—"} last />
         </CardContent>
@@ -143,6 +153,60 @@ function Row({ k, v, last }: { k: string; v: string; last?: boolean }) {
     <div className={`flex flex-wrap justify-between gap-2 py-2 ${last ? "" : "border-b"}`}>
       <span className="text-muted-foreground">{k}</span>
       <span className="font-medium break-all text-right">{v}</span>
+    </div>
+  );
+}
+
+function EditableRow({ label, value, onSave }: { label: string; value: string; onSave: (val: string) => Promise<void> }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [val, setVal] = useState(value);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setVal(value);
+  }, [value]);
+
+  async function handleSave() {
+    if (val === value) return setIsEditing(false);
+    setBusy(true);
+    try {
+      await onSave(val);
+      setIsEditing(false);
+      toast.success(`${label} atualizado.`);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao salvar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap justify-between items-center gap-2 py-2 border-b">
+      <span className="text-muted-foreground">{label}</span>
+      {isEditing ? (
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Input 
+            value={val} 
+            onChange={(e) => setVal(e.target.value)} 
+            className="h-8 text-sm" 
+            autoFocus
+            disabled={busy}
+          />
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-600" onClick={handleSave} disabled={busy}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          </Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => { setIsEditing(false); setVal(value); }} disabled={busy}>
+            <XIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 group">
+          <span className="font-medium break-all text-right">{value}</span>
+          <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setIsEditing(true)}>
+            <Edit2 className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
