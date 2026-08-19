@@ -62,8 +62,10 @@ function parseRoutine(title: string): { variant: "FULL" | "LIGHT"; client: strin
 
 function OperacoesPage() {
   const qc = useQueryClient();
+  const { user, hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
   const [filterClient, setFilterClient] = useState<string>("all");
-  const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [filterAssignee, setFilterAssignee] = useState<string>(isAdmin ? "all" : (user?.id || "all"));
   const [filterKind, setFilterKind] = useState<string>("all");
   const [filterTag, setFilterTag] = useState<string>("all");
   const [openTask, setOpenTask] = useState<string | null>(null);
@@ -189,7 +191,7 @@ function OperacoesPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden p-4 sm:p-6 lg:p-8 gap-4 sm:gap-6 touch-none">
       <div className="flex flex-col gap-2 sm:gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
@@ -211,9 +213,11 @@ function OperacoesPage() {
               <Button size="sm" variant={view === "calendar" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("calendar")} aria-label="Calendário">
                 <CalendarDays className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Calendário</span>
               </Button>
-              <Button size="sm" variant={view === "productivity" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("productivity")} aria-label="Produtividade">
-                <BarChart3 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Produtividade</span>
-              </Button>
+              {isAdmin && (
+                <Button size="sm" variant={view === "productivity" ? "default" : "ghost"} className="h-8 px-2 sm:gap-1.5" onClick={() => setView("productivity")} aria-label="Produtividade">
+                  <BarChart3 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Produtividade</span>
+                </Button>
+              )}
             </div>
             <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
           </div>
@@ -231,7 +235,11 @@ function OperacoesPage() {
             <SelectTrigger className="w-[130px] sm:w-[160px] h-9 shrink-0"><SelectValue placeholder="Responsável" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toda equipe</SelectItem>
-              {(team.data ?? []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
+              {isAdmin ? (
+                (team.data ?? []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)
+              ) : (
+                <SelectItem value={user?.id || "none"}>Minhas tarefas</SelectItem>
+              )}
             </SelectContent>
           </Select>
           <Select value={filterKind} onValueChange={setFilterKind}>
@@ -744,7 +752,7 @@ function TaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
       draggable
       onDragStart={(e) => { e.dataTransfer.setData("text/task-id", task.id); e.dataTransfer.effectAllowed = "move"; }}
       onClick={onOpen}
-      className="cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-md transition-all"
+      className="cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-md transition-all touch-auto select-none"
     >
       <CardContent className="p-3 space-y-2.5">
         <div className="flex items-start justify-between gap-2">
