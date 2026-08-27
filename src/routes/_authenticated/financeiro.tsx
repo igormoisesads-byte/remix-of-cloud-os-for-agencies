@@ -15,6 +15,7 @@ import { Check, Search, X, AlertTriangle, Plus, Trash2, Repeat, Wallet, Trending
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { FeesAnalytics } from "@/components/fees-analytics";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
   component: FinanceiroPage,
