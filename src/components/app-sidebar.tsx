@@ -31,7 +31,7 @@ const groups = [
     label: "CS",
     icon: Headphones,
     items: [
-      { title: "Clientes", url: "/clientes", icon: Users },
+      { title: "Clientes", url: "/clientes", icon: Users, adminOnly: true },
       { title: "Health Score", url: "/health-score", icon: HeartPulse },
       { title: "NPS", url: "/nps", icon: Smile },
       { title: "PDA", url: "/pdas", icon: Target },
@@ -49,6 +49,7 @@ const groups = [
   {
     label: "Financeiro",
     icon: Wallet,
+    adminOnly: true,
     items: [
       { title: "Mensalidades", url: "/financeiro", icon: DollarSign },
     ],
@@ -57,19 +58,29 @@ const groups = [
     label: "Configurações",
     icon: Cog,
     items: [
-      { title: "Equipe", url: "/equipe", icon: UserCog },
+      { title: "Equipe", url: "/equipe", icon: UserCog, adminOnly: true },
       { title: "Ajustes", url: "/ajustes", icon: Settings },
     ],
   },
-] as const;
+] as const satisfies readonly {
+  label: string;
+  icon: any;
+  adminOnly?: boolean;
+  items: readonly { title: string; url: string; icon: any; adminOnly?: boolean }[];
+}[];
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { profile, roles, signOut } = useAuth();
+  const { profile, roles, signOut, hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
   const nav = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive = (url: string) => pathname === url || pathname.startsWith(url + "/");
   const closeIfMobile = () => { if (isMobile) setOpenMobile(false); };
+  const visibleGroups = groups
+    .filter((g) => isAdmin || !(g as { adminOnly?: boolean }).adminOnly)
+    .map((g) => ({ ...g, items: g.items.filter((i) => isAdmin || !(i as { adminOnly?: boolean }).adminOnly) }))
+    .filter((g) => g.items.length > 0);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((g) => [g.label, true]))
   );
@@ -90,7 +101,7 @@ export function AppSidebar() {
 
       </SidebarHeader>
       <SidebarContent className="gap-0">
-        {groups.map((g, idx) => {
+        {visibleGroups.map((g, idx) => {
           const open = openGroups[g.label] ?? true;
           const GroupIcon = g.icon;
           return (
