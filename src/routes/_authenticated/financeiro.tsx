@@ -15,6 +15,7 @@ import { Check, Search, X, AlertTriangle, Plus, Trash2, Repeat, Wallet, Trending
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { FeesAnalytics } from "@/components/fees-analytics";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
   component: FinanceiroPage,
@@ -180,6 +181,8 @@ function FeesTab() {
         <Card><CardContent className="pt-6"><div className="text-xs uppercase text-muted-foreground">A receber</div><div className="text-2xl font-bold">{fmtBRL(total - pago)}</div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-xs uppercase text-muted-foreground">Em atraso</div><div className="text-2xl font-bold text-red-600">{fmtBRL(atrasadoValor)}</div></CardContent></Card>
       </div>
+
+      <FeesAnalytics fees={filtered} />
 
       <Card>
         <CardHeader className="gap-3">
