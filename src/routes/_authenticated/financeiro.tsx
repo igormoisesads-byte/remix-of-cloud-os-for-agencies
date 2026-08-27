@@ -181,6 +181,8 @@ function FeesTab() {
         <Card><CardContent className="pt-6"><div className="text-xs uppercase text-muted-foreground">Em atraso</div><div className="text-2xl font-bold text-red-600">{fmtBRL(atrasadoValor)}</div></CardContent></Card>
       </div>
 
+      <FeesAnalytics fees={filtered} />
+
       <Card>
         <CardHeader className="gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
