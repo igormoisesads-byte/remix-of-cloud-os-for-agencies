@@ -1218,7 +1218,11 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
 
               <div className="pt-4 border-t">
                 <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive" onClick={async () => {
-                  if (!confirm("Excluir esta tarefa?")) return;
+                  if (!confirm("Excluir esta tarefa e todas as suas subtarefas, comentários e anexos?")) return;
+                  await supabase.from("task_checklist_items").delete().eq("task_id", taskId);
+                  await supabase.from("task_comments").delete().eq("task_id", taskId);
+                  await supabase.from("task_status_history").delete().eq("task_id", taskId);
+                  await supabase.from("messages").update({ task_id: null }).eq("task_id", taskId);
                   const { error } = await supabase.from("tasks").delete().eq("id", taskId);
                   if (error) return toast.error(error.message);
                   toast.success("Tarefa excluída");
