@@ -122,8 +122,8 @@
 /* Cloudflare-esque grid backdrop */
 @utility bg-grid {
   background-image:
-    linear-gradient(to right, oklch(0.85 0.008 260 / 0.6) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(0.85 0.008 260 / 0.6) 1px, transparent 1px);
+    linear-gradient(to right, oklch(0.92 0 0 / 0.8) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.92 0 0 / 0.8) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
