@@ -284,6 +284,7 @@ function FeesTab() {
         onSaved={() => { 
           qc.invalidateQueries({ queryKey: ["financeiro-fees"] }); 
           qc.invalidateQueries({ queryKey: ["fin-overview-month"] }); 
+          qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
         }} 
       />
       
@@ -293,6 +294,7 @@ function FeesTab() {
         onSaved={() => { 
           qc.invalidateQueries({ queryKey: ["financeiro-fees"] }); 
           qc.invalidateQueries({ queryKey: ["fin-overview-month"] }); 
+          qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
         }} 
       />
     </div>
@@ -386,9 +388,10 @@ function FeeDetailDialog({ fee, onClose, onSaved }: { fee: any; onClose: () => v
           <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={async () => {
             if (!confirm("Excluir esta mensalidade?")) return;
             setSaving(true);
-            const { error } = await supabase.from("monthly_fees").delete().eq("id", fee.id);
+            const { data: deleted, error } = await supabase.from("monthly_fees").delete().eq("id", fee.id).select("id").maybeSingle();
             setSaving(false);
             if (error) { toast.error(error.message); return; }
+            if (!deleted) { toast.error("A mensalidade não pôde ser excluída."); return; }
             toast.success("Mensalidade excluída");
             onSaved(); onClose();
           }} disabled={saving}>

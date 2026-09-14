@@ -6,6 +6,7 @@ const InviteSchema = z.object({
   email: z.string().email(),
   full_name: z.string().min(1).max(120).optional(),
   role: z.enum(["admin", "gestor", "operacional", "financeiro"]).default("operacional"),
+  origin: z.string().url(),
 });
 
 export const inviteTeamMember = createServerFn({ method: "POST" })
@@ -18,19 +19,18 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       .select("role")
       .eq("user_id", context.userId);
     if (rolesErr) throw new Error(rolesErr.message);
-    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "superadmin");
     if (!isAdmin) throw new Error("Apenas admin pode convidar membros.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const siteUrl = process.env.SITE_URL || process.env.SUPABASE_URL || "";
-    const redirectTo = siteUrl ? undefined : undefined;
+    const redirectTo = `${new URL(data.origin).origin}/convite`;
 
     const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       data.email,
       {
         data: data.full_name ? { full_name: data.full_name } : undefined,
-        ...(redirectTo ? { redirectTo } : {}),
+        redirectTo,
       },
     );
     if (invErr) throw new Error(invErr.message);

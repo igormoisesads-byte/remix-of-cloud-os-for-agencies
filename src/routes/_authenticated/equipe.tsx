@@ -115,7 +115,7 @@ function InviteDialog() {
     if (!email) return toast.error("Informe o e-mail.");
     setLoading(true);
     try {
-      await invite({ data: { email, full_name: fullName || undefined, role } });
+      await invite({ data: { email, full_name: fullName || undefined, role, origin: window.location.origin } });
       toast.success(`Convite enviado para ${email}`);
       setOpen(false);
       setEmail(""); setFullName(""); setRole("operacional");
