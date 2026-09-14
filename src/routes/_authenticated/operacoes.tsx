@@ -219,7 +219,10 @@ function OperacoesPage() {
                 </Button>
               )}
             </div>
-            <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
+            <NewTaskDialog clients={clients.data ?? []} team={team.data ?? []} onDone={() => {
+              qc.invalidateQueries({ queryKey: ["tasks"] });
+              qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+            }} />
           </div>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -324,7 +327,10 @@ function OperacoesPage() {
           clients={clients.data ?? []}
           team={team.data ?? []}
           onClose={() => setOpenTask(null)}
-          onChange={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+          onChange={() => {
+            qc.invalidateQueries({ queryKey: ["tasks"] });
+            qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+          }}
         />
       )}
 
@@ -1219,12 +1225,17 @@ function TaskDetail({ taskId, clients, team, onClose, onChange }: { taskId: stri
               <div className="pt-4 border-t">
                 <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive" onClick={async () => {
                   if (!confirm("Excluir esta tarefa e todas as suas subtarefas, comentários e anexos?")) return;
-                  await supabase.from("task_checklist_items").delete().eq("task_id", taskId);
-                  await supabase.from("task_comments").delete().eq("task_id", taskId);
-                  await supabase.from("task_status_history").delete().eq("task_id", taskId);
-                  await supabase.from("messages").update({ task_id: null }).eq("task_id", taskId);
-                  const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+                  const cleanup = await Promise.all([
+                    supabase.from("task_checklist_items").delete().eq("task_id", taskId),
+                    supabase.from("task_comments").delete().eq("task_id", taskId),
+                    supabase.from("task_status_history").delete().eq("task_id", taskId),
+                    supabase.from("messages").update({ task_id: null }).eq("task_id", taskId),
+                  ]);
+                  const cleanupError = cleanup.find((result) => result.error)?.error;
+                  if (cleanupError) return toast.error(cleanupError.message);
+                  const { data: deleted, error } = await supabase.from("tasks").delete().eq("id", taskId).select("id").maybeSingle();
                   if (error) return toast.error(error.message);
+                  if (!deleted) return toast.error("A tarefa não pôde ser excluída.");
                   toast.success("Tarefa excluída");
                   onClose(); onChange();
                 }}>
