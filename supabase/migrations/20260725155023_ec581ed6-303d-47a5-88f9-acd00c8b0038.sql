@@ -1,1 +1,0 @@
-GRANT EXECUTE ON FUNCTION public.get_public_report_payload(text) TO service_role;
