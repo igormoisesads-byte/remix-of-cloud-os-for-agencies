@@ -79,6 +79,17 @@ function SignInForm() {
         <Input id="in-pass" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <Button type="submit" className="w-full" disabled={busy}>{busy ? "Entrando…" : "Entrar"}</Button>
+      <button type="button" onClick={forgot} className="w-full text-center text-xs text-muted-foreground underline hover:text-foreground">
+        Esqueci minha senha
+      </button>
     </form>
   );
+  async function forgot() {
+    if (!email) return toast.error("Digite seu e-mail acima primeiro.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Enviamos um link de recuperação para seu e-mail.");
+  }
 }

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermosRouteImport } from './routes/termos'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ConviteRouteImport } from './routes/convite'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -48,6 +49,11 @@ import { Route as ApiPublicHooksCheckBalancesRouteImport } from './routes/api/pu
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
   path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/convite': typeof ConviteRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/convite': typeof ConviteRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/chat': typeof AuthenticatedChatRoute
   '/criativos': typeof AuthenticatedCriativosRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/convite': typeof ConviteRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/_authenticated/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/convite'
     | '/privacidade'
+    | '/reset-password'
     | '/termos'
     | '/ajustes'
     | '/chat'
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/convite'
     | '/privacidade'
+    | '/reset-password'
     | '/termos'
     | '/chat'
     | '/criativos'
@@ -419,6 +430,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/convite'
     | '/privacidade'
+    | '/reset-password'
     | '/termos'
     | '/_authenticated/ajustes'
     | '/_authenticated/chat'
@@ -457,6 +469,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ConviteRoute: typeof ConviteRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   ApiR2UploadRoute: typeof ApiR2UploadRoute
   NpsTokenRoute: typeof NpsTokenRoute
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       path: '/termos'
       fullPath: '/termos'
       preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidade': {
@@ -797,6 +817,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ConviteRoute: ConviteRoute,
   PrivacidadeRoute: PrivacidadeRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   ApiR2UploadRoute: ApiR2UploadRoute,
   NpsTokenRoute: NpsTokenRoute,
