@@ -33,6 +33,7 @@ import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
 import { Route as PRelatorioTokenRouteImport } from './routes/p.relatorio.$token'
 import { Route as ApiPublicCreativeImageRouteImport } from './routes/api/public/creative-image'
+import { Route as ApiPublicBootstrapOwnerRouteImport } from './routes/api/public/bootstrap-owner'
 import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
 import { Route as AuthenticatedAjustesSquadsRouteImport } from './routes/_authenticated/ajustes.squads'
 import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
@@ -168,6 +169,11 @@ const ApiPublicCreativeImageRoute = ApiPublicCreativeImageRouteImport.update({
   path: '/api/public/creative-image',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBootstrapOwnerRoute = ApiPublicBootstrapOwnerRouteImport.update({
+  id: '/api/public/bootstrap-owner',
+  path: '/api/public/bootstrap-owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/api/public/bootstrap-owner': typeof ApiPublicBootstrapOwnerRoute
   '/api/public/creative-image': typeof ApiPublicCreativeImageRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes/': typeof AuthenticatedAjustesIndexRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/api/public/bootstrap-owner': typeof ApiPublicBootstrapOwnerRoute
   '/api/public/creative-image': typeof ApiPublicCreativeImageRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/ajustes': typeof AuthenticatedAjustesIndexRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/_authenticated/ajustes/planos': typeof AuthenticatedAjustesPlanosRoute
   '/_authenticated/ajustes/squads': typeof AuthenticatedAjustesSquadsRoute
   '/_authenticated/clientes/$id': typeof AuthenticatedClientesIdRoute
+  '/api/public/bootstrap-owner': typeof ApiPublicBootstrapOwnerRoute
   '/api/public/creative-image': typeof ApiPublicCreativeImageRoute
   '/p/relatorio/$token': typeof PRelatorioTokenRoute
   '/_authenticated/ajustes/': typeof AuthenticatedAjustesIndexRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/ajustes/planos'
     | '/ajustes/squads'
     | '/clientes/$id'
+    | '/api/public/bootstrap-owner'
     | '/api/public/creative-image'
     | '/p/relatorio/$token'
     | '/ajustes/'
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/ajustes/planos'
     | '/ajustes/squads'
     | '/clientes/$id'
+    | '/api/public/bootstrap-owner'
     | '/api/public/creative-image'
     | '/p/relatorio/$token'
     | '/ajustes'
@@ -455,6 +466,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ajustes/planos'
     | '/_authenticated/ajustes/squads'
     | '/_authenticated/clientes/$id'
+    | '/api/public/bootstrap-owner'
     | '/api/public/creative-image'
     | '/p/relatorio/$token'
     | '/_authenticated/ajustes/'
@@ -473,6 +485,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   ApiR2UploadRoute: typeof ApiR2UploadRoute
   NpsTokenRoute: typeof NpsTokenRoute
+  ApiPublicBootstrapOwnerRoute: typeof ApiPublicBootstrapOwnerRoute
   ApiPublicCreativeImageRoute: typeof ApiPublicCreativeImageRoute
   PRelatorioTokenRoute: typeof PRelatorioTokenRoute
   ApiPublicHooksCheckBalancesRoute: typeof ApiPublicHooksCheckBalancesRoute
@@ -649,6 +662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCreativeImageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bootstrap-owner': {
+      id: '/api/public/bootstrap-owner'
+      path: '/api/public/bootstrap-owner'
+      fullPath: '/api/public/bootstrap-owner'
+      preLoaderRoute: typeof ApiPublicBootstrapOwnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/clientes/$id': {
       id: '/_authenticated/clientes/$id'
       path: '/$id'
@@ -821,6 +841,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   ApiR2UploadRoute: ApiR2UploadRoute,
   NpsTokenRoute: NpsTokenRoute,
+  ApiPublicBootstrapOwnerRoute: ApiPublicBootstrapOwnerRoute,
   ApiPublicCreativeImageRoute: ApiPublicCreativeImageRoute,
   PRelatorioTokenRoute: PRelatorioTokenRoute,
   ApiPublicHooksCheckBalancesRoute: ApiPublicHooksCheckBalancesRoute,
