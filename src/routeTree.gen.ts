@@ -9,60 +9,45 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ConviteRouteImport } from './routes/convite'
-import { Route as PrivacidadeRouteImport } from './routes/privacidade'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermosRouteImport } from './routes/termos'
-import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
-import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
-import { Route as AuthenticatedCriativosRouteImport } from './routes/_authenticated/criativos'
-import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
-import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
-import { Route as AuthenticatedHealthScoreRouteImport } from './routes/_authenticated/health-score'
-import { Route as AuthenticatedHojeRouteImport } from './routes/_authenticated/hoje'
-import { Route as AuthenticatedNpsRouteImport } from './routes/_authenticated/nps'
-import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
-import { Route as AuthenticatedPdasRouteImport } from './routes/_authenticated/pdas'
-import { Route as ApiR2UploadRouteImport } from './routes/api/r2-upload'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as ConviteRouteImport } from './routes/convite'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as NpsTokenRouteImport } from './routes/nps.$token'
-import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
-import { Route as AuthenticatedAjustesCargosRouteImport } from './routes/_authenticated/ajustes.cargos'
-import { Route as AuthenticatedAjustesComissaoRouteImport } from './routes/_authenticated/ajustes.comissao'
-import { Route as AuthenticatedAjustesEquipeRouteImport } from './routes/_authenticated/ajustes.equipe'
-import { Route as AuthenticatedAjustesIntegracoesRouteImport } from './routes/_authenticated/ajustes.integracoes'
-import { Route as AuthenticatedAjustesMarcaRouteImport } from './routes/_authenticated/ajustes.marca'
-import { Route as AuthenticatedAjustesOnboardingRouteImport } from './routes/_authenticated/ajustes.onboarding'
-import { Route as AuthenticatedAjustesPerfilRouteImport } from './routes/_authenticated/ajustes.perfil'
-import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
-import { Route as AuthenticatedAjustesSquadsRouteImport } from './routes/_authenticated/ajustes.squads'
+import { Route as ApiR2UploadRouteImport } from './routes/api/r2-upload'
+import { Route as AuthenticatedPdasRouteImport } from './routes/_authenticated/pdas'
+import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
+import { Route as AuthenticatedNpsRouteImport } from './routes/_authenticated/nps'
+import { Route as AuthenticatedHojeRouteImport } from './routes/_authenticated/hoje'
+import { Route as AuthenticatedHealthScoreRouteImport } from './routes/_authenticated/health-score'
+import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
+import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
+import { Route as AuthenticatedCriativosRouteImport } from './routes/_authenticated/criativos'
+import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedAjustesRouteImport } from './routes/_authenticated/ajustes'
 import { Route as AuthenticatedClientesIndexRouteImport } from './routes/_authenticated/clientes.index'
-import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
-import { Route as ApiPublicCreativeImageRouteImport } from './routes/api/public/creative-image'
+import { Route as AuthenticatedAjustesIndexRouteImport } from './routes/_authenticated/ajustes.index'
 import { Route as PRelatorioTokenRouteImport } from './routes/p.relatorio.$token'
-import { Route as ApiPublicHooksCheckBalancesRouteImport } from './routes/api/public/hooks/check-balances'
+import { Route as ApiPublicCreativeImageRouteImport } from './routes/api/public/creative-image'
+import { Route as AuthenticatedClientesIdRouteImport } from './routes/_authenticated/clientes.$id'
+import { Route as AuthenticatedAjustesSquadsRouteImport } from './routes/_authenticated/ajustes.squads'
+import { Route as AuthenticatedAjustesPlanosRouteImport } from './routes/_authenticated/ajustes.planos'
+import { Route as AuthenticatedAjustesPerfilRouteImport } from './routes/_authenticated/ajustes.perfil'
+import { Route as AuthenticatedAjustesOnboardingRouteImport } from './routes/_authenticated/ajustes.onboarding'
+import { Route as AuthenticatedAjustesMarcaRouteImport } from './routes/_authenticated/ajustes.marca'
+import { Route as AuthenticatedAjustesIntegracoesRouteImport } from './routes/_authenticated/ajustes.integracoes'
+import { Route as AuthenticatedAjustesEquipeRouteImport } from './routes/_authenticated/ajustes.equipe'
+import { Route as AuthenticatedAjustesComissaoRouteImport } from './routes/_authenticated/ajustes.comissao'
+import { Route as AuthenticatedAjustesCargosRouteImport } from './routes/_authenticated/ajustes.cargos'
 import { Route as ApiPublicHooksSyncAdsRouteImport } from './routes/api/public/hooks/sync-ads'
+import { Route as ApiPublicHooksCheckBalancesRouteImport } from './routes/api/public/hooks/check-balances'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConviteRoute = ConviteRouteImport.update({
-  id: '/convite',
-  path: '/convite',
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
@@ -70,44 +55,53 @@ const PrivacidadeRoute = PrivacidadeRouteImport.update({
   path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const ConviteRoute = ConviteRouteImport.update({
+  id: '/convite',
+  path: '/convite',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermosRoute = TermosRouteImport.update({
-  id: '/termos',
-  path: '/termos',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAjustesRoute = AuthenticatedAjustesRouteImport.update({
-  id: '/ajustes',
-  path: '/ajustes',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NpsTokenRoute = NpsTokenRouteImport.update({
+  id: '/nps/$token',
+  path: '/nps/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiR2UploadRoute = ApiR2UploadRouteImport.update({
+  id: '/api/r2-upload',
+  path: '/api/r2-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPdasRoute = AuthenticatedPdasRouteImport.update({
+  id: '/pdas',
+  path: '/pdas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
+const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
+  id: '/operacoes',
+  path: '/operacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
-  id: '/clientes',
-  path: '/clientes',
+const AuthenticatedNpsRoute = AuthenticatedNpsRouteImport.update({
+  id: '/nps',
+  path: '/nps',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCriativosRoute = AuthenticatedCriativosRouteImport.update({
-  id: '/criativos',
-  path: '/criativos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
-  id: '/equipe',
-  path: '/equipe',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
+const AuthenticatedHojeRoute = AuthenticatedHojeRouteImport.update({
+  id: '/hoje',
+  path: '/hoje',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHealthScoreRoute =
@@ -116,82 +110,67 @@ const AuthenticatedHealthScoreRoute =
     path: '/health-score',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedHojeRoute = AuthenticatedHojeRouteImport.update({
-  id: '/hoje',
-  path: '/hoje',
+const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedNpsRoute = AuthenticatedNpsRouteImport.update({
-  id: '/nps',
-  path: '/nps',
+const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
-  id: '/operacoes',
-  path: '/operacoes',
+const AuthenticatedCriativosRoute = AuthenticatedCriativosRouteImport.update({
+  id: '/criativos',
+  path: '/criativos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPdasRoute = AuthenticatedPdasRouteImport.update({
-  id: '/pdas',
-  path: '/pdas',
+const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiR2UploadRoute = ApiR2UploadRouteImport.update({
-  id: '/api/r2-upload',
-  path: '/api/r2-upload',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const NpsTokenRoute = NpsTokenRouteImport.update({
-  id: '/nps/$token',
-  path: '/nps/$token',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAjustesRoute = AuthenticatedAjustesRouteImport.update({
+  id: '/ajustes',
+  path: '/ajustes',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedClientesIndexRoute =
+  AuthenticatedClientesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedClientesRoute,
+  } as any)
 const AuthenticatedAjustesIndexRoute =
   AuthenticatedAjustesIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
-const AuthenticatedAjustesCargosRoute =
-  AuthenticatedAjustesCargosRouteImport.update({
-    id: '/cargos',
-    path: '/cargos',
-    getParentRoute: () => AuthenticatedAjustesRoute,
-  } as any)
-const AuthenticatedAjustesComissaoRoute =
-  AuthenticatedAjustesComissaoRouteImport.update({
-    id: '/comissao',
-    path: '/comissao',
-    getParentRoute: () => AuthenticatedAjustesRoute,
-  } as any)
-const AuthenticatedAjustesEquipeRoute =
-  AuthenticatedAjustesEquipeRouteImport.update({
-    id: '/equipe',
-    path: '/equipe',
-    getParentRoute: () => AuthenticatedAjustesRoute,
-  } as any)
-const AuthenticatedAjustesIntegracoesRoute =
-  AuthenticatedAjustesIntegracoesRouteImport.update({
-    id: '/integracoes',
-    path: '/integracoes',
-    getParentRoute: () => AuthenticatedAjustesRoute,
-  } as any)
-const AuthenticatedAjustesMarcaRoute =
-  AuthenticatedAjustesMarcaRouteImport.update({
-    id: '/marca',
-    path: '/marca',
-    getParentRoute: () => AuthenticatedAjustesRoute,
-  } as any)
-const AuthenticatedAjustesOnboardingRoute =
-  AuthenticatedAjustesOnboardingRouteImport.update({
-    id: '/onboarding',
-    path: '/onboarding',
-    getParentRoute: () => AuthenticatedAjustesRoute,
-  } as any)
-const AuthenticatedAjustesPerfilRoute =
-  AuthenticatedAjustesPerfilRouteImport.update({
-    id: '/perfil',
-    path: '/perfil',
+const PRelatorioTokenRoute = PRelatorioTokenRouteImport.update({
+  id: '/p/relatorio/$token',
+  path: '/p/relatorio/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCreativeImageRoute = ApiPublicCreativeImageRouteImport.update({
+  id: '/api/public/creative-image',
+  path: '/api/public/creative-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedClientesRoute,
+} as any)
+const AuthenticatedAjustesSquadsRoute =
+  AuthenticatedAjustesSquadsRouteImport.update({
+    id: '/squads',
+    path: '/squads',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
 const AuthenticatedAjustesPlanosRoute =
@@ -200,31 +179,51 @@ const AuthenticatedAjustesPlanosRoute =
     path: '/planos',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
-const AuthenticatedAjustesSquadsRoute =
-  AuthenticatedAjustesSquadsRouteImport.update({
-    id: '/squads',
-    path: '/squads',
+const AuthenticatedAjustesPerfilRoute =
+  AuthenticatedAjustesPerfilRouteImport.update({
+    id: '/perfil',
+    path: '/perfil',
     getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
-const AuthenticatedClientesIndexRoute =
-  AuthenticatedClientesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedClientesRoute,
+const AuthenticatedAjustesOnboardingRoute =
+  AuthenticatedAjustesOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedAjustesRoute,
   } as any)
-const AuthenticatedClientesIdRoute = AuthenticatedClientesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedClientesRoute,
-} as any)
-const ApiPublicCreativeImageRoute = ApiPublicCreativeImageRouteImport.update({
-  id: '/api/public/creative-image',
-  path: '/api/public/creative-image',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PRelatorioTokenRoute = PRelatorioTokenRouteImport.update({
-  id: '/p/relatorio/$token',
-  path: '/p/relatorio/$token',
+const AuthenticatedAjustesMarcaRoute =
+  AuthenticatedAjustesMarcaRouteImport.update({
+    id: '/marca',
+    path: '/marca',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
+const AuthenticatedAjustesIntegracoesRoute =
+  AuthenticatedAjustesIntegracoesRouteImport.update({
+    id: '/integracoes',
+    path: '/integracoes',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
+const AuthenticatedAjustesEquipeRoute =
+  AuthenticatedAjustesEquipeRouteImport.update({
+    id: '/equipe',
+    path: '/equipe',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
+const AuthenticatedAjustesComissaoRoute =
+  AuthenticatedAjustesComissaoRouteImport.update({
+    id: '/comissao',
+    path: '/comissao',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
+const AuthenticatedAjustesCargosRoute =
+  AuthenticatedAjustesCargosRouteImport.update({
+    id: '/cargos',
+    path: '/cargos',
+    getParentRoute: () => AuthenticatedAjustesRoute,
+  } as any)
+const ApiPublicHooksSyncAdsRoute = ApiPublicHooksSyncAdsRouteImport.update({
+  id: '/api/public/hooks/sync-ads',
+  path: '/api/public/hooks/sync-ads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksCheckBalancesRoute =
@@ -233,18 +232,12 @@ const ApiPublicHooksCheckBalancesRoute =
     path: '/api/public/hooks/check-balances',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksSyncAdsRoute = ApiPublicHooksSyncAdsRouteImport.update({
-  id: '/api/public/hooks/sync-ads',
-  path: '/api/public/hooks/sync-ads',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/convite': typeof ConviteRoute
   '/privacidade': typeof PrivacidadeRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/chat': typeof AuthenticatedChatRoute
@@ -281,7 +274,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/convite': typeof ConviteRoute
   '/privacidade': typeof PrivacidadeRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/chat': typeof AuthenticatedChatRoute
   '/criativos': typeof AuthenticatedCriativosRoute
@@ -318,7 +310,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/convite': typeof ConviteRoute
   '/privacidade': typeof PrivacidadeRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/termos': typeof TermosRoute
   '/_authenticated/ajustes': typeof AuthenticatedAjustesRouteWithChildren
   '/_authenticated/chat': typeof AuthenticatedChatRoute
@@ -357,7 +348,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/convite'
     | '/privacidade'
-    | '/reset-password'
     | '/termos'
     | '/ajustes'
     | '/chat'
@@ -394,7 +384,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/convite'
     | '/privacidade'
-    | '/reset-password'
     | '/termos'
     | '/chat'
     | '/criativos'
@@ -430,7 +419,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/convite'
     | '/privacidade'
-    | '/reset-password'
     | '/termos'
     | '/_authenticated/ajustes'
     | '/_authenticated/chat'
@@ -469,7 +457,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ConviteRoute: typeof ConviteRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
   TermosRoute: typeof TermosRoute
   ApiR2UploadRoute: typeof ApiR2UploadRoute
   NpsTokenRoute: typeof NpsTokenRoute
@@ -481,32 +468,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/convite': {
-      id: '/convite'
-      path: '/convite'
-      fullPath: '/convite'
-      preLoaderRoute: typeof ConviteRouteImport
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidade': {
@@ -516,102 +482,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/convite': {
+      id: '/convite'
+      path: '/convite'
+      fullPath: '/convite'
+      preLoaderRoute: typeof ConviteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/termos': {
-      id: '/termos'
-      path: '/termos'
-      fullPath: '/termos'
-      preLoaderRoute: typeof TermosRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/ajustes': {
-      id: '/_authenticated/ajustes'
-      path: '/ajustes'
-      fullPath: '/ajustes'
-      preLoaderRoute: typeof AuthenticatedAjustesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/chat': {
-      id: '/_authenticated/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/clientes': {
-      id: '/_authenticated/clientes'
-      path: '/clientes'
-      fullPath: '/clientes'
-      preLoaderRoute: typeof AuthenticatedClientesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/criativos': {
-      id: '/_authenticated/criativos'
-      path: '/criativos'
-      fullPath: '/criativos'
-      preLoaderRoute: typeof AuthenticatedCriativosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/equipe': {
-      id: '/_authenticated/equipe'
-      path: '/equipe'
-      fullPath: '/equipe'
-      preLoaderRoute: typeof AuthenticatedEquipeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/financeiro': {
-      id: '/_authenticated/financeiro'
-      path: '/financeiro'
-      fullPath: '/financeiro'
-      preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/health-score': {
-      id: '/_authenticated/health-score'
-      path: '/health-score'
-      fullPath: '/health-score'
-      preLoaderRoute: typeof AuthenticatedHealthScoreRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/hoje': {
-      id: '/_authenticated/hoje'
-      path: '/hoje'
-      fullPath: '/hoje'
-      preLoaderRoute: typeof AuthenticatedHojeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/nps': {
-      id: '/_authenticated/nps'
-      path: '/nps'
-      fullPath: '/nps'
-      preLoaderRoute: typeof AuthenticatedNpsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/operacoes': {
-      id: '/_authenticated/operacoes'
-      path: '/operacoes'
-      fullPath: '/operacoes'
-      preLoaderRoute: typeof AuthenticatedOperacoesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pdas': {
-      id: '/_authenticated/pdas'
-      path: '/pdas'
-      fullPath: '/pdas'
-      preLoaderRoute: typeof AuthenticatedPdasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/r2-upload': {
-      id: '/api/r2-upload'
-      path: '/api/r2-upload'
-      fullPath: '/api/r2-upload'
-      preLoaderRoute: typeof ApiR2UploadRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/nps/$token': {
@@ -621,6 +517,97 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NpsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/r2-upload': {
+      id: '/api/r2-upload'
+      path: '/api/r2-upload'
+      fullPath: '/api/r2-upload'
+      preLoaderRoute: typeof ApiR2UploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/pdas': {
+      id: '/_authenticated/pdas'
+      path: '/pdas'
+      fullPath: '/pdas'
+      preLoaderRoute: typeof AuthenticatedPdasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/operacoes': {
+      id: '/_authenticated/operacoes'
+      path: '/operacoes'
+      fullPath: '/operacoes'
+      preLoaderRoute: typeof AuthenticatedOperacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/nps': {
+      id: '/_authenticated/nps'
+      path: '/nps'
+      fullPath: '/nps'
+      preLoaderRoute: typeof AuthenticatedNpsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hoje': {
+      id: '/_authenticated/hoje'
+      path: '/hoje'
+      fullPath: '/hoje'
+      preLoaderRoute: typeof AuthenticatedHojeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/health-score': {
+      id: '/_authenticated/health-score'
+      path: '/health-score'
+      fullPath: '/health-score'
+      preLoaderRoute: typeof AuthenticatedHealthScoreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financeiro': {
+      id: '/_authenticated/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipe': {
+      id: '/_authenticated/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof AuthenticatedEquipeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/criativos': {
+      id: '/_authenticated/criativos'
+      path: '/criativos'
+      fullPath: '/criativos'
+      preLoaderRoute: typeof AuthenticatedCriativosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes': {
+      id: '/_authenticated/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ajustes': {
+      id: '/_authenticated/ajustes'
+      path: '/ajustes'
+      fullPath: '/ajustes'
+      preLoaderRoute: typeof AuthenticatedAjustesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes/': {
+      id: '/_authenticated/clientes/'
+      path: '/'
+      fullPath: '/clientes/'
+      preLoaderRoute: typeof AuthenticatedClientesIndexRouteImport
+      parentRoute: typeof AuthenticatedClientesRoute
+    }
     '/_authenticated/ajustes/': {
       id: '/_authenticated/ajustes/'
       path: '/'
@@ -628,53 +615,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAjustesIndexRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
-    '/_authenticated/ajustes/cargos': {
-      id: '/_authenticated/ajustes/cargos'
-      path: '/cargos'
-      fullPath: '/ajustes/cargos'
-      preLoaderRoute: typeof AuthenticatedAjustesCargosRouteImport
-      parentRoute: typeof AuthenticatedAjustesRoute
+    '/p/relatorio/$token': {
+      id: '/p/relatorio/$token'
+      path: '/p/relatorio/$token'
+      fullPath: '/p/relatorio/$token'
+      preLoaderRoute: typeof PRelatorioTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/ajustes/comissao': {
-      id: '/_authenticated/ajustes/comissao'
-      path: '/comissao'
-      fullPath: '/ajustes/comissao'
-      preLoaderRoute: typeof AuthenticatedAjustesComissaoRouteImport
-      parentRoute: typeof AuthenticatedAjustesRoute
+    '/api/public/creative-image': {
+      id: '/api/public/creative-image'
+      path: '/api/public/creative-image'
+      fullPath: '/api/public/creative-image'
+      preLoaderRoute: typeof ApiPublicCreativeImageRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/ajustes/equipe': {
-      id: '/_authenticated/ajustes/equipe'
-      path: '/equipe'
-      fullPath: '/ajustes/equipe'
-      preLoaderRoute: typeof AuthenticatedAjustesEquipeRouteImport
-      parentRoute: typeof AuthenticatedAjustesRoute
+    '/_authenticated/clientes/$id': {
+      id: '/_authenticated/clientes/$id'
+      path: '/$id'
+      fullPath: '/clientes/$id'
+      preLoaderRoute: typeof AuthenticatedClientesIdRouteImport
+      parentRoute: typeof AuthenticatedClientesRoute
     }
-    '/_authenticated/ajustes/integracoes': {
-      id: '/_authenticated/ajustes/integracoes'
-      path: '/integracoes'
-      fullPath: '/ajustes/integracoes'
-      preLoaderRoute: typeof AuthenticatedAjustesIntegracoesRouteImport
-      parentRoute: typeof AuthenticatedAjustesRoute
-    }
-    '/_authenticated/ajustes/marca': {
-      id: '/_authenticated/ajustes/marca'
-      path: '/marca'
-      fullPath: '/ajustes/marca'
-      preLoaderRoute: typeof AuthenticatedAjustesMarcaRouteImport
-      parentRoute: typeof AuthenticatedAjustesRoute
-    }
-    '/_authenticated/ajustes/onboarding': {
-      id: '/_authenticated/ajustes/onboarding'
-      path: '/onboarding'
-      fullPath: '/ajustes/onboarding'
-      preLoaderRoute: typeof AuthenticatedAjustesOnboardingRouteImport
-      parentRoute: typeof AuthenticatedAjustesRoute
-    }
-    '/_authenticated/ajustes/perfil': {
-      id: '/_authenticated/ajustes/perfil'
-      path: '/perfil'
-      fullPath: '/ajustes/perfil'
-      preLoaderRoute: typeof AuthenticatedAjustesPerfilRouteImport
+    '/_authenticated/ajustes/squads': {
+      id: '/_authenticated/ajustes/squads'
+      path: '/squads'
+      fullPath: '/ajustes/squads'
+      preLoaderRoute: typeof AuthenticatedAjustesSquadsRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
     '/_authenticated/ajustes/planos': {
@@ -684,39 +650,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAjustesPlanosRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
-    '/_authenticated/ajustes/squads': {
-      id: '/_authenticated/ajustes/squads'
-      path: '/squads'
-      fullPath: '/ajustes/squads'
-      preLoaderRoute: typeof AuthenticatedAjustesSquadsRouteImport
+    '/_authenticated/ajustes/perfil': {
+      id: '/_authenticated/ajustes/perfil'
+      path: '/perfil'
+      fullPath: '/ajustes/perfil'
+      preLoaderRoute: typeof AuthenticatedAjustesPerfilRouteImport
       parentRoute: typeof AuthenticatedAjustesRoute
     }
-    '/_authenticated/clientes/': {
-      id: '/_authenticated/clientes/'
-      path: '/'
-      fullPath: '/clientes/'
-      preLoaderRoute: typeof AuthenticatedClientesIndexRouteImport
-      parentRoute: typeof AuthenticatedClientesRoute
+    '/_authenticated/ajustes/onboarding': {
+      id: '/_authenticated/ajustes/onboarding'
+      path: '/onboarding'
+      fullPath: '/ajustes/onboarding'
+      preLoaderRoute: typeof AuthenticatedAjustesOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
     }
-    '/_authenticated/clientes/$id': {
-      id: '/_authenticated/clientes/$id'
-      path: '/$id'
-      fullPath: '/clientes/$id'
-      preLoaderRoute: typeof AuthenticatedClientesIdRouteImport
-      parentRoute: typeof AuthenticatedClientesRoute
+    '/_authenticated/ajustes/marca': {
+      id: '/_authenticated/ajustes/marca'
+      path: '/marca'
+      fullPath: '/ajustes/marca'
+      preLoaderRoute: typeof AuthenticatedAjustesMarcaRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
     }
-    '/api/public/creative-image': {
-      id: '/api/public/creative-image'
-      path: '/api/public/creative-image'
-      fullPath: '/api/public/creative-image'
-      preLoaderRoute: typeof ApiPublicCreativeImageRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/ajustes/integracoes': {
+      id: '/_authenticated/ajustes/integracoes'
+      path: '/integracoes'
+      fullPath: '/ajustes/integracoes'
+      preLoaderRoute: typeof AuthenticatedAjustesIntegracoesRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
     }
-    '/p/relatorio/$token': {
-      id: '/p/relatorio/$token'
-      path: '/p/relatorio/$token'
-      fullPath: '/p/relatorio/$token'
-      preLoaderRoute: typeof PRelatorioTokenRouteImport
+    '/_authenticated/ajustes/equipe': {
+      id: '/_authenticated/ajustes/equipe'
+      path: '/equipe'
+      fullPath: '/ajustes/equipe'
+      preLoaderRoute: typeof AuthenticatedAjustesEquipeRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
+    '/_authenticated/ajustes/comissao': {
+      id: '/_authenticated/ajustes/comissao'
+      path: '/comissao'
+      fullPath: '/ajustes/comissao'
+      preLoaderRoute: typeof AuthenticatedAjustesComissaoRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
+    '/_authenticated/ajustes/cargos': {
+      id: '/_authenticated/ajustes/cargos'
+      path: '/cargos'
+      fullPath: '/ajustes/cargos'
+      preLoaderRoute: typeof AuthenticatedAjustesCargosRouteImport
+      parentRoute: typeof AuthenticatedAjustesRoute
+    }
+    '/api/public/hooks/sync-ads': {
+      id: '/api/public/hooks/sync-ads'
+      path: '/api/public/hooks/sync-ads'
+      fullPath: '/api/public/hooks/sync-ads'
+      preLoaderRoute: typeof ApiPublicHooksSyncAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/check-balances': {
@@ -724,13 +711,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/check-balances'
       fullPath: '/api/public/hooks/check-balances'
       preLoaderRoute: typeof ApiPublicHooksCheckBalancesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/sync-ads': {
-      id: '/api/public/hooks/sync-ads'
-      path: '/api/public/hooks/sync-ads'
-      fullPath: '/api/public/hooks/sync-ads'
-      preLoaderRoute: typeof ApiPublicHooksSyncAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -817,7 +797,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ConviteRoute: ConviteRoute,
   PrivacidadeRoute: PrivacidadeRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
   TermosRoute: TermosRoute,
   ApiR2UploadRoute: ApiR2UploadRoute,
   NpsTokenRoute: NpsTokenRoute,
